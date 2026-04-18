@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+        font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+        img-src 'self' data: blob: https: http:;
+        frame-src https://www.youtube.com https://drive.google.com https://youtube.com;
+        connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com;
+        object-src 'none';
+    ">
+    <title>Voice Acting Team — Профессиональная озвучка и дубляж</title>
+    <meta name="description" content="Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.">
+    <link rel="icon" type="image/png" href="img/logo.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<script>
+(function(){
+    var _queue = [];
+    window.navigate = function(p, ps) { _queue.push([p, ps]); };
+    window._navQueue = _queue;
+})();
+</script>
+
+<div id="toast-container"></div>
+
+<!-- ==================== ШАПКА ==================== -->
+<header>
+    <div class="logo" onclick="navigate('home')">
+        <img src="img/logo.jpg" class="logo-img" alt="VAT" onerror="this.style.display='none'">
+        <div>
+            <span class="logo-text">Voice <span class="logo-accent">Acting</span> Team</span>
+            <span class="logo-sub">Dubbing Studio</span>
+        </div>
+    </div>
+    <nav>
+        <a id="n-home"    class="nav-link active" onclick="navigate('home')">Релизы</a>
+        <a id="n-team"    class="nav-link"        onclick="navigate('team')">Состав</a>
+        <a id="n-profile" class="nav-link"        onclick="navigate('profile')">Профиль</a>
+        <a id="n-dubin"   class="nav-link dub-nav" onclick="navigate('dubin')" style="display:none;">
+            <i class="fas fa-microphone-alt" style="font-size:10px;"></i> DUB-in
+        </a>
+        <a id="n-playlists" class="nav-link" onclick="navigate('playlists')" style="display:none;">
+            <i class="fas fa-layer-group" style="font-size:10px;"></i> Плейлисты
+        </a>
+        <a id="n-order" class="nav-link" onclick="navigate('order')">
+            <i class="fas fa-wand-magic-sparkles" style="font-size:10px;"></i> Заказать
+        </a>
+    </nav>
+</header>
+
+<main class="container">
+
+    <!-- ==================== ГЛАВНАЯ / РЕЛИЗЫ ==================== -->
+    <section id="home" class="section active">
+        <div class="search-bar">
+            <div class="search-wrap" id="search-wrap">
+                <button class="search-open-btn" id="search-open-btn"
+                        onclick="openSearch()" title="Поиск">
+                    <i class="fas fa-search"></i>
+                    <span class="search-open-label">Поиск</span>
+                </button>
+                <div class="search-field-wrap" id="search-field-wrap">
+                    <input type="text" id="main-search" class="search-field-input"
+                           placeholder="Название релиза..."
+                           oninput="filterData()"
+                           autocomplete="off" name="sws-s" data-lpignore="true"
+                           onkeydown="if(event.key==='Escape')closeSearch()">
+                    <button class="search-close-btn" onclick="closeSearch()" title="Закрыть">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <select id="filter-genre" class="filter-select" onchange="filterData()">
+                <option value="all">Все жанры</option>
+                <option value="Аниме">Аниме</option>
+                <option value="Сериал">Сериалы</option>
+                <option value="Фильм">Фильмы</option>
+            </select>
+            <select id="filter-sort" class="filter-select" onchange="filterData()">
+                <option value="new">Новинки</option>
+                <option value="pop">Популярные</option>
+                <option value="random">Случайный</option>
+            </select>
+            <button id="adm-btn-rel" class="btn btn-blue" style="display:none;" onclick="openRelModal()">
+                <i class="fas fa-plus"></i> Добавить релиз
+            </button>
+        </div>
+
+        <div class="releases-hero">
+            <div>
+                <div class="releases-hero-title">Все релизы</div>
+                <div class="releases-hero-sub">Качественная озвучка от Voice Acting Team — аниме, сериалы и фильмы.</div>
+            </div>
+        </div>
+        <div class="grid" id="main-grid"></div>
+    </section>
+
+    <!-- ==================== КОМАНДА ==================== -->
+    <section id="team" class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+            <div>
+                <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Команда студии</h1>
+                <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Люди, которые делают озвучку живой</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button id="adm-btn-team" class="btn btn-blue" style="display:none;" onclick="openTeamModal()">
+                    <i class="fas fa-user-plus"></i> Участник
+                </button>
+                <button id="adm-btn-role" class="btn btn-blue" style="display:none;" onclick="openRoleModal()">
+                    <i class="fas fa-user-shield"></i> Роли
+                </button>
+            </div>
+        </div>
+        <div id="team-wrapper"></div>
+    </section>
+
+    <!-- ==================== СТРАНИЦА УЧАСТНИКА ==================== -->
+    <section id="team-page" class="section">
+        <button class="btn btn-outline" onclick="navigate('team')" style="margin-bottom:22px;">← Назад</button>
+        <div id="team-page-view" style="background:var(--card-bg);padding:32px;border-radius:var(--radius-lg);border:1px solid var(--border);"></div>
+        <div id="adm-tp-controls" style="display:none;margin-top:18px;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-blue" onclick="openTPModal()">Редактировать страницу</button>
+            <button class="btn btn-purple" onclick="openAccessModal()"><i class="fas fa-key"></i> Выдать доступ</button>
+            <button class="btn btn-outline" style="color:red;border-color:rgba(239,68,68,0.4);" onclick="deleteTP()">Удалить страницу</button>
+        </div>
+        <div id="own-tp-controls" style="display:none;margin-top:18px;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="openMyTPEdit()"><i class="fas fa-pen"></i> Редактировать мою страницу</button>
+        </div>
+    </section>
+
+    <!-- ==================== ПРОСМОТР РЕЛИЗА ==================== -->
+    <section id="view" class="section">
+        <button class="btn btn-outline" onclick="navigate('home')" style="margin-bottom:22px;">← К релизам</button>
+        <div id="v-info"></div>
+        <div style="background:var(--card-bg);padding:24px;border-radius:var(--radius-lg);border:1px solid var(--border);margin-top:22px;">
+            <h4 style="margin-bottom:16px;font-size:1.1rem;font-family:var(--font-display);">Комментарии (<span id="comm-count">0</span>)</h4>
+            <div id="comm-auth-msg" class="unauth-msg">
+                <p style="margin-bottom:12px;font-weight:700;">Войдите, чтобы оставить комментарий.</p>
+                <button class="btn btn-blue" onclick="navigate('profile')">Войти / Регистрация</button>
+            </div>
+            <div id="comm-form" style="display:none;margin-top:16px;">
+                <textarea id="comm-text" placeholder="Ваш комментарий... Используйте @email для упоминания" rows="3"></textarea>
+                <button class="btn" onclick="sendComment()">Отправить</button>
+            </div>
+            <div id="comm-list" style="margin-top:20px;"></div>
+        </div>
+    </section>
+
+    <!-- ==================== ПРОФИЛЬ ==================== -->
+    <section id="profile" class="section">
+        <!-- Форма входа -->
+        <div id="auth-ui" style="max-width:380px;margin:48px auto;">
+            <div style="background:var(--card-bg);padding:40px;border-radius:var(--radius-lg);border:1px solid rgba(124,58,237,0.25);box-shadow:var(--shadow-v);">
+                <div style="text-align:center;margin-bottom:32px;">
+                    <div style="width:80px;height:80px;background:rgba(124,58,237,0.12);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;overflow:hidden;">
+                        <img src="img/logo.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:18px;" onerror="this.parentElement.innerHTML='<i class=\'fas fa-microphone-alt\' style=\'font-size:2rem;color:var(--violet-light);\'></i>'">
+                    </div>
+                    <h2 style="font-size:1.3rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Voice Acting Team</h2>
+                    <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Войдите или зарегистрируйтесь</p>
+                </div>
+                <form onsubmit="return false;" autocomplete="off">
+                    <input type="text" id="auth-honeypot" name="auth-honeypot" style="display:none" autocomplete="username" tabindex="-1">
+                    <label for="email" class="order-label">Email</label>
+                    <input type="email" id="email" placeholder="mail@example.com" autocomplete="username" style="margin-bottom:14px;">
+                    <label for="pass" class="order-label">Пароль</label>
+                    <input type="password" id="pass" placeholder="Минимум 6 символов" autocomplete="current-password" style="margin-bottom:18px;">
+                    <button class="btn" style="width:100%;margin-bottom:10px;" id="btn-login" type="button"><i class="fas fa-sign-in-alt"></i> Войти</button>
+                    <button class="btn btn-outline" style="width:100%;margin-bottom:10px;" id="btn-reg" type="button"><i class="fas fa-user-plus"></i> Регистрация</button>
+                </form>
+                <div id="reset-pass-block" style="display:none;text-align:center;margin-top:6px;">
+                    <a href="#" style="color:var(--text-dim);font-size:12px;" onclick="resetPassword();return false;">Забыли пароль?</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Авторизованный пользователь -->
+        <div id="user-ui">
+            <div class="profile-header">
+                <div style="position:relative;">
+                    <img id="u-ava" src="https://api.dicebear.com/7.x/identicon/svg"
+                         style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--violet);">
+                </div>
+                <div style="flex:1;">
+                    <h2 id="u-nick" style="margin-bottom:10px;font-size:1.8rem;font-weight:700;font-family:var(--font-display);"></h2>
+                    <div id="u-role-badge" style="margin-bottom:14px;"></div>
+                    <div style="display:flex;gap:28px;font-size:13px;flex-wrap:wrap;">
+                        <div><b id="u-views" style="font-size:1.5rem;color:var(--teal);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Просмотрено</span></div>
+                        <div style="cursor:pointer;" onclick="showMySubscribers()"><b id="u-subs" style="font-size:1.5rem;color:var(--violet-light);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Подписчики</span></div>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;min-width:180px;">
+                    <button class="btn btn-outline" onclick="document.getElementById('m-prof').style.display='flex'"><i class="fas fa-cog"></i> Настройки</button>
+                    <button class="btn btn-outline" onclick="openAchInventory()"><i class="fas fa-medal"></i> Достижения</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('m-public-prof').style.display='flex'"><i class="fas fa-user-edit"></i> Мой профиль</button>
+                    <button class="btn btn-outline" onclick="navigate('playlists')"><i class="fas fa-layer-group"></i> Плейлисты</button>
+                    <button class="btn btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,0.35);" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+                </div>
+            </div>
+
+            <div style="background:var(--card-bg);padding:24px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:22px;">
+                <h4 style="font-size:14px;margin-bottom:16px;font-family:var(--font-display);">Мои достижения</h4>
+                <div id="u-ach" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+            </div>
+
+            <div style="background:var(--card-bg);padding:24px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:22px;">
+                <h4 style="font-size:14px;margin-bottom:20px;font-family:var(--font-display);"><i class="fas fa-bookmark" style="color:var(--teal);margin-right:8px;"></i> Мои списки</h4>
+                <div id="my-lists-wrap"><p style="font-size:13px;color:var(--text-dim);font-style:italic;">Загрузка...</p></div>
+            </div>
+
+            <div id="adm-ach-panel" style="display:none;background:rgba(124,58,237,0.05);padding:24px;border-radius:var(--radius);border:1px dashed rgba(124,58,237,0.3);margin-bottom:22px;">
+                <p style="font-size:10px;color:var(--violet-light);margin-bottom:14px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">Панель администратора</p>
+                <button class="btn btn-blue" onclick="document.getElementById('m-give-ach').style.display='flex'"><i class="fas fa-award"></i> Выдать ачивку</button>
+            </div>
+
+            <div style="text-align:center;padding:32px 0;border-top:1px solid var(--border);margin-top:22px;">
+                <a href="javascript:void(0)" onclick="openPrivacy()" style="color:var(--text-dim);font-size:11px;text-decoration:none;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Политика конфиденциальности</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ПЛЕЙЛИСТЫ ==================== -->
+    <section id="playlists" class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:14px;">
+            <div>
+                <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;">← Профиль</button>
+                <h1 style="font-size:1.8rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"><i class="fas fa-layer-group" style="-webkit-text-fill-color:var(--violet-light);margin-right:10px;"></i>Мои плейлисты</h1>
+                <p style="color:var(--text-dim);font-size:13px;margin-top:6px;line-height:1.6;font-style:italic;">Создавайте плейлисты и добавляйте релизы. До 3 можно закрепить в профиле.</p>
+            </div>
+            <button class="btn" onclick="openPlaylistModal()">
+                <i class="fas fa-plus"></i> Создать плейлист
+            </button>
+        </div>
+        <div id="playlists-wrap"></div>
+    </section>
+
+    <!-- ==================== DUB-IN ==================== -->
+    <section id="dubin" class="section">
+        <div class="dubin-hero">
+            <div style="position:relative;z-index:2;">
+                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.35);border-radius:20px;padding:6px 18px;font-size:10px;font-weight:800;color:var(--violet-light);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:20px;font-family:var(--font-body);">
+                    <i class="fas fa-microphone-alt"></i> VAT — DUB-in
+                </div>
+                <h1 style="font-size:2.3rem;font-weight:700;margin-bottom:12px;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Студийная Платформа</h1>
+                <p style="color:var(--text-dim);max-width:600px;line-height:1.7;font-size:15px;font-style:italic;">Загружайте и скачивайте материалы для работы над озвучкой.</p>
+            </div>
+        </div>
+        <div id="dubin-files-panel" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+                <h2 style="font-size:1.4rem;font-weight:700;font-family:var(--font-display);">📁 Архив проектов</h2>
+                <button id="dubin-adm-add-project" class="btn btn-blue" style="display:none;" onclick="openDubinProjectModal()">
+                    <i class="fas fa-plus"></i> Добавить проект
+                </button>
+            </div>
+            <div id="dubin-projects-list"></div>
+        </div>
+        <div id="dubin-suggest-panel">
+            <div class="request-form">
+                <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:8px;font-family:var(--font-display);"><i class="fas fa-lightbulb" style="color:var(--teal);"></i> Предложить проект для озвучки</h2>
+                <p style="color:var(--text-dim);font-size:13px;margin-bottom:24px;line-height:1.6;font-style:italic;">Хотите, чтобы мы озвучили ваш любимый сериал, аниме или фильм?</p>
+                <label class="order-label">Название *</label>
+                <input type="text" id="sug-title" placeholder="Например: Атака Титанов...">
+                <label class="order-label">Тип контента *</label>
+                <select id="sug-type" style="margin-bottom:12px;">
+                    <option value="">— Выберите тип —</option>
+                    <option value="Аниме">Аниме</option>
+                    <option value="Сериал">Сериал</option>
+                    <option value="Фильм">Фильм</option>
+                    <option value="Мультфильм">Мультфильм</option>
+                    <option value="Другое">Другое</option>
+                </select>
+                <label class="order-label">Ссылка (трейлер, MAL...)</label>
+                <input type="text" id="sug-link" placeholder="https://...">
+                <label class="order-label">Почему именно это? *</label>
+                <textarea id="sug-reason" placeholder="Расскажите, почему этот проект заслуживает внимания..." rows="4"></textarea>
+                <div id="sug-name-block" style="display:none;">
+                    <input type="text" id="sug-name" placeholder="Ваше имя / никнейм">
+                    <input type="email" id="sug-email" placeholder="your@email.com">
+                </div>
+                <button class="btn" style="width:100%;" onclick="sendSuggestion()"><i class="fas fa-paper-plane"></i> Отправить предложение</button>
+            </div>
+            <div id="join-cta-block" style="margin-top:26px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(20,184,166,0.06));border:1px solid rgba(124,58,237,0.2);border-radius:var(--radius-lg);padding:32px;text-align:center;">
+                <div style="font-size:2.5rem;margin-bottom:14px;">🎙️</div>
+                <h3 style="margin-bottom:8px;font-size:1.2rem;font-family:var(--font-display);">Хотите стать частью команды?</h3>
+                <p style="color:var(--text-dim);font-size:13px;margin-bottom:22px;line-height:1.6;font-style:italic;">Если вы хотите попробовать себя в роли актёра дубляжа, звукорежиссёра или сценариста — напишите нам.</p>
+                <a href="https://t.me/VoiceActingTeam1" target="_blank" class="btn" style="text-decoration:none;font-size:12px;">
+                    <i class="fab fa-telegram-plane"></i> Написать в Telegram
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ЗАКАЗАТЬ ОЗВУЧКУ ==================== -->
+    <section id="order" class="section">
+        <div class="order-hero">
+            <div class="order-hero-badge">
+                <i class="fas fa-microphone-alt"></i> Voice Acting Team
+            </div>
+            <h1>Заказать озвучку</h1>
+            <p>Хотите, чтобы мы озвучили ваш любимый проект? Выберите тип предложения.</p>
+        </div>
+
+        <div class="order-type-grid" id="order-type-grid">
+            <div class="order-type-card" onclick="selectOrderType('free')">
+                <div class="order-type-icon" style="background:rgba(20,184,166,0.12);border-color:rgba(20,184,166,0.3);">
+                    <i class="fas fa-heart" style="color:var(--teal);"></i>
+                </div>
+                <h3>Бесплатное предложение</h3>
+                <p>Предложите проект для озвучки — мы сами решим, берёмся ли за него. Без оплаты.</p>
+                <div class="order-type-badge" style="background:rgba(20,184,166,0.12);color:var(--teal-light);border-color:rgba(20,184,166,0.3);">
+                    Бесплатно
+                </div>
+            </div>
+            <div class="order-type-card" onclick="selectOrderType('paid')">
+                <div class="order-type-icon" style="background:rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.3);">
+                    <i class="fas fa-star" style="color:var(--violet-light);"></i>
+                </div>
+                <h3>Платный заказ</h3>
+                <p>Закажите озвучку приоритетно. Чем подробнее проект — тем точнее цена. Переходим в Telegram.</p>
+                <div class="order-type-badge" style="background:rgba(124,58,237,0.12);color:var(--violet-pale);border-color:rgba(124,58,237,0.3);">
+                    Платно · В Telegram
+                </div>
+            </div>
+        </div>
+
+        <!-- Форма БЕСПЛАТНОГО предложения -->
+        <div id="order-free-form" class="order-form-wrap" style="display:none;">
+            <div class="order-form-header">
+                <button class="btn btn-outline btn-sm" onclick="backToOrderType()">← Назад</button>
+                <h2><i class="fas fa-heart" style="color:var(--teal);margin-right:8px;"></i>Бесплатное предложение</h2>
+            </div>
+            <div class="order-form-card">
+                <div class="order-field-group">
+                    <label class="order-label">Название проекта *</label>
+                    <input type="text" id="ord-free-title" placeholder="Например: Атака Титанов...">
+                </div>
+                <div class="order-field-row">
+                    <div class="order-field-group">
+                        <label class="order-label">Тип контента *</label>
+                        <select id="ord-free-type">
+                            <option value="">— Выберите —</option>
+                            <option value="Аниме">Аниме</option>
+                            <option value="Сериал">Сериал</option>
+                            <option value="Фильм">Фильм</option>
+                            <option value="Мультфильм">Мультфильм</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+                    <div class="order-field-group">
+                        <label class="order-label">Ссылка (MAL, трейлер...)</label>
+                        <input type="text" id="ord-free-link" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="order-field-group">
+                    <label class="order-label">Почему именно этот проект? *</label>
+                    <textarea id="ord-free-reason" rows="4" placeholder="Расскажите, чем он особенный..."></textarea>
+                </div>
+                <div class="order-anon-block" id="ord-free-anon-block">
+                    <div class="order-field-row">
+                        <div class="order-field-group">
+                            <label class="order-label">Ваш никнейм / имя</label>
+                            <input type="text" id="ord-free-name" placeholder="Аноним">
+                        </div>
+                        <div class="order-field-group">
+                            <label class="order-label">Email (необязательно)</label>
+                            <input type="email" id="ord-free-email" placeholder="mail@example.com">
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" style="width:100%;" onclick="submitFreeOrder()">
+                    <i class="fas fa-paper-plane"></i> Отправить предложение
+                </button>
+            </div>
+        </div>
+
+        <!-- Форма ПЛАТНОГО заказа -->
+        <div id="order-paid-form" class="order-form-wrap" style="display:none;">
+            <div class="order-form-header">
+                <button class="btn btn-outline btn-sm" onclick="backToOrderType()">← Назад</button>
+                <h2><i class="fas fa-star" style="color:var(--violet-light);margin-right:8px;"></i>Платный заказ</h2>
+            </div>
+            <div class="order-form-card">
+                <div class="order-info-box">
+                    <i class="fab fa-telegram-plane" style="font-size:22px;color:#2CA5E0;"></i>
+                    <div>
+                        <p style="font-weight:700;margin-bottom:3px;">Заказ оформляется через Telegram</p>
+                        <p style="font-size:12px;color:var(--text-dim);">Заполните форму — мы сгенерируем сообщение и откроем Telegram. Там вы выберете способ оплаты и обсудите детали.</p>
+                    </div>
+                </div>
+                <div class="order-field-group">
+                    <label class="order-label">Название проекта *</label>
+                    <input type="text" id="ord-paid-title" placeholder="Полное название">
+                </div>
+                <div class="order-field-row">
+                    <div class="order-field-group">
+                        <label class="order-label">Тип контента *</label>
+                        <select id="ord-paid-type" onchange="calcOrderPrice()">
+                            <option value="">— Выберите —</option>
+                            <option value="Аниме">Аниме</option>
+                            <option value="Сериал">Сериал</option>
+                            <option value="Фильм">Фильм</option>
+                            <option value="Мультфильм">Мультфильм</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+                    <div class="order-field-group">
+                        <label class="order-label">Жанр</label>
+                        <input type="text" id="ord-paid-genre" placeholder="Боевик, Романтика..." oninput="calcOrderPrice()">
+                    </div>
+                </div>
+                <div class="order-field-row">
+                    <div class="order-field-group">
+                        <label class="order-label">Год выхода</label>
+                        <input type="number" id="ord-paid-year" placeholder="2020" min="1950" max="2030" oninput="calcOrderPrice()">
+                    </div>
+                    <div class="order-field-group">
+                        <label class="order-label">Количество серий / частей</label>
+                        <input type="number" id="ord-paid-episodes" placeholder="12" min="1" oninput="calcOrderPrice()">
+                    </div>
+                </div>
+                <div class="order-field-row">
+                    <div class="order-field-group">
+                        <label class="order-label">Длительность (мин)</label>
+                        <input type="number" id="ord-paid-duration" placeholder="24" min="1" oninput="calcOrderPrice()">
+                    </div>
+                    <div class="order-field-group">
+                        <label class="order-label">Популярность</label>
+                        <select id="ord-paid-popularity" onchange="calcOrderPrice()">
+                            <option value="unknown">Малоизвестный</option>
+                            <option value="medium">Средняя аудитория</option>
+                            <option value="popular">Популярный</option>
+                            <option value="top">Топ / Легенда</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="order-field-group">
+                    <label class="order-label">Качество исходника</label>
+                    <select id="ord-paid-quality" onchange="calcOrderPrice()">
+                        <option value="low">Низкое (360p–480p)</option>
+                        <option value="medium" selected>Среднее (720p)</option>
+                        <option value="high">Высокое (1080p)</option>
+                        <option value="ultra">Ультра (4K)</option>
+                    </select>
+                </div>
+                <div class="order-field-group">
+                    <label class="order-label">Ссылка на проект (MAL, трейлер...)</label>
+                    <input type="text" id="ord-paid-link" placeholder="https://...">
+                </div>
+                <div class="order-field-group">
+                    <label class="order-label">Дополнительные пожелания</label>
+                    <textarea id="ord-paid-notes" rows="3" placeholder="Особые требования, сроки, что важно..."></textarea>
+                </div>
+                <div class="order-price-block" id="order-price-block">
+                    <div class="order-price-label">Ориентировочная стоимость</div>
+                    <div class="order-price-value" id="order-price-value">— ₽</div>
+                    <div class="order-price-hint">Точная цена обсуждается в Telegram</div>
+                </div>
+                <button class="btn btn-purple" style="width:100%;" onclick="submitPaidOrder()">
+                    <i class="fab fa-telegram-plane"></i> Перейти в Telegram
+                </button>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ==================== ФУТЕР ==================== -->
+<footer class="footer-main">
+    <div class="footer-wave"></div>
+    <div class="footer-inner" style="margin-top:0;padding-top:48px;">
+        <div class="footer-brand">
+            <span class="logo" style="cursor:default;">
+                <img src="img/logo.jpg" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">
+                <span style="font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:2px;text-transform:uppercase;">Voice <span style="color:var(--teal);">Acting</span> Team</span>
+            </span>
+            <p>Студия фандаба, которая создаёт качественный дубляж и озвучку аниме, сериалов, фильмов и мультфильмов. Всё — с душой и для фанатов.</p>
+            <div class="footer-socials">
+                <a href="https://vk.com/voiceactingteam1" target="_blank" class="footer-social-btn" title="ВКонтакте"><i class="fab fa-vk"></i></a>
+                <a href="https://t.me/VoiceActingTeam1" target="_blank" class="footer-social-btn" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                <a href="https://youtube.com/@voiceactingteam1?si=0PoFChfUBfstrFrL" target="_blank" class="footer-social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/@voice.acting.team8?_t=ZN-90cUs7oh1i2&_r=1" target="_blank" class="footer-social-btn" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="https://boosty.to/voiceactingteam" target="_blank" class="footer-social-btn" title="Boosty" style="font-size:11px;font-weight:900;font-family:var(--font-display);">B</a>
+                <a href="https://vattchelovekizvuchat.com/twich" target="_blank" class="footer-social-btn" title="Twitch"><i class="fab fa-twitch"></i></a>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h5>Сайт</h5>
+            <span onclick="navigate('home')">Релизы</span>
+            <span onclick="navigate('team')">Команда</span>
+            <span onclick="navigate('profile')">Профиль</span>
+            <span onclick="openPrivacy()">Политика конфиденциальности</span>
+        </div>
+        <div class="footer-col">
+            <h5>Студия</h5>
+            <a href="https://vk.com/voiceactingteam1" target="_blank">ВКонтакте</a>
+            <a href="https://t.me/VoiceActingTeam1" target="_blank">Telegram</a>
+            <a href="https://youtube.com/@voiceactingteam1?si=0PoFChfUBfstrFrL" target="_blank">YouTube</a>
+            <a href="https://www.tiktok.com/@voice.acting.team8?_t=ZN-90cUs7oh1i2&_r=1" target="_blank">TikTok</a>
+            <a href="https://boosty.to/voiceactingteam" target="_blank">Boosty</a>
+            <a href="https://vattchelovekizvuchat.com/twich" target="_blank">Twitch</a>
+        </div>
+        <div class="footer-col">
+            <h5>Хочешь с нами?</h5>
+            <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;line-height:1.6;font-style:italic;">Мы всегда рады новым актёрам дубляжа, редакторам и энтузиастам!</p>
+            <a href="https://t.me/VoiceActingTeam1" target="_blank" class="footer-join-btn">
+                <i class="fas fa-microphone-alt"></i> Написать в Telegram
+            </a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2024–2026 Voice Acting Team. Все права защищены.</p>
+        <a onclick="openPrivacy()">Политика конфиденциальности</a>
+    </div>
+</footer>
+
+<!-- ==================== МОДАЛЬНЫЕ ОКНА ==================== -->
+
+<div id="m-rel" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:18px;">Управление релизом</h3>
+    <input type="hidden" id="ed-rel-id">
+    <input type="text"  id="ad-title"     placeholder="Название">
+    <select id="ad-genre">
+        <option value="Аниме">Аниме</option>
+        <option value="Сериал">Сериал</option>
+        <option value="Фильм">Фильм</option>
+    </select>
+    <input type="text" id="ad-year"      placeholder="Год выпуска">
+    <input type="text" id="ad-voiceover" placeholder="Озвучка (Voice Acting Team)">
+    <input type="text" id="ad-authors"   placeholder="Студия / Авторы">
+    <input type="text" id="ad-img"       placeholder="URL постера">
+    <textarea id="ad-desc" placeholder="Описание сюжета..." rows="4"></textarea>
+    <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveRel()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-ep" class="modal"><div class="modal-content" style="max-width:580px;">
+    <h3 id="m-ep-heading" style="margin-bottom:18px;">Добавить медиа</h3>
+    <input type="hidden" id="ed-ep-idx">
+    <select id="ad-ep-type">
+        <option value="series">Серия / Фильм</option>
+        <option value="trailer">Трейлер (автоплей без звука)</option>
+    </select>
+    <input type="text" id="ad-ep-name"  placeholder="Название кнопки (Серия 1 / Трейлер)">
+    <input type="text" id="ad-ep-title" placeholder="Полное название серии (необязательно)">
+    <input type="text" id="ad-ep-url"   placeholder="URL видео (Google Drive или YouTube)">
+    <input type="text" id="ad-ep-thumb" placeholder="URL превью серии (необязательно)">
+    <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:12px;">
+        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">⏱ Тайминги (формат мм:сс)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Начало заставки</label>
+                <input type="text" id="ad-ep-intro-start" placeholder="1:30" style="margin-bottom:0;" pattern="[0-9]+:[0-5][0-9]">
+            </div>
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Длительность (сек)</label>
+                <input type="number" id="ad-ep-intro-dur" placeholder="90" style="margin-bottom:0;" min="1">
+            </div>
+        </div>
+        <div style="margin-top:8px;">
+            <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Когда предложить следующую серию</label>
+            <input type="text" id="ad-ep-outro-start" placeholder="21:30" pattern="[0-9]+:[0-5][0-9]">
+        </div>
+    </div>
+    <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveEp()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-team" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:18px;">Участник команды</h3>
+    <input type="hidden" id="ed-team-id">
+    <input type="text" id="ad-m-name" placeholder="Никнейм">
+    <input type="text" id="ad-m-role" placeholder="Роль (Дабер, Редактор...)">
+    <input type="text" id="ad-m-img"  placeholder="URL фото">
+    <input type="text" id="ad-m-cat"  placeholder="Категория">
+    <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveTeam()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-prof" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:18px;">Настройки аккаунта</h3>
+    <input type="text"     id="ed-nick"      placeholder="Никнейм">
+    <input type="text"     id="ed-ava"       placeholder="URL аватара">
+    <button class="btn" style="width:100%;margin-bottom:14px;" onclick="saveProfile()">Сохранить профиль</button>
+    <hr style="border-color:var(--border);margin-bottom:14px;">
+    <input type="email"    id="ed-new-email" placeholder="Новый Email">
+    <button class="btn btn-outline" style="width:100%;margin-bottom:10px;" onclick="changeUserEmail()">Сменить почту</button>
+    <input type="password" id="ed-new-pass"  placeholder="Новый пароль">
+    <button class="btn btn-outline" style="width:100%;margin-bottom:10px;" onclick="changeUserPass()">Сменить пароль</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:5px;border-color:rgba(239,68,68,0.4);color:#ef4444;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-public-prof" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:6px;">🎭 Мой публичный профиль</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Эту информацию смогут видеть другие пользователи.</p>
+    <label class="order-label">О себе</label>
+    <textarea id="pub-bio" rows="5" placeholder="Расскажите о себе..."></textarea>
+    <label class="order-label">Ссылка (соцсеть, портфолио)</label>
+    <input type="text" id="pub-link" placeholder="https://...">
+    <button class="btn btn-purple" style="width:100%;" onclick="savePublicProfile()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-subs" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:16px;">Ваши подписчики</h3>
+    <div id="subs-list" style="max-height:300px;overflow-y:auto;"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-tp-edit" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:16px;">Редактировать страницу участника</h3>
+    <textarea id="tp-bio" rows="8" placeholder="Информация об участнике..."></textarea>
+    <input type="text" id="tp-social" placeholder="Ссылка на соцсети">
+    <button class="btn btn-blue" style="width:100%;" onclick="saveTP()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-my-tp-edit" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:16px;">✏️ Редактировать мою страницу</h3>
+    <div id="my-tp-name-block" style="display:none;">
+        <label class="order-label">Имя / Псевдоним</label>
+        <input type="text" id="my-tp-name" placeholder="Ваш псевдоним">
+    </div>
+    <div id="my-tp-img-block" style="display:none;">
+        <label class="order-label">URL Аватара</label>
+        <input type="text" id="my-tp-img" placeholder="Ссылка на фото">
+    </div>
+    <label class="order-label">О себе</label>
+    <textarea id="my-tp-bio" rows="7" placeholder="Расскажите о себе..."></textarea>
+    <label class="order-label">Соцсети / Ссылки</label>
+    <input type="text" id="my-tp-social" placeholder="https://...">
+    <button class="btn btn-purple" style="width:100%;" onclick="saveMyTP()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-access" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:6px;"><i class="fas fa-key"></i> Выдать доступ к карточке</h3>
+    <input type="email" id="access-email" placeholder="user@example.com">
+    <p class="order-label" style="margin:12px 0 8px;">Разрешить редактировать:</p>
+    <label class="checkbox-row"><input type="checkbox" id="acc-name"> Имя / Псевдоним</label>
+    <label class="checkbox-row"><input type="checkbox" id="acc-img"> Аватар / Фото</label>
+    <button class="btn btn-purple" style="width:100%;margin-top:10px;" onclick="grantCardAccess()"><i class="fas fa-check"></i> Выдать доступ</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-role" class="modal"><div class="modal-content" style="max-width:500px;">
+    <h3 style="margin-bottom:6px;"><i class="fas fa-user-shield"></i> Управление ролями</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">
+        Роль <b style="color:var(--teal);">dub</b> — открывает DUB-in.<br>
+        Роль <b style="color:var(--lavender-lt);">moderator</b> — может отправлять жалобы.
+    </p>
+    <label class="order-label">Email пользователя</label>
+    <input type="email" id="role-email" placeholder="user@example.com">
+    <label class="order-label">Назначить роль</label>
+    <select id="role-select" style="margin-bottom:16px;">
+        <option value="moderator">moderator — Модератор</option>
+        <option value="dub">dub — Актёр дубляжа</option>
+        <option value="admin">admin — Администратор</option>
+    </select>
+    <button class="btn btn-blue" style="width:100%;" onclick="assignRole()"><i class="fas fa-save"></i> Назначить роль</button>
+    <hr style="border-color:var(--border);margin:14px 0;">
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Снять роль (вернуть в обычные пользователи):</p>
+    <button class="btn btn-outline" style="width:100%;border-color:rgba(239,68,68,0.4);color:#ef4444;" onclick="removeRole()"><i class="fas fa-user-minus"></i> Снять текущую роль</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-give-ach" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:16px;">Выдать достижение</h3>
+    <input type="text" id="ga-uid"  placeholder="Email пользователя">
+    <input type="text" id="ga-name" placeholder="Название достижения">
+    <input type="text" id="ga-desc" placeholder="Описание">
+    <input type="text" id="ga-img"  placeholder="Эмодзи (например: 🏆)">
+    <button class="btn btn-blue" style="width:100%;" onclick="giveAch()">Выдать</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-ach-inv" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:5px;">Инвентарь достижений</h3>
+    <p style="font-size:11px;color:var(--text-dim);margin-bottom:16px;font-style:italic;">Нажмите, чтобы скрыть/показать в профиле.</p>
+    <div id="ach-inv-list" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-ach-view" class="modal"><div class="modal-content" style="text-align:center;">
+    <div id="ach-v-img"  style="font-size:52px;margin-bottom:12px;"></div>
+    <h2  id="ach-v-name" style="margin-bottom:10px;font-family:var(--font-display);"></h2>
+    <p   id="ach-v-desc" style="font-size:14px;margin-bottom:16px;line-height:1.5;color:var(--text-dim);font-style:italic;"></p>
+    <div id="ach-v-meta" style="font-size:12px;color:var(--text-dim);background:var(--input-bg);padding:12px;border-radius:10px;margin-bottom:16px;border:1px solid var(--border);"></div>
+    <button id="btn-ach-del" class="btn" style="background:red;width:100%;display:none;margin-bottom:8px;" onclick="deleteAchievement()">Удалить навсегда</button>
+    <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-privacy" class="modal"><div class="modal-content" style="max-width:700px;">
+    <h3 style="margin-bottom:16px;">Политика конфиденциальности</h3>
+    <div id="priv-text" style="font-size:13px;line-height:1.6;margin:16px 0;max-height:400px;overflow-y:auto;white-space:pre-wrap;color:var(--text-dim);font-style:italic;"></div>
+    <textarea id="priv-edit" style="display:none;height:280px;width:100%;"></textarea>
+    <div id="priv-adm-btns" style="display:none;margin-top:10px;">
+        <button id="priv-btn-edit" class="btn btn-blue" style="width:100%;" onclick="editPriv()">Редактировать</button>
+        <button id="priv-btn-save" class="btn btn-blue" style="display:none;width:100%;background:var(--teal);" onclick="savePriv()">Сохранить</button>
+    </div>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-user-profile" class="modal"><div class="modal-content" style="text-align:center;">
+    <img id="mu-ava" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);margin-bottom:12px;">
+    <h2 id="mu-nick" style="margin-bottom:8px;font-family:var(--font-display);"></h2>
+    <div id="mu-role-badge" style="margin-bottom:14px;display:flex;justify-content:center;"></div>
+    <p id="mu-bio" class="mu-bio-text"></p>
+    <a id="mu-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;display:none;margin:0 auto 14px;"><i class="fas fa-link"></i> Профиль</a>
+    <div style="display:flex;justify-content:center;gap:32px;font-size:13px;margin:14px 0;">
+        <div><b id="mu-views-count" style="font-size:1.3rem;color:var(--teal);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Просмотрено</span></div>
+        <div><b id="mu-subs-count"  style="font-size:1.3rem;color:var(--violet-light);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Подписчики</span></div>
+    </div>
+    <div id="mu-ach-list" style="display:flex;justify-content:center;gap:6px;margin:14px 0;flex-wrap:wrap;"></div>
+    <button id="btn-mu-sub" class="btn" style="width:100%;margin-bottom:8px;">Подписаться</button>
+    <button id="btn-report-user" class="btn btn-outline" style="width:100%;margin-bottom:8px;border-color:rgba(245,158,11,0.4);color:#f59e0b;display:none;">
+        <i class="fas fa-flag"></i> Пожаловаться
+    </button>
+    <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<div id="m-dubin-project" class="modal"><div class="modal-content" style="max-width:600px;">
+    <h3 style="margin-bottom:6px;">📁 Управление проектом DUB-in</h3>
+    <input type="hidden" id="dubin-proj-id">
+    <input type="text" id="dp-name" placeholder="Название проекта *">
+    <select id="dp-genre" style="margin-bottom:12px;">
+        <option value="Аниме">Аниме</option><option value="Сериал">Сериал</option>
+        <option value="Фильм">Фильм</option><option value="Мультфильм">Мультфильм</option>
+        <option value="Трейлер">Трейлер</option><option value="Тизер">Тизер</option>
+    </select>
+    <select id="dp-status" style="margin-bottom:12px;">
+        <option value="В работе">В работе</option>
+        <option value="Завершён">Завершён</option>
+        <option value="На паузе">На паузе</option>
+    </select>
+    <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:14px;">
+        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🔗 Ссылки на папки Google Drive</p>
+        <input type="text" id="dp-raw"   placeholder="📹 RAW-ка" style="margin-bottom:8px;">
+        <input type="text" id="dp-hard"  placeholder="📝 Hardsubs" style="margin-bottom:8px;">
+        <input type="text" id="dp-soft"  placeholder="🗒 Softsubs" style="margin-bottom:8px;">
+        <input type="text" id="dp-voice" placeholder="🎙 Озвучка">
+    </div>
+    <input type="text" id="dp-img" placeholder="Обложка (URL)" oninput="updateDubinImgPreview(this.value)">
+    <div id="dp-img-preview" style="display:none;margin:-4px 0 12px;border-radius:10px;overflow:hidden;border:1px solid var(--border);width:72px;height:100px;">
+        <img id="dp-img-preview-img" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+    </div>
+    <textarea id="dp-notes" rows="3" placeholder="Заметки для команды..."></textarea>
+    <button class="btn btn-purple" style="width:100%;" onclick="saveDubinProject()"><i class="fas fa-save"></i> Сохранить проект</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-upload-voice" class="modal"><div class="modal-content">
+    <h3 style="margin-bottom:6px;"><i class="fas fa-upload"></i> Загрузить озвучку</h3>
+    <input type="hidden" id="uv-proj-id">
+    <input type="text"   id="uv-name"    placeholder="Название файла">
+    <input type="text"   id="uv-link"    placeholder="Прямая ссылка на файл *">
+    <select id="uv-format" style="margin-bottom:12px;">
+        <option value="mp3">MP3</option>
+        <option value="flac">FLAC</option>
+    </select>
+    <input type="text" id="uv-comment" placeholder="Комментарий (необязательно)">
+    <button class="btn btn-purple" style="width:100%;" onclick="submitVoiceFile()"><i class="fas fa-upload"></i> Отправить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-playlist-edit" class="modal"><div class="modal-content" style="max-width:480px;">
+    <h3 id="pl-modal-title" style="margin-bottom:18px;">Новый плейлист</h3>
+    <input type="hidden" id="pl-edit-id">
+    <label class="order-label">Название *</label>
+    <input type="text" id="pl-edit-name" placeholder="Например: Любимое аниме">
+    <label class="order-label">Описание</label>
+    <textarea id="pl-edit-desc" rows="3" placeholder="Короткое описание плейлиста..."></textarea>
+    <label class="order-label">Обложка (URL)</label>
+    <input type="text" id="pl-edit-img" placeholder="https://..." oninput="updatePlaylistImgPreview(this.value)">
+    <img id="pl-img-preview" style="display:none;width:80px;height:110px;border-radius:8px;object-fit:cover;margin-bottom:12px;border:1px solid var(--border);" src="" alt="">
+    <button class="btn" style="width:100%;margin-top:4px;" onclick="savePlaylist()"><i class="fas fa-save"></i> Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
+</div></div>
+
+<div id="m-add-to-playlist" class="modal"><div class="modal-content" style="max-width:420px;">
+    <h3 style="margin-bottom:6px;font-size:1.1rem;">
+        <i class="fas fa-layer-group"></i> Добавить в плейлист
+    </h3>
+    <input type="hidden" id="atp-rel-id">
+    <input type="hidden" id="atp-rel-title">
+    <input type="hidden" id="atp-rel-img">
+    <div id="atp-list" style="max-height:320px;overflow-y:auto;margin:14px 0;display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btn btn-outline" style="width:100%;" onclick="openPlaylistModal()">
+        <i class="fas fa-plus"></i> Создать новый плейлист
+    </button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
+<!-- ==================== СКРИПТЫ ==================== -->
+<script type="module" src="js/app.js"></script>
+
+<!-- Cosmic Animated Background -->
+<canvas id="bg-canvas"></canvas>
+<script>
+(function(){
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    // Stars
+    const stars = [];
+    for (let i = 0; i < 220; i++) {
+        stars.push({
+            x: Math.random() * W, y: Math.random() * H,
+            r: Math.random() * 1.4 + 0.2,
+            a: Math.random(),
+            da: (Math.random() - 0.5) * 0.008,
+            speed: Math.random() * 0.12 + 0.02,
+        });
+    }
+
+    // Nebula orbs (violet/teal)
+    const orbs = [
+        { x: 0.15, y: 0.2,  r: 260, col: [124,58,237],  t: 0,   alpha: 0.06 },
+        { x: 0.85, y: 0.75, r: 300, col: [20,184,166],   t: 1.8, alpha: 0.05 },
+        { x: 0.5,  y: 0.5,  r: 350, col: [139,92,246],   t: 3.2, alpha: 0.04 },
+        { x: 0.1,  y: 0.8,  r: 180, col: [20,184,166],   t: 0.5, alpha: 0.04 },
+        { x: 0.9,  y: 0.15, r: 200, col: [124,58,237],   t: 2.5, alpha: 0.05 },
+    ];
+
+    // Shooting stars
+    const shoots = [];
+    function spawnShoot() {
+        if (shoots.length < 3 && Math.random() < 0.006) {
+            shoots.push({
+                x: Math.random() * W * 0.7,
+                y: Math.random() * H * 0.5,
+                len: Math.random() * 120 + 60,
+                speed: Math.random() * 6 + 4,
+                a: 1,
+                angle: Math.PI / 4 + (Math.random() - 0.5) * 0.4,
+            });
+        }
+    }
+
+    let t = 0;
+    function animate() {
+        ctx.clearRect(0, 0, W, H);
+        t += 0.003;
+
+        // Nebula orbs
+        orbs.forEach(o => {
+            const ox = (o.x + Math.sin(t * 0.4 + o.t) * 0.04) * W;
+            const oy = (o.y + Math.cos(t * 0.3 + o.t) * 0.03) * H;
+            const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, o.r);
+            g.addColorStop(0, `rgba(${o.col},${o.alpha})`);
+            g.addColorStop(1, 'transparent');
+            ctx.beginPath(); ctx.arc(ox, oy, o.r, 0, Math.PI * 2);
+            ctx.fillStyle = g; ctx.fill();
+        });
+
+        // Stars
+        stars.forEach(s => {
+            s.a += s.da;
+            if (s.a <= 0.05 || s.a >= 1) s.da *= -1;
+            s.y += s.speed;
+            if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            const twinkle = Math.random() > 0.98 ? Math.random() * 0.5 + 0.5 : s.a;
+            ctx.fillStyle = `rgba(220,210,255,${twinkle})`;
+            ctx.fill();
+        });
+
+        // Shooting stars
+        spawnShoot();
+        for (let i = shoots.length - 1; i >= 0; i--) {
+            const s = shoots[i];
+            ctx.save();
+            ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+            const grad = ctx.createLinearGradient(0, 0, s.len, 0);
+            grad.addColorStop(0, `rgba(200,180,255,${s.a})`);
+            grad.addColorStop(0.5, `rgba(94,234,212,${s.a * 0.6})`);
+            grad.addColorStop(1, 'transparent');
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s.len, 0);
+            ctx.strokeStyle = grad; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.restore();
+            s.x += Math.cos(s.angle) * s.speed;
+            s.y += Math.sin(s.angle) * s.speed;
+            s.a -= 0.025;
+            if (s.a <= 0) shoots.splice(i, 1);
+        }
+
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
+</script>
+
+<!-- Ripple effect -->
+<script>
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn, .card, .nav-link, .order-type-card');
+    if (!btn) return;
+    const r = document.createElement('span');
+    r.className = 'ripple-fx';
+    const rect = btn.getBoundingClientRect();
+    const sz = Math.max(rect.width, rect.height) * 2;
+    r.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-rect.left-sz/2}px;top:${e.clientY-rect.top-sz/2}px`;
+    btn.style.position = btn.style.position || 'relative';
+    btn.style.overflow = 'hidden';
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 600);
+});
+</script>
+
+</body>
+</html>
