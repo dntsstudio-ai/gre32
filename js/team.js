@@ -115,21 +115,7 @@ export function bindTeam(db, getState) {
 
         document.getElementById('team-page-view').innerHTML = '<div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;"><img src="' + esc(curTM.img) + '" style="width:230px;height:320px;border-radius:14px;object-fit:cover;border:2px solid var(--accent);box-shadow:var(--shadow);" onerror="this.src=\'' + PLACEHOLDER_TEAM_IMG + '\'"><div style="flex:1;min-width:280px;"><h1 style="font-size:2.2rem;margin-bottom:8px;">' + esc(curTM.name) + '</h1><h3 style="color:var(--accent);margin-bottom:18px;">' + esc(curTM.role) + '</h3><div style="background:var(--input-bg);padding:18px;border-radius:10px;border:1px solid var(--border);margin-bottom:18px;"><h4 style="margin-bottom:8px;color:var(--text-dim);">О себе:</h4><p style="line-height:1.6;font-size:14px;white-space:pre-wrap;">' + esc(curTM.bio||'Информация пока не добавлена.') + '</p></div>' + (curTM.social ? '<a href="' + esc(curTM.social) + '" target="_blank" class="btn btn-outline" style="text-decoration:none;"><i class="fas fa-link"></i> Соцсети</a>' : '') + creditsHtml + '</div></div>';
 
-        // Кнопка управления кредитами для админа
-        if (isAdmin) {
-            const adminBlock = document.getElementById('adm-tp-controls');
-            if (adminBlock) {
-                // Добавим кнопку если её нет
-                if (!adminBlock.querySelector('#btn-manage-credits')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'btn-manage-credits';
-                    btn.className = 'btn btn-outline';
-                    btn.innerHTML = '<i class="fas fa-film"></i> Участие в релизах';
-                    btn.onclick = function() { openCreditsModal(); };
-                    adminBlock.appendChild(btn);
-                }
-            }
-        }
+        // Кнопка "Участие в релизах" уже статически есть в HTML (#adm-tp-controls)
     };
 
     // ── Управление кредитами (участие в релизах) ──
@@ -154,17 +140,24 @@ export function bindTeam(db, getState) {
     function renderCreditsList(credits, allRels) {
         const list = document.getElementById('credits-list');
         if (!credits.length) {
-            list.innerHTML = '<p style="font-size:12px;color:var(--text-dim);font-style:italic;">Нет записей</p>';
+            list.innerHTML = '<p style="font-size:12px;color:var(--text-dim);font-style:italic;">Нет записей об участии в релизах.</p>';
             return;
         }
         list.innerHTML = credits.map(function(c, idx){
             var roleStr = '';
-            if (c.creditRole === 'voice') roleStr = '🎙 ' + (c.character ? 'Озвучивал: ' + c.character : 'Озвучивал');
-            else if (c.creditRole === 'tech') roleStr = '⚙️ ' + (c.techRole||'Тех. часть');
+            if (c.creditRole === 'voice') roleStr = '🎙 ' + (c.character ? 'Озвучивал: ' + esc(c.character) : 'Озвучивал');
+            else if (c.creditRole === 'tech') roleStr = '⚙️ ' + esc(c.techRole||'Тех. часть');
             else if (c.creditRole === 'curator') roleStr = '👑 Куратор';
-            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--input-bg);border-radius:8px;border:1px solid var(--border);margin-bottom:6px;">' +
-                '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(c.relTitle||'') + '</div><div style="font-size:11px;color:var(--text-dim);">' + roleStr + '</div></div>' +
-                '<button class="btn-sm" style="background:#ef4444;flex-shrink:0;" onclick="removeCredit(' + idx + ')"><i class="fas fa-times"></i></button>' +
+            return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--input-bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;">' +
+                (c.relImg ? '<img src="' + esc(c.relImg) + '" style="width:32px;height:44px;border-radius:5px;object-fit:cover;flex-shrink:0;">' : '') +
+                '<div style="flex:1;min-width:0;">' +
+                  '<div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(c.relTitle||'Релиз') + '</div>' +
+                  '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + roleStr + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:5px;flex-shrink:0;">' +
+                  '<button class="btn-sm" style="background:var(--violet);width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:9px;" title="Редактировать" onclick="editCredit(' + idx + ')"><i class="fas fa-pen"></i></button>' +
+                  '<button class="btn-sm" style="background:#ef4444;width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:9px;" title="Удалить" onclick="removeCredit(' + idx + ')"><i class="fas fa-times"></i></button>' +
+                '</div>' +
                 '</div>';
         }).join('');
     }
@@ -208,6 +201,33 @@ export function bindTeam(db, getState) {
         document.getElementById('credit-voice-block').style.display = 'block';
         document.getElementById('credit-tech-block').style.display  = 'none';
         document.getElementById('credit-character').value = '';
+    };
+
+    window.editCredit = async function(idx) {
+        if (!curTM) return;
+        const c = (curTM.credits || [])[idx];
+        if (!c) return;
+        // Заполняем форму данными существующего кредита
+        const relSel = document.getElementById('credit-rel-select');
+        if (relSel && c.relId) {
+            Array.from(relSel.options).forEach(function(opt){ if (opt.value === c.relId) opt.selected = true; });
+        }
+        const roleSel = document.getElementById('credit-role-select');
+        if (roleSel) {
+            roleSel.value = c.creditRole || 'voice';
+            window.onCreditRoleChange();
+        }
+        if (c.creditRole === 'voice') {
+            const charEl = document.getElementById('credit-character');
+            if (charEl) charEl.value = c.character || '';
+        }
+        if (c.creditRole === 'tech') {
+            const techEl = document.getElementById('credit-tech-role');
+            if (techEl) techEl.value = c.techRole || 'Монтажёр';
+        }
+        // Удаляем старую запись — пользователь нажмёт «Добавить» и создаст новую
+        await window.removeCredit(idx);
+        showToast('Запись загружена для редактирования — измените и нажмите «Добавить»', 'info');
     };
 
     window.removeCredit = async function(idx) {
