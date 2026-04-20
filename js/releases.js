@@ -294,7 +294,9 @@ function renderEpGrid(series, isAdmin) {
 }
 
 // ── Тайминги заставок ──
-// Поля хранятся в секундах, но в форме указываются в формате мм:сс
+// introStart — абсолютная секунда начала заставки в видео
+// introEnd   — абсолютная секунда конца заставки в видео
+// outroStart — абсолютная секунда для кнопки "следующая серия"
 function scheduleIntroTimers(series, idx) {
     introTimers.forEach(t => clearTimeout(t));
     introTimers = [];
@@ -302,28 +304,39 @@ function scheduleIntroTimers(series, idx) {
     const ep = series[idx];
     if (!ep) return;
 
-    // introStart — начало заставки (уже в секундах после сохранения через saveEp)
-    if (ep.introStart && ep.introStart > 0) {
+    // ── Кнопка «Пропустить заставку» ──
+    // introStart = начало заставки (секунды в видео)
+    // introEnd   = конец заставки (секунды в видео)
+    const hasIntro = ep.introStart > 0 && ep.introEnd > 0 && ep.introEnd > ep.introStart;
+
+    if (hasIntro) {
+        // Показываем кнопку через introStart секунд после начала воспроизведения
         const t1 = setTimeout(() => {
             if (currentEpIdx !== idx) return;
             if (playerSettings.autoSkip) {
-                playerSeekTo(MAIN_ID, ep.introStart + (ep.introDuration || 90));
+                // Для YouTube — seek, для Drive — только скрываем кнопку (seek невозможен)
+                playerSeekTo(MAIN_ID, ep.introEnd);
                 return;
             }
             playerShowSkip(MAIN_ID, () => {
-                playerSeekTo(MAIN_ID, ep.introStart + (ep.introDuration || 90));
+                playerSeekTo(MAIN_ID, ep.introEnd);
             });
-            const t2 = setTimeout(() => playerHideSkip(MAIN_ID), (ep.introDuration || 90) * 1000);
+            // Прячем кнопку когда заставка закончится
+            const duration = ep.introEnd - ep.introStart;
+            const t2 = setTimeout(() => {
+                if (currentEpIdx !== idx) return;
+                playerHideSkip(MAIN_ID);
+            }, duration * 1000);
             introTimers.push(t2);
         }, ep.introStart * 1000);
         introTimers.push(t1);
     }
 
-    // outroStart — появление кнопки «Следующая серия»
+    // ── Кнопка «Следующая серия» ──
     if (ep.outroStart && ep.outroStart > 0) {
         const t3 = setTimeout(() => {
             if (currentEpIdx !== idx) return;
-            if (idx >= series.length - 1) return;
+            if (idx >= series.length - 1) return; // последняя серия
             if (playerSettings.autoNext) { playNextEp(); return; }
             playerShowNext(MAIN_ID, () => playNextEp());
         }, ep.outroStart * 1000);
@@ -484,20 +497,19 @@ export function bindReleases(db, auth, getState) {
         const editIdxEl = document.getElementById('ed-ep-idx');
         if (editIdxEl) editIdxEl.value = globalIdx;
         const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+        const toMM = (sec) => {
+            if (!sec || sec <= 0) return '';
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${String(s).padStart(2,'0')}`;
+        };
         set('ad-ep-type',        ep.type || 'series');
         set('ad-ep-name',        ep.name);
         set('ad-ep-title',       ep.title);
         set('ad-ep-url',         ep.url);
         set('ad-ep-thumb',       ep.thumb);
-        // Тайминги показываем в формате мм:сс
-        const toMM = (sec) => {
-            if (!sec) return '';
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return `${m}:${String(s).padStart(2,'0')}`;
-        };
         set('ad-ep-intro-start', toMM(ep.introStart));
-        set('ad-ep-intro-dur',   ep.introDuration ? String(ep.introDuration) + 'с' : '');
+        set('ad-ep-intro-end',   toMM(ep.introEnd));
         set('ad-ep-outro-start', toMM(ep.outroStart));
         const h = document.getElementById('m-ep-heading');
         if (h) h.textContent = 'Редактировать медиа';
@@ -513,12 +525,12 @@ export function bindReleases(db, auth, getState) {
 
         // Конвертируем мм:сс → секунды
         const introStartRaw = document.getElementById('ad-ep-intro-start')?.value || '';
-        const introDurRaw   = document.getElementById('ad-ep-intro-dur')?.value   || '';
+        const introEndRaw   = document.getElementById('ad-ep-intro-end')?.value   || '';
         const outroStartRaw = document.getElementById('ad-ep-outro-start')?.value || '';
 
         const parseMinSec = (val) => {
             if (!val) return 0;
-            val = String(val).replace(/[^0-9:]/g,'');
+            val = String(val).replace(/[^0-9:]/g, '');
             if (val.includes(':')) {
                 const [m, s] = val.split(':').map(Number);
                 return (m || 0) * 60 + (s || 0);
@@ -526,17 +538,23 @@ export function bindReleases(db, auth, getState) {
             return parseInt(val) || 0;
         };
 
+        const introStart = parseMinSec(introStartRaw);
+        const introEnd   = parseMinSec(introEndRaw);
+
         const ep = {
-            type:          document.getElementById('ad-ep-type').value,
-            name:          document.getElementById('ad-ep-name').value.trim(),
-            title:         document.getElementById('ad-ep-title')?.value.trim() || '',
-            url:           document.getElementById('ad-ep-url').value.trim(),
-            thumb:         document.getElementById('ad-ep-thumb')?.value.trim() || '',
-            introStart:    parseMinSec(introStartRaw),
-            introDuration: parseMinSec(introDurRaw) || 90,
-            outroStart:    parseMinSec(outroStartRaw),
+            type:       document.getElementById('ad-ep-type').value,
+            name:       document.getElementById('ad-ep-name').value.trim(),
+            title:      document.getElementById('ad-ep-title')?.value.trim() || '',
+            url:        document.getElementById('ad-ep-url').value.trim(),
+            thumb:      document.getElementById('ad-ep-thumb')?.value.trim() || '',
+            introStart,
+            introEnd,
+            outroStart: parseMinSec(outroStartRaw),
         };
         if (!ep.name || !ep.url) return showToast('Заполните название и URL!','error');
+        if (ep.introEnd > 0 && ep.introEnd <= ep.introStart) {
+            return showToast('Конец заставки должен быть позже начала!','error');
+        }
 
         const eps = [...(curProj.episodes||[])];
         if (editIdx >= 0 && editIdx < eps.length) {
