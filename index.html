@@ -76,7 +76,7 @@
 <!-- ========== HEADER ========== -->
 <header>
     <div style="display:flex;align-items:center;gap:14px;">
-        <button class="sidebar-toggle-btn" onclick="openSidebar()" title="Меню">
+        <button class="sidebar-toggle-btn" onclick="openSidebar()" title="Меню" aria-label="Открыть меню">
             <span></span><span></span><span></span>
         </button>
         <div class="logo" onclick="navigate('home')">
@@ -471,12 +471,22 @@
     <input type="text" id="ad-ep-url" placeholder="URL видео (Google Drive или YouTube)">
     <input type="text" id="ad-ep-thumb" placeholder="URL превью серии (необязательно)">
     <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:12px;">
-        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">⏱ Тайминги (формат мм:сс)</p>
+        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏱ Тайминги заставки (формат мм:сс)</p>
+        <p style="font-size:10px;color:var(--text-muted);margin-bottom:10px;font-style:italic;">Указывайте время относительно начала видео. Например: заставка с 0:30 до 1:45</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Начало заставки</label><input type="text" id="ad-ep-intro-start" placeholder="1:30" style="margin-bottom:0;"></div>
-            <div><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Длительность (сек)</label><input type="number" id="ad-ep-intro-dur" placeholder="90" style="margin-bottom:0;" min="1"></div>
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">▶ Начало заставки</label>
+                <input type="text" id="ad-ep-intro-start" placeholder="0:30" style="margin-bottom:0;">
+            </div>
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">⏹ Конец заставки</label>
+                <input type="text" id="ad-ep-intro-end" placeholder="1:45" style="margin-bottom:0;">
+            </div>
         </div>
-        <div style="margin-top:8px;"><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">Когда предложить следующую серию</label><input type="text" id="ad-ep-outro-start" placeholder="21:30"></div>
+        <div style="margin-top:10px;">
+            <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">🎬 Предложить следующую серию с</label>
+            <input type="text" id="ad-ep-outro-start" placeholder="21:30" style="margin-bottom:0;">
+        </div>
     </div>
     <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveEp()">Сохранить</button>
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
@@ -665,28 +675,35 @@
 </div></div>
 
 <!-- Rating modals -->
-<div id="m-rating-detail" class="modal"><div class="modal-content" style="max-width:640px;">
+<!-- Rating detail modal -->
+<div id="m-rating-detail" class="modal"><div class="modal-content" style="max-width:660px;">
     <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;">
-        <img id="rd-ava" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);flex-shrink:0;">
+        <img id="rd-ava" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);flex-shrink:0;" src="" alt="">
         <div style="flex:1;min-width:180px;">
             <h2 id="rd-name" style="font-family:var(--font-display);font-size:1.4rem;margin-bottom:4px;"></h2>
-            <div id="rd-role" style="color:var(--text-dim);font-size:13px;margin-bottom:10px;"></div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div id="rd-role" style="color:var(--text-dim);font-size:13px;margin-bottom:12px;"></div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <div id="rd-rank-badge"></div>
                 <span id="rd-score-total" style="font-size:12px;color:var(--text-dim);"></span>
             </div>
         </div>
     </div>
-    <div style="overflow-x:auto;margin-bottom:16px;">
+    <div style="overflow-x:auto;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);overflow:hidden;">
         <table style="width:100%;border-collapse:collapse;" id="rd-equip-table"></table>
     </div>
-    <div style="margin-bottom:14px;">
+    <div style="margin-bottom:16px;">
         <label class="order-label">Заметки об оборудовании</label>
-        <textarea id="rd-equip-note" rows="3" placeholder="Описание оборудования, комментарии..."></textarea>
+        <textarea id="rd-equip-note" rows="3" placeholder="Описание оборудования, комментарии куратора..."></textarea>
     </div>
-    <button id="rd-preview-btn" class="btn btn-blue" style="width:100%;display:none;margin-bottom:8px;" onclick="previewRank()">Предпросмотр ранга</button>
-    <button id="rd-save-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;">Сохранить оценки</button>
-    <button id="rd-delete-btn" class="btn btn-outline" style="width:100%;display:none;border-color:rgba(239,68,68,0.4);color:#ef4444;margin-bottom:8px;">Удалить карточку</button>
+    <button id="rd-preview-btn" class="btn btn-blue" style="width:100%;display:none;margin-bottom:8px;" onclick="previewRank()">
+        <i class="fas fa-eye"></i> Предпросмотр ранга
+    </button>
+    <button id="rd-save-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;">
+        <i class="fas fa-save"></i> Сохранить оценки
+    </button>
+    <button id="rd-delete-btn" class="btn btn-outline" style="width:100%;display:none;border-color:rgba(239,68,68,0.4);color:#ef4444;margin-bottom:8px;">
+        <i class="fas fa-trash"></i> Удалить карточку
+    </button>
     <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
