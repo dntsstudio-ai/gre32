@@ -1102,7 +1102,7 @@ select option { background: var(--modal-bg); color: var(--text); }
 /* Sidebar panel */
 #app-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0;
-    width: 300px; z-index: 1200;
+    width: 270px; z-index: 1200;
     background: rgba(11,8,32,0.98);
     border-right: 1px solid rgba(124,58,237,0.25);
     backdrop-filter: blur(24px) saturate(180%);
@@ -1331,24 +1331,19 @@ select option { background: var(--modal-bg); color: var(--text); }
 /* ═══════════════════════════════════════════════
    MOBILE ADAPTATIONS
    ═══════════════════════════════════════════════ */
+/* ── Sidebar toggle всегда виден ── */
 @media (max-width: 768px) {
-    /* На мобиле — кнопка гамбургер справа в header */
-    .sidebar-toggle-btn:not(.sidebar-toggle-btn--mobile) {
-        display: none;
-    }
-    .sidebar-toggle-btn--mobile { display: flex; }
-
-    .header-left { gap: 10px; }
-    header { justify-content: space-between; }
-
-    #app-sidebar { width: 280px; }
-
+    .sidebar-toggle-btn { display: flex; }
+    #app-sidebar { width: 260px; }
     .ratings-grid { grid-template-columns: 1fr; }
+
+    /* На мобиле чуть меньше лого текст */
+    .logo-text { font-size: 0.85rem; }
+    .logo-sub { display: none; }
 }
 
 @media (min-width: 769px) {
-    /* На ПК — гамбургер слева в header-left, mobile-btn скрыт */
-    .sidebar-toggle-btn--mobile { display: none; }
+    .sidebar-toggle-btn { display: flex; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1366,7 +1361,7 @@ select option { background: var(--modal-bg); color: var(--text); }
 
 #app-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0;
-    width: 280px; z-index: 1200;
+    width: 270px; z-index: 1200;
     background: rgba(10,7,32,0.98);
     backdrop-filter: blur(30px) saturate(180%);
     border-right: 1px solid rgba(124,58,237,0.22);
