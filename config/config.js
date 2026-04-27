@@ -31,7 +31,25 @@ export const JOIN_FORM_URL        = 'https://t.me/VoiceActingTeam1';
 export const PLACEHOLDER_IMG      = 'https://placehold.co/300x420/1a0a2e/7c3aed?text=VAT';
 export const PLACEHOLDER_TEAM_IMG = 'https://api.dicebear.com/7.x/identicon/svg';
 
-export const VIEW_COUNT_AFTER_MS = 10 * 60 * 1000;
+export const VIEW_COUNT_AFTER_MS  = 10 * 60 * 1000;
+
+// ── VCoins default prices (admin can override in Firestore settings/vcoins) ──
+export const VCOINS_DEFAULT_PRICES = {
+    colorNick:  500,   // цветной никнейм
+    prefix:     300,   // префикс
+    achSlot:    200,   // дополнительный слот ачивки
+};
+
+// ── VCoins rewards ──
+export const VCOINS_REWARDS = {
+    watchEpisode:  10,   // за просмотр серии 18+ мин
+    dailyLogin:     5,   // ежедневный вход
+    comment:        2,   // комментарий
+    gameWin:       50,   // выигрыш в игре
+};
+
+// ── DUB-in roles ──
+export const DUBIN_ROLES = ['admin','dub','curator','subber','previewer','editor','mixer'];
 
 export const AUTO_ACHIEVEMENTS = [
     { id: 'first_view',     name: 'Первый просмотр',   desc: 'Посмотрел первый релиз',         img: '👁️', trigger: 'views_1'    },
@@ -44,4 +62,6 @@ export const AUTO_ACHIEVEMENTS = [
     { id: 'suggest_1',      name: 'Инициатор',          desc: 'Предложил проект для озвучки',    img: '💡', trigger: 'suggest_1'  },
     { id: 'profile_filled', name: 'Личность',           desc: 'Заполнил профиль полностью',      img: '🎭', trigger: 'profile_ok' },
     { id: 'newcomer',       name: 'Новичок',            desc: 'Зарегистрировался на сайте',      img: '👋', trigger: null         },
+    { id: 'rich_1000',      name: 'Богач',              desc: 'Накопил 1000 VCoins',             img: '💰', trigger: 'vcoins_1000'},
+    { id: 'gamer',          name: 'Игрок',              desc: 'Выиграл первую игру',             img: '🎮', trigger: 'game_win'   },
 ];
