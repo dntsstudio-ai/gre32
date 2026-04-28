@@ -1954,3 +1954,112 @@ select option { background: var(--modal-bg); color: var(--text); }
 #btn-rel-subscribe {
     display: inline-flex; align-items: center; gap: 7px;
 }
+
+/* ============================================================
+   FIXES & UI POLISH (Добавь в конец style.css)
+   ============================================================ */
+
+/* 1. Исправление прыгающего поиска в шапке */
+.search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.search-field-wrap {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+    background: var(--bg);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+}
+.search-wrap.search-open .search-field-wrap {
+    max-width: 320px;
+    opacity: 1;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+.search-field-input {
+    width: 260px;
+    height: 100%;
+    margin-bottom: 0; /* Убираем margin, чтобы не съезжало */
+    border-radius: 12px 0 0 12px;
+}
+.search-close-btn {
+    height: 100%;
+    margin-bottom: 0;
+}
+
+/* 2. Кастомный Dropdown (Селектор) Cosmic Dark */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314b8a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+    border-radius: 12px;
+    background-color: var(--input-bg);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    color: var(--text);
+    cursor: pointer;
+    transition: var(--ts);
+}
+select:hover {
+    border-color: var(--teal);
+    box-shadow: 0 0 12px rgba(20, 184, 166, 0.15);
+}
+select:focus {
+    border-color: var(--teal);
+    outline: none;
+}
+select option {
+    background-color: var(--card-bg);
+    color: var(--text);
+    padding: 10px;
+}
+
+/* 3. Кнопка Telegram (Сделать заметнее) */
+.footer-join-btn {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 15px rgba(20, 184, 166, 0.35);
+    letter-spacing: 1.5px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.footer-join-btn:hover {
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.5);
+}
+
+/* 4. Настройки стены - красивые карточки выбора */
+.checkbox-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: var(--input-bg);
+    border-radius: 12px; border: 1px solid var(--border);
+    margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+    font-weight: 600; font-size: 13px;
+}
+.checkbox-row:hover {
+    border-color: var(--violet);
+    background: rgba(124,58,237,0.05);
+    transform: translateY(-1px);
+}
+.checkbox-row input[type=radio], .checkbox-row input[type=checkbox] {
+    width: 18px; height: 18px; margin: 0;
+    cursor: pointer; accent-color: var(--violet);
+}
+
+/* 5. Выравнивание кнопок (убираем съезжание) */
+.btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
