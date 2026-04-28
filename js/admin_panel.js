@@ -87,12 +87,11 @@ async function loadSiteStats() {
     wrap.innerHTML = '<div class="stats-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка статистики...</div>';
 
     try {
-        // ИСПРАВЛЕНИЕ: Используем getCountFromServer, чтобы не выкачивать всю БД и не получать ошибку прав
         const [usersCountSnap, relCountSnap, statsDoc, onlineSnap] = await Promise.all([
             getCountFromServer(collection(_db, 'users')),
             getCountFromServer(collection(_db, 'releases')),
-            getDoc(doc(_db, 'settings', 'siteStats')), // Берем из doc, а не из collection!
-            getDocs(query(collection(_db, 'users'), where('lastSeen', '>', Date.now() - 5 * 60 * 1000))) // Онлайн за 5 мин
+            getDoc(doc(_db, 'settings', 'siteStats')),
+            getDocs(query(collection(_db, 'users'), where('lastSeen', '>', Date.now() - 5 * 60 * 1000)))
         ]);
 
         const totalUsers = usersCountSnap.data().count;
@@ -100,6 +99,7 @@ async function loadSiteStats() {
         const onlineUsers = onlineSnap.size;
         const stats = statsDoc.exists() ? statsDoc.data() : {};
 
+        // ИСПРАВЛЕНИЕ: Добавлены кнопки обнуления для динамических данных
         wrap.innerHTML = `
         <div class="stats-grid">
             <div class="stats-card stats-card--online">
@@ -117,10 +117,13 @@ async function loadSiteStats() {
                 <div class="stats-card-val">${totalRels}</div>
                 <div class="stats-card-label">Релизов на сайте</div>
             </div>
-            <div class="stats-card">
+            <div class="stats-card" style="position:relative;">
+                <button class="ep-adm-btn ep-adm-btn--del" style="position:absolute;top:10px;right:10px;width:28px;height:28px;" title="Обнулить просмотры" onclick="resetStat('totalPageViews')">
+                    <i class="fas fa-trash"></i>
+                </button>
                 <div class="stats-card-icon">👁</div>
                 <div class="stats-card-val">${stats.totalPageViews||0}</div>
-                <div class="stats-card-label">Просмотров страниц</div>
+                <div class="stats-card-label">Уникальных просмотров</div>
             </div>
         </div>
 
@@ -143,20 +146,37 @@ async function loadSiteStats() {
     }
 }
 
-export async function updateLastSeen(uid) {
-    if (!uid) return;
-    try { await updateDoc(doc(_db,'users',uid), { lastSeen: Date.now() }); } catch(e) {}
-}
+// Функции сброса статистики
+window.resetStat = async function(statKey) {
+    if (!confirm('Точно обнулить этот счетчик? Это действие нельзя отменить.')) return;
+    try {
+        if (statKey === 'totalPageViews') {
+            await updateDoc(doc(_db, 'settings', 'siteStats'), { totalPageViews: 0 });
+        }
+        showToast('Счетчик обнулен', 'success');
+        loadSiteStats(); // Перезагружаем интерфейс
+    } catch (e) {
+        showToast('Ошибка при обнулении', 'error');
+    }
+};
 
+// ... (пропускаем updateLastSeen)
+
+// ИСПРАВЛЕНИЕ: Засчитываем просмотр только 1 раз за сессию
 export async function incrementPageView() {
+    // Проверяем, был ли уже просмотр в этой сессии (вкладке браузера)
+    if (sessionStorage.getItem('vat_view_counted')) return;
+
     try {
         const ref = doc(_db,'settings','siteStats');
         const snap = await getDoc(ref);
         if (snap.exists()) {
-            await updateDoc(ref, { totalPageViews: (snap.data().totalPageViews||0)+1 });
+            await updateDoc(ref, { totalPageViews: increment(1) });
         } else {
             await setDoc(ref, { totalPageViews: 1 });
         }
+        // Записываем в сессию, чтобы при F5 не крутило счетчик
+        sessionStorage.setItem('vat_view_counted', 'true');
     } catch(e) {}
 }
 
