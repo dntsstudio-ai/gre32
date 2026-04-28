@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth()    { return request.auth != null; }
+    function uid()       { return request.auth.uid; }
+    function getUser()   { return get(/databases/$(database)/documents/users/$(uid())).data; }
+    function isAdmin()   { return isAuth() && getUser().role == 'admin'; }
+    function isDubRole() {
+      return isAuth() && getUser().role in ['admin','dub','curator','subber','previewer','editor','mixer'];
+    }
+    function isCurator() { return isAuth() && getUser().role in ['admin','curator']; }
+    function isMod()     { return isAuth() && getUser().role in ['admin','moderator']; }
+
+    // ── USERS ────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && uid() == userId && request.resource.data.role == 'user';
+      allow update: if isAuth() && (uid() == userId || isAdmin());
+      allow delete: if isAdmin();
+
+      match /watchlist/{id}  { allow read, write: if isAuth() && uid() == userId; }
+      match /viewed/{id}     { allow read, write: if isAuth() && uid() == userId; }
+      match /watched/{id}    { allow read, write: if isAuth() && uid() == userId; }
+      match /vcoinLog/{id}   { allow read: if isAuth() && uid() == userId; allow write: if isAuth(); }
+      match /notifications/{id} { allow read, write: if isAuth() && uid() == userId; }
+      match /wall/{id}       { allow read: if true; allow write: if isAuth(); allow delete: if isAuth(); }
+      match /playlists/{plId} {
+        allow read, write: if isAuth() && uid() == userId;
+        match /items/{itemId} { allow read, write: if isAuth() && uid() == userId; }
+      }
+    }
+
+    // ── RELEASES ─────────────────────────────────────────────
+    match /releases/{releaseId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isAuth();
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow delete: if isAuth() && (resource.data.uid == uid() || isAdmin());
+        allow update: if isAdmin();
+      }
+    }
+
+    // ── RELEASE SUBSCRIBERS ───────────────────────────────────
+    match /releaseSubscribers/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow delete: if isAuth() && resource.data.uid == uid();
+    }
+
+    // ── TEAM ─────────────────────────────────────────────────
+    match /team/{memberId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isDubRole() &&
+        get(/databases/$(database)/documents/users/$(uid())).data.linkedCardId == memberId
+      );
+    }
+
+    // ── RATINGS ──────────────────────────────────────────────
+    match /ratings/{ratingId} {
+      allow read:   if isCurator();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+
+    // ── DUBIN PROJECTS ───────────────────────────────────────
+    match /dubinProjects/{projectId} {
+      allow read:   if isDubRole();
+      allow create, delete: if isAdmin();
+      allow update: if isDubRole();
+    }
+
+    // ── SUGGESTIONS ──────────────────────────────────────────
+    match /suggestions/{suggestionId} {
+      allow read:   if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── REPORTS ──────────────────────────────────────────────
+    match /reports/{reportId} {
+      allow read:   if isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── SETTINGS ─────────────────────────────────────────────
+    match /settings/{settingId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+  }
+}
