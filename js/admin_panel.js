@@ -39,7 +39,7 @@ async function loadRolesPanel() {
         });
 
         wrap.innerHTML = Object.entries(groups).map(([role, members]) => {
-            const rl = (await import('./core.js').then(m => m.ROLE_LABELS))?.[role] || { label: role.toUpperCase(), icon:'fa-user' };
+            const rl = ROLE_LABELS[role] || { label: role.toUpperCase(), icon:'fa-user' };
             return `
             <div class="admin-role-group">
                 <div class="admin-role-group-header">
