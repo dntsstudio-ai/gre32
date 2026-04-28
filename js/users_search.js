@@ -27,41 +27,25 @@ export function bindUserSearch(db, auth, getState) {
     };
 
     async function doSearch() {
-        const q = document.getElementById('friend-search-input')?.value?.trim();
+        const q = document.getElementById('friend-search-input')?.value?.trim().toLowerCase();
         const res = document.getElementById('friend-search-results');
         if (!res) return;
         if (!q || q.length < 2) {
             res.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Введите минимум 2 символа</p>';
             return;
         }
-        res.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Поиск...</div>';
+        res.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Ищем...</div>';
 
         try {
-            // Поиск по нику (точное совпадение и startsWith через range)
-            const byNick = await getDocs(query(
-                collection(_db,'users'),
-                where('nickname','>=',q),
-                where('nickname','<=',q+'\uf8ff'),
-                limit(10)
-            ));
-
-            // Поиск по email (точное)
-            let byEmail = { docs: [] };
-            try {
-                byEmail = await getDocs(query(
-                    collection(_db,'users'),
-                    where('email','==',q)
-                ));
-            } catch(e) {}
-
-            const seen = new Set();
-            const results = [];
-            [...byNick.docs, ...byEmail.docs].forEach(d => {
-                if (!seen.has(d.id)) {
-                    seen.add(d.id);
-                    results.push({ id: d.id, ...d.data() });
-                }
-            });
+            // ИСПРАВЛЕНИЕ: Делаем гибкий JS фильтр (Firebase не умеет искать без учета регистра)
+            const snap = await getDocs(query(collection(_db, 'users'), limit(150)));
+            
+            const results = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(u => 
+                    (u.nickname && u.nickname.toLowerCase().includes(q)) || 
+                    (u.email && u.email.toLowerCase().includes(q))
+                );
 
             if (!results.length) {
                 res.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли 🔍</p>';
@@ -77,7 +61,6 @@ export function bindUserSearch(db, auth, getState) {
                     <div class="friend-result-info">
                         <div class="friend-result-nick" style="${u.nickColor?'color:'+u.nickColor+';':''}">${u.activePrefix?'<span class="nick-prefix">['+esc(u.activePrefix)+']</span>':''} ${esc(u.nickname)}</div>
                         <div class="friend-result-meta">${u.subscribers||0} подписчиков · ${u.views||0} просмотрено</div>
-                        ${u.publicBio ? '<div class="friend-result-bio">' + esc(u.publicBio.slice(0,60)) + (u.publicBio.length>60?'…':'') + '</div>' : ''}
                     </div>
                     <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openUserProfile('${u.id}')">
                         <i class="fas fa-user"></i>
@@ -86,7 +69,6 @@ export function bindUserSearch(db, auth, getState) {
             }).join('');
         } catch(e) {
             res.innerHTML = '<p style="color:#ef4444;font-size:13px;text-align:center;padding:20px;">Ошибка поиска</p>';
-            console.error(e);
         }
     }
 }
@@ -98,7 +80,7 @@ export function bindProfileWall(db, auth, getState) {
     window.loadProfileWall = async function(targetUid) {
         const wrap = document.getElementById('profile-wall-wrap');
         if (!wrap) return;
-        wrap.innerHTML = '<p style="color:var(--text-dim);font-size:13px;">Загрузка...</p>';
+        wrap.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка стены...</div>';
 
         try {
             const snap = await getDocs(query(
@@ -111,11 +93,9 @@ export function bindProfileWall(db, auth, getState) {
             const isOwner = myUid === targetUid;
             const isAdmin = userData?.role === 'admin';
 
-            // Настройки стены
             const settingsSnap = await getDoc(doc(_db, 'users', targetUid));
             const wallSettings = settingsSnap.data()?.wallSettings || { allowAll: true, allowFriendsOnly: false, disabled: false };
 
-            // Форма для записей (если разрешено)
             let formHtml = '';
             if (isOwner || isAdmin) {
                 formHtml = buildWallForm(targetUid, true);
@@ -124,15 +104,14 @@ export function bindProfileWall(db, auth, getState) {
                     ? (settingsSnap.data()?.subscribersList||[]).includes(myUid)
                     : wallSettings.allowAll !== false;
                 if (canPost) formHtml = buildWallForm(targetUid, false);
-                else formHtml = '<p style="color:var(--text-dim);font-size:13px;font-style:italic;margin-bottom:16px;">Владелец закрыл стену для записей.</p>';
+                else formHtml = '<p style="color:var(--text-dim);font-size:13px;font-style:italic;margin-bottom:16px;text-align:center;">Владелец закрыл стену для записей.</p>';
             }
 
             wrap.innerHTML = formHtml + (posts.length === 0
                 ? '<p style="color:var(--text-dim);font-size:13px;font-style:italic;text-align:center;padding:20px;">Пока нет записей на стене</p>'
                 : posts.map(p => renderWallPost(p, myUid, isOwner, isAdmin, targetUid)).join(''));
         } catch(e) {
-            wrap.innerHTML = '<p style="color:#ef4444;font-size:13px;">Ошибка загрузки стены</p>';
-            console.error(e);
+            wrap.innerHTML = '<p style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">Ошибка загрузки стены. Возможно, у вас нет прав.</p>';
         }
     };
 
@@ -145,10 +124,10 @@ export function bindProfileWall(db, auth, getState) {
                     <input type="file" accept="image/*" style="display:none;" onchange="previewWallImage(this)">
                 </label>
                 <div id="wall-img-preview" style="display:none;">
-                    <img id="wall-img-preview-img" style="height:60px;border-radius:8px;object-fit:cover;" src="" alt="">
-                    <button class="btn-sm" style="background:#ef4444;border-radius:50%;width:22px;height:22px;padding:0;" onclick="clearWallImage()"><i class="fas fa-times"></i></button>
+                    <img id="wall-img-preview-img" style="height:40px;border-radius:8px;object-fit:cover;" src="" alt="">
+                    <button class="btn-sm" style="background:#ef4444;border-radius:50%;width:22px;height:22px;padding:0;border:none;color:white;cursor:pointer;" onclick="clearWallImage()"><i class="fas fa-times"></i></button>
                 </div>
-                <button class="btn btn-sm" onclick="postToWall('${targetUid}')"><i class="fas fa-paper-plane"></i> Опубликовать</button>
+                <button class="btn btn-sm" onclick="postToWall('${targetUid}')" style="margin-left:auto;"><i class="fas fa-paper-plane"></i> Отправить</button>
             </div>
         </div>`;
     }
@@ -197,11 +176,9 @@ export function bindProfileWall(db, auth, getState) {
         if (!text && !imgUrl) return showToast('Добавьте текст или фото','error');
         try {
             await addDoc(collection(_db, `users/${targetUid}/wall`), {
-                text, imgUrl,
-                authorUid:  auth.currentUser.uid,
-                authorNick: userData.nickname,
-                authorAva:  userData.avatar || '',
-                date:       Date.now()
+                text, imgUrl, authorUid: auth.currentUser.uid,
+                authorNick: userData.nickname, authorAva: userData.avatar || '',
+                date: Date.now()
             });
             document.getElementById('wall-post-text').value = '';
             window.clearWallImage();
@@ -224,9 +201,8 @@ export function bindProfileWall(db, auth, getState) {
         const allowAll   = document.getElementById('wall-allow-all')?.checked ?? true;
         const friendsOnly = document.getElementById('wall-friends-only')?.checked ?? false;
         const disabled   = document.getElementById('wall-disabled')?.checked ?? false;
-        await addDoc ? null : null;
         const { updateDoc: upd } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-        await upd(doc(_db,'users',auth.currentUser.uid), {
+        await upd(doc(_db,'users',_auth.currentUser.uid), {
             wallSettings: { allowAll, allowFriendsOnly: friendsOnly, disabled }
         });
         showToast('Настройки стены сохранены!');
