@@ -429,7 +429,7 @@ async function loadWatchListStatus(db, auth, relId) {
 export function bindReleases(db, auth, getState) {
 
     // Поиск — только когда включён
-    window.filterData = () => { const { isAdmin } = getState(); renderGrid(isAdmin); };
+    window.filterData = function() { const { isAdmin } = getState(); renderGrid(isAdmin); };
 
     window.openView = async (id) => {
         const { userData, isAdmin } = getState();
