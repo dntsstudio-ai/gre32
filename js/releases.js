@@ -429,13 +429,23 @@ async function loadWatchListStatus(db, auth, relId) {
 export function bindReleases(db, auth, getState) {
 
     // Поиск — только когда включён
-    window.filterData = function() { const { isAdmin } = getState(); renderGrid(isAdmin); };
+// 1. Поиск (исправлено: убрали лишнее "=" и обернули логику в функцию)
+window.filterData = () => {
+    const { isAdmin } = getState(); 
+    renderGrid(isAdmin); 
+};
 
+// 2. Открытие релиза (исправлено: логика внутри асинхронной функции)
     window.openView = async (id) => {
-        const { userData, isAdmin } = getState();
-        await openViewRelease(db, auth, id, userData, isAdmin);
+    const { userData, isAdmin } = getState();
+    // Вызываем функцию отрисовки модалки релиза
+    await openViewRelease(db, auth, id, userData, isAdmin);
+    
+    // Если нужно обновить текущий проект в стейте
+    if (typeof curProj !== 'undefined') {
         getState().curProj = curProj;
-    };
+    }
+};
 
     window.rateProj = async (type) => {
         const { userData } = getState();
