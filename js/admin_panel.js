@@ -4,7 +4,7 @@
 
 import {
     collection, getDocs, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
-    doc, query, where, orderBy, limit, serverTimestamp
+    doc, query, where, orderBy, limit, serverTimestamp, getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { esc, showToast, closeModals, ROLE_LABELS } from './core.js';
 
@@ -14,13 +14,15 @@ let _db, _auth, _getState;
 async function loadRolesPanel() {
     const wrap = document.getElementById('admin-roles-list');
     if (!wrap) return;
-    wrap.innerHTML = '<p style="color:var(--text-dim);font-size:13px;">Загрузка...</p>';
+    wrap.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка ролей...</div>';
 
     try {
-        const snap = await getDocs(collection(_db, 'users'));
+        // ИСПРАВЛЕНИЕ: Запрашиваем только тех, у кого роль НЕ user (экономит лимиты и обходит лимиты чтения)
+        const q = query(collection(_db, 'users'), where('role', '!=', 'user'));
+        const snap = await getDocs(q);
+        
         const users = snap.docs
             .map(d => ({ id: d.id, ...d.data() }))
-            .filter(u => u.role && u.role !== 'user')
             .sort((a,b) => {
                 const order = {admin:0,curator:1,moderator:2,dub:3,subber:4,previewer:5,editor:6,mixer:7};
                 return (order[a.role]??9) - (order[b.role]??9);
@@ -31,7 +33,6 @@ async function loadRolesPanel() {
             return;
         }
 
-        // Группируем по роли
         const groups = {};
         users.forEach(u => {
             if (!groups[u.role]) groups[u.role] = [];
@@ -68,7 +69,7 @@ async function loadRolesPanel() {
             </div>`;
         }).join('');
     } catch(e) {
-        wrap.innerHTML = `<p style="color:#ef4444;font-size:13px;">Ошибка: ${e.message}</p>`;
+        wrap.innerHTML = `<p style="color:#ef4444;font-size:13px;padding:20px;">Ошибка: ${e.message}</p>`;
     }
 }
 
@@ -86,32 +87,17 @@ async function loadSiteStats() {
     wrap.innerHTML = '<div class="stats-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка статистики...</div>';
 
     try {
-        // Счётчики из Firestore
-        const [usersSnap, relSnap, commSnap] = await Promise.all([
-            getDocs(collection(_db,'users')),
-            getDocs(collection(_db,'releases')),
-            getDocs(collection(_db,'siteStats')),
+        // ИСПРАВЛЕНИЕ: Используем getCountFromServer, чтобы не выкачивать всю БД и не получать ошибку прав
+        const [usersCountSnap, relCountSnap, statsDoc, onlineSnap] = await Promise.all([
+            getCountFromServer(collection(_db, 'users')),
+            getCountFromServer(collection(_db, 'releases')),
+            getDoc(doc(_db, 'settings', 'siteStats')), // Берем из doc, а не из collection!
+            getDocs(query(collection(_db, 'users'), where('lastSeen', '>', Date.now() - 5 * 60 * 1000))) // Онлайн за 5 мин
         ]);
 
-        const totalUsers = usersSnap.size;
-        const totalRels  = relSnap.size;
-
-        // Онлайн — пользователи активные за последние 5 мин
-        const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-        const onlineUsers = usersSnap.docs.filter(d => (d.data().lastSeen||0) > fiveMinAgo).length;
-
-        // Сегодня зарегались
-        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const todayUsers = usersSnap.docs.filter(d => (d.data().createdAt||0) > todayStart.getTime()).length;
-
-        // Общее время на сайте (в минутах суммарно)
-        const totalMinutes = usersSnap.docs.reduce((acc,d) => acc + (d.data().totalMinutes||0), 0);
-
-        // Просмотры сегодня (из релизов)
-        const todayViews = relSnap.docs.reduce((acc,d) => acc + (d.data().todayViews||0), 0);
-
-        // Статистика из settings/siteStats
-        const statsDoc = await getDoc(doc(_db,'settings','siteStats'));
+        const totalUsers = usersCountSnap.data().count;
+        const totalRels  = relCountSnap.data().count;
+        const onlineUsers = onlineSnap.size;
         const stats = statsDoc.exists() ? statsDoc.data() : {};
 
         wrap.innerHTML = `
@@ -127,19 +113,9 @@ async function loadSiteStats() {
                 <div class="stats-card-label">Всего пользователей</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">🆕</div>
-                <div class="stats-card-val">${todayUsers}</div>
-                <div class="stats-card-label">Регистраций сегодня</div>
-            </div>
-            <div class="stats-card">
                 <div class="stats-card-icon">🎬</div>
                 <div class="stats-card-val">${totalRels}</div>
                 <div class="stats-card-label">Релизов на сайте</div>
-            </div>
-            <div class="stats-card">
-                <div class="stats-card-icon">⏱</div>
-                <div class="stats-card-val">${Math.round(totalMinutes/60)}ч</div>
-                <div class="stats-card-label">Суммарное время на сайте</div>
             </div>
             <div class="stats-card">
                 <div class="stats-card-icon">👁</div>
@@ -149,11 +125,9 @@ async function loadSiteStats() {
         </div>
 
         <div style="background:var(--card-bg);padding:20px;border-radius:var(--radius);border:1px solid var(--border);margin-top:22px;">
-            <h4 style="font-size:14px;margin-bottom:14px;font-family:var(--font-display);">Активные пользователи</h4>
+            <h4 style="font-size:14px;margin-bottom:14px;font-family:var(--font-display);">Активные пользователи (Онлайн)</h4>
             <div id="stats-online-list">
-                ${usersSnap.docs
-                    .filter(d => (d.data().lastSeen||0) > fiveMinAgo)
-                    .map(d => {
+                ${onlineSnap.docs.map(d => {
                         const u = d.data();
                         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
                             <span class="online-dot"></span>
@@ -165,19 +139,15 @@ async function loadSiteStats() {
             </div>
         </div>`;
     } catch(e) {
-        wrap.innerHTML = `<p style="color:#ef4444;">Ошибка загрузки статистики: ${e.message}</p>`;
+        wrap.innerHTML = `<p style="color:#ef4444;padding:20px;">Ошибка загрузки статистики: ${e.message}</p>`;
     }
 }
 
-// ── Обновить lastSeen пользователя ──
 export async function updateLastSeen(uid) {
     if (!uid) return;
-    try {
-        await updateDoc(doc(_db,'users',uid), { lastSeen: Date.now() });
-    } catch(e) {}
+    try { await updateDoc(doc(_db,'users',uid), { lastSeen: Date.now() }); } catch(e) {}
 }
 
-// ── Счётчик страниц ──
 export async function incrementPageView() {
     try {
         const ref = doc(_db,'settings','siteStats');
@@ -190,40 +160,33 @@ export async function incrementPageView() {
     } catch(e) {}
 }
 
-// ── Учёт времени на сайте ──
 let _sessionStart = Date.now();
 export function startSessionTimer(uid) {
     if (!uid) return;
     _sessionStart = Date.now();
-    // Каждые 2 минуты обновляем lastSeen и записываем +2 мин
     const interval = setInterval(async () => {
         if (!document.hidden) {
             await updateLastSeen(uid);
             try {
+                const uDoc = await getDoc(doc(_db,'users',uid));
                 await updateDoc(doc(_db,'users',uid), {
-                    totalMinutes: (await getDoc(doc(_db,'users',uid))).data()?.totalMinutes
-                        ? (await getDoc(doc(_db,'users',uid))).data().totalMinutes + 2
-                        : 2
+                    totalMinutes: (uDoc.data()?.totalMinutes || 0) + 2
                 });
             } catch(e) {}
         }
     }, 2 * 60 * 1000);
-    // Очищаем при уходе со страницы
     window.addEventListener('beforeunload', () => clearInterval(interval));
 }
 
 export function bindAdminPanel(db, auth, getState) {
     _db = db; _auth = auth; _getState = getState;
-
     window.openAdminRolesPanel = function() {
         document.getElementById('m-admin-roles').style.display = 'flex';
         loadRolesPanel();
     };
-
     window.openSiteStats = function() {
         window.navigate('stats');
         loadSiteStats();
     };
-
     window.loadStatsPage = function() { loadSiteStats(); };
 }
