@@ -150,7 +150,7 @@ export function bindNotifications(db, auth, getState) {
 
     window.openNotifPanel = function() {
         document.getElementById('m-notifications').style.display = 'flex';
-    };
+    }
 
     // ИСПРАВЛЕНИЕ: Делаем функцию глобальной, чтобы HTML-кнопка её видела
     window.toggleReleaseSubscription = async function(releaseId, releaseTitle) {
