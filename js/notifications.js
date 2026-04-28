@@ -144,14 +144,6 @@ window.toggleReleaseSubscription = async function(releaseId, releaseTitle) {
     }
 };
 
-export function bindNotifications(db, auth, getState) {
-    _db = db; _auth = auth; _getState = getState;
-
-    window.openNotifPanel = function() {
-        document.getElementById('m-notifications').style.display = 'flex';
-    };
-}
-
 // Конец файла notifications.js
 export function bindNotifications(db, auth, getState) {
     _db = db; _auth = auth; _getState = getState;
