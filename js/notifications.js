@@ -151,3 +151,38 @@ export function bindNotifications(db, auth, getState) {
         document.getElementById('m-notifications').style.display = 'flex';
     };
 }
+
+// Конец файла notifications.js
+export function bindNotifications(db, auth, getState) {
+    _db = db; _auth = auth; _getState = getState;
+
+    window.openNotifPanel = function() {
+        document.getElementById('m-notifications').style.display = 'flex';
+    };
+
+    // ИСПРАВЛЕНИЕ: Делаем функцию глобальной, чтобы HTML-кнопка её видела
+    window.toggleReleaseSubscription = async function(releaseId, releaseTitle) {
+        const uid = _auth?.currentUser?.uid;
+        if (!uid) return showToast('Войдите в аккаунт','error');
+        
+        const q = query(collection(_db,'releaseSubscribers'),
+                        where('releaseId','==',releaseId),
+                        where('uid','==',uid));
+        const snap = await getDocs(q);
+        
+        if (!snap.empty) {
+            const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+            await deleteDoc(snap.docs[0].ref);
+            showToast('Уведомления отключены');
+            const btn = document.getElementById('btn-rel-subscribe');
+            if (btn) { btn.classList.remove('btn-active'); btn.innerHTML='<i class="fas fa-bell"></i> Уведомлять о сериях'; }
+        } else {
+            await addDoc(collection(_db,'releaseSubscribers'), { releaseId, releaseTitle, uid, date: Date.now() });
+            const perm = await requestPushPermission();
+            if (!perm) showToast('Разрешите уведомления в браузере для push-оповещений','info');
+            showToast('🔔 Вы подпишетесь на новые серии!');
+            const btn = document.getElementById('btn-rel-subscribe');
+            if (btn) { btn.classList.add('btn-active'); btn.innerHTML='<i class="fas fa-bell-slash"></i> Отписаться'; }
+        }
+    };
+}
