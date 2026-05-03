@@ -1,0 +1,49 @@
+# ============================================================
+#  .github/workflows/deploy.yml
+#  Автоматический деплой при изменении любого файла
+#  В т.ч. maintenance.json — для управления техработами
+# ============================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main          # или master — укажи свою ветку
+  workflow_dispatch:  # ручной запуск из интерфейса GitHub
+
+# Разрешения для деплоя на Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Только один деплой за раз
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: 📦 Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Загружаем весь корень репозитория
+          path: '.'
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
