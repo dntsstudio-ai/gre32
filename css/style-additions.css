@@ -1,0 +1,77 @@
+/* ============================================================
+   Voice Acting Team — style-additions.css
+   Дополнение к основному style.css:
+   - Новые роли: proxyadmin, developer
+   - Фиксы для совместимости
+   - Переменные для maintenance
+   ============================================================ */
+
+/* ── Новые роли ── */
+.role-proxyadmin {
+    background: rgba(96, 165, 250, 0.12);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+}
+
+.role-developer {
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+/* ── Sidebar badge coin фикс ── */
+.sidebar-badge--coin {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.4);
+    min-width: 32px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Фикс user-ui: скрыт по умолчанию через CSS тоже ── */
+#user-ui {
+    display: none;
+}
+
+/* ── Кнопка btn-sm в dubin file row ── */
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 10px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+}
+
+/* ── Дополнительные стили для wall-img-preview ── */
+#wall-img-preview {
+    display: none;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Rocket display фикс ── */
+.rocket-display {
+    position: relative;
+    height: 160px;
+    background: linear-gradient(180deg, rgba(7,4,26,0.8) 0%, rgba(124,58,237,0.05) 100%);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin: 16px 0;
+    padding-bottom: 10px;
+}
+
+/* ── Coin display spinning animation ── */
+.game-coin-display.spinning {
+    animation: coinSpin 0.9s ease;
+}
+
+/* ── Maintenance overlay z-index fix ── */
+#maintenance-overlay {
+    z-index: 99999 !important;
+}
