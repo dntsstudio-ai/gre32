@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com; object-src 'none';">
     <title>Voice Acting Team — Профессиональная озвучка и дубляж</title>
     <meta name="description" content="Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.">
     <link rel="icon" type="image/png" href="img/logo.jpg">
@@ -15,10 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <!-- ИСПРАВЛЕН путь к CSS: style.css в корне -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Дополнительные стили: новые роли, фиксы -->
-    <link rel="stylesheet" href="style-additions.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <script>
@@ -52,11 +49,6 @@
             <i class="fas fa-layer-group"></i>
             <span>Плейлисты</span>
         </a>
-        <a id="sn-shop" class="sidebar-link sidebar-link--coin" onclick="navigate('shop')" style="display:none;">
-            <i class="fas fa-coins"></i>
-            <span>VCoins &amp; Магазин</span>
-            <span class="sidebar-badge sidebar-badge--coin" id="sn-shop-balance">0</span>
-        </a>
         <div class="sidebar-divider"></div>
         <div class="sidebar-section-label">Студия</div>
         <a id="sn-dubin" class="sidebar-link sidebar-link--special" onclick="navigate('dubin')" style="display:none;">
@@ -68,13 +60,6 @@
             <i class="fas fa-star"></i>
             <span>Оценка</span>
             <span class="sidebar-badge sidebar-badge--gold">Admin</span>
-        </a>
-        <div class="sidebar-divider"></div>
-        <div class="sidebar-section-label">Администрация</div>
-        <a id="sn-stats" class="sidebar-link" onclick="navigate('stats')" style="display:none;">
-            <i class="fas fa-chart-bar"></i>
-            <span>Статистика</span>
-            <span class="sidebar-badge" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:rgba(16,185,129,0.3);">Admin</span>
         </a>
     </nav>
     <div class="sidebar-footer">
@@ -105,13 +90,9 @@
     <nav>
         <a id="n-home"  class="nav-link active" onclick="navigate('home')">Релизы</a>
         <a id="n-team"  class="nav-link"        onclick="navigate('team')">Состав</a>
-        <a id="n-order" class="nav-link"        onclick="navigate('order')">
+        <a id="n-order" class="nav-link"         onclick="navigate('order')">
             <i class="fas fa-wand-magic-sparkles" style="font-size:10px;"></i> Заказать
         </a>
-        <button class="notif-bell-btn" onclick="openNotifPanel()" title="Уведомления" style="display:none;" id="notif-btn">
-            <i class="fas fa-bell"></i>
-            <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
-        </button>
     </nav>
 </header>
 
@@ -226,21 +207,17 @@
                 </div>
             </div>
         </div>
-        <div id="user-ui" style="display:none;">
+        <div id="user-ui">
             <div class="profile-header">
                 <div style="position:relative;">
                     <img id="u-ava" src="https://api.dicebear.com/7.x/identicon/svg" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--violet);">
                 </div>
                 <div style="flex:1;">
-                    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-                        <span id="u-nick-prefix" style="display:none;font-size:13px;font-weight:800;color:var(--teal);font-family:var(--font-body);"></span>
-                        <h2 id="u-nick" style="font-size:1.8rem;font-weight:700;font-family:var(--font-display);"></h2>
-                    </div>
+                    <h2 id="u-nick" style="margin-bottom:10px;font-size:1.8rem;font-weight:700;font-family:var(--font-display);"></h2>
                     <div id="u-role-badge" style="margin-bottom:14px;"></div>
                     <div style="display:flex;gap:28px;font-size:13px;flex-wrap:wrap;">
                         <div><b id="u-views" style="font-size:1.5rem;color:var(--teal);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Просмотрено</span></div>
                         <div style="cursor:pointer;" onclick="showMySubscribers()"><b id="u-subs" style="font-size:1.5rem;color:var(--violet-light);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Подписчики</span></div>
-                        <div style="cursor:pointer;" onclick="navigate('shop')"><b id="u-vcoins" style="font-size:1.5rem;color:#fbbf24;">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">🪙 VCoins</span></div>
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;min-width:180px;">
@@ -248,9 +225,6 @@
                     <button class="btn btn-outline" onclick="openAchInventory()"><i class="fas fa-medal"></i> Достижения</button>
                     <button class="btn btn-outline" onclick="document.getElementById('m-public-prof').style.display='flex'"><i class="fas fa-user-edit"></i> Мой профиль</button>
                     <button class="btn btn-outline" onclick="navigate('playlists')"><i class="fas fa-layer-group"></i> Плейлисты</button>
-                    <button class="btn btn-outline" onclick="openFindFriends()"><i class="fas fa-user-friends"></i> Найти друзей</button>
-                    <button class="btn btn-outline" onclick="navigate('shop')"><i class="fas fa-coins"></i> Магазин</button>
-                    <button id="btn-admin-roles" class="btn btn-outline" style="display:none;" onclick="openAdminRolesPanel()"><i class="fas fa-users-cog"></i> Роли пользователей</button>
                     <button class="btn btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,0.35);" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Выйти</button>
                 </div>
             </div>
@@ -266,15 +240,6 @@
                 <p style="font-size:10px;color:var(--violet-light);margin-bottom:14px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">Панель администратора</p>
                 <button class="btn btn-blue" onclick="document.getElementById('m-give-ach').style.display='flex'"><i class="fas fa-award"></i> Выдать ачивку</button>
             </div>
-            <div style="background:var(--card-bg);padding:24px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:22px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-                    <h4 style="font-size:14px;font-family:var(--font-display);"><i class="fas fa-stream" style="color:var(--teal);margin-right:8px;"></i> Моя стена</h4>
-                    <button class="btn btn-outline btn-sm" onclick="document.getElementById('m-wall-settings').style.display='flex'">
-                        <i class="fas fa-cog"></i> Настройки стены
-                    </button>
-                </div>
-                <div id="profile-wall-wrap"></div>
-            </div>
             <div style="text-align:center;padding:32px 0;border-top:1px solid var(--border);margin-top:22px;">
                 <a href="javascript:void(0)" onclick="openPrivacy()" style="color:var(--text-dim);font-size:11px;text-decoration:none;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Политика конфиденциальности</a>
             </div>
@@ -287,6 +252,7 @@
             <div>
                 <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;">← Профиль</button>
                 <h1 style="font-size:1.8rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"><i class="fas fa-layer-group" style="-webkit-text-fill-color:var(--violet-light);margin-right:10px;"></i>Мои плейлисты</h1>
+                <p style="color:var(--text-dim);font-size:13px;margin-top:6px;line-height:1.6;font-style:italic;">Создавайте плейлисты и добавляйте релизы. До 3 можно закрепить в профиле.</p>
             </div>
             <button class="btn" onclick="openPlaylistModal()"><i class="fas fa-plus"></i> Создать плейлист</button>
         </div>
@@ -433,35 +399,6 @@
 
 </main>
 
-    <!-- ===== МАГАЗИН VCOINS ===== -->
-    <section id="shop" class="section">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
-            <div>
-                <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-                    <i class="fas fa-coins" style="-webkit-text-fill-color:#fbbf24;margin-right:10px;"></i>VCoins &amp; Магазин
-                </h1>
-                <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Монеты за просмотры, игры и активность</p>
-            </div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button id="btn-admin-vcoins" class="btn btn-blue" style="display:none;" onclick="openVcoinsAdminPanel()">
-                    <i class="fas fa-cog"></i> Цены
-                </button>
-            </div>
-        </div>
-        <div id="shop-wrap"></div>
-    </section>
-
-    <!-- ===== СТАТИСТИКА ===== -->
-    <section id="stats" class="section">
-        <div style="margin-bottom:28px;">
-            <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,#34d399,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-                <i class="fas fa-chart-bar" style="-webkit-text-fill-color:#34d399;margin-right:10px;"></i>Статистика сайта
-            </h1>
-            <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Только для администраторов</p>
-        </div>
-        <div id="stats-wrap"></div>
-    </section>
-
 <!-- ===== FOOTER ===== -->
 <footer class="footer-main">
     <div class="footer-wave"></div>
@@ -475,9 +412,10 @@
             <div class="footer-socials">
                 <a href="https://vk.com/voiceactingteam1" target="_blank" class="footer-social-btn" title="ВКонтакте"><i class="fab fa-vk"></i></a>
                 <a href="https://t.me/VoiceActingTeam1" target="_blank" class="footer-social-btn" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
-                <a href="https://youtube.com/@voiceactingteam1" target="_blank" class="footer-social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
-                <a href="https://www.tiktok.com/@voice.acting.team8" target="_blank" class="footer-social-btn" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="https://youtube.com/@voiceactingteam1?si=0PoFChfUBfstrFrL" target="_blank" class="footer-social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/@voice.acting.team8?_t=ZN-90cUs7oh1i2&_r=1" target="_blank" class="footer-social-btn" title="TikTok"><i class="fab fa-tiktok"></i></a>
                 <a href="https://boosty.to/voiceactingteam" target="_blank" class="footer-social-btn" title="Boosty" style="font-size:11px;font-weight:900;font-family:var(--font-display);">B</a>
+                <a href="https://vattchelovekizvuchat.com/twich" target="_blank" class="footer-social-btn" title="Twitch"><i class="fab fa-twitch"></i></a>
             </div>
         </div>
         <div class="footer-col">
@@ -494,6 +432,7 @@
             <a href="https://youtube.com/@voiceactingteam1" target="_blank">YouTube</a>
             <a href="https://www.tiktok.com/@voice.acting.team8" target="_blank">TikTok</a>
             <a href="https://boosty.to/voiceactingteam" target="_blank">Boosty</a>
+            <a href="https://vattchelovekizvuchat.com/twich" target="_blank">Twitch</a>
         </div>
         <div class="footer-col">
             <h5>Хочешь с нами?</h5>
@@ -508,7 +447,7 @@
 </footer>
 
 <!-- ===== MODALS ===== -->
-<!-- (все модалы без изменений — скопированы из оригинала) -->
+
 <div id="m-rel" class="modal"><div class="modal-content">
     <h3 style="margin-bottom:18px;">Управление релизом</h3>
     <input type="hidden" id="ed-rel-id">
@@ -526,18 +465,28 @@
 <div id="m-ep" class="modal"><div class="modal-content" style="max-width:580px;">
     <h3 id="m-ep-heading" style="margin-bottom:18px;">Добавить медиа</h3>
     <input type="hidden" id="ed-ep-idx">
-    <select id="ad-ep-type"><option value="series">Серия / Фильм</option><option value="trailer">Трейлер</option></select>
+    <select id="ad-ep-type"><option value="series">Серия / Фильм</option><option value="trailer">Трейлер (автоплей без звука)</option></select>
     <input type="text" id="ad-ep-name" placeholder="Название кнопки (Серия 1 / Трейлер)">
     <input type="text" id="ad-ep-title" placeholder="Полное название серии (необязательно)">
     <input type="text" id="ad-ep-url" placeholder="URL видео (Google Drive или YouTube)">
     <input type="text" id="ad-ep-thumb" placeholder="URL превью серии (необязательно)">
     <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:12px;">
-        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏱ Тайминги заставки (мм:сс)</p>
+        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏱ Тайминги заставки (формат мм:сс)</p>
+        <p style="font-size:10px;color:var(--text-muted);margin-bottom:10px;font-style:italic;">Указывайте время относительно начала видео. Например: заставка с 0:30 до 1:45</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">▶ Начало заставки</label><input type="text" id="ad-ep-intro-start" placeholder="0:30" style="margin-bottom:0;"></div>
-            <div><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">⏹ Конец заставки</label><input type="text" id="ad-ep-intro-end" placeholder="1:45" style="margin-bottom:0;"></div>
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">▶ Начало заставки</label>
+                <input type="text" id="ad-ep-intro-start" placeholder="0:30" style="margin-bottom:0;">
+            </div>
+            <div>
+                <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">⏹ Конец заставки</label>
+                <input type="text" id="ad-ep-intro-end" placeholder="1:45" style="margin-bottom:0;">
+            </div>
         </div>
-        <div style="margin-top:10px;"><label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">🎬 Следующая серия с</label><input type="text" id="ad-ep-outro-start" placeholder="21:30" style="margin-bottom:0;"></div>
+        <div style="margin-top:10px;">
+            <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">🎬 Предложить следующую серию с</label>
+            <input type="text" id="ad-ep-outro-start" placeholder="21:30" style="margin-bottom:0;">
+        </div>
     </div>
     <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveEp()">Сохранить</button>
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
@@ -568,8 +517,19 @@
             <option value="tech">Тех. часть</option>
             <option value="curator">Куратор</option>
         </select>
-        <div id="credit-voice-block"><label class="order-label">Имя персонажа</label><input type="text" id="credit-character" placeholder="Например: Наруто Узумаки" style="margin-bottom:0;"></div>
-        <div id="credit-tech-block" style="display:none;"><label class="order-label">Должность</label><select id="credit-tech-role" style="margin-bottom:0;"><option value="Монтажёр">Монтажёр</option><option value="Локализатор">Локализатор</option><option value="Сводчик">Сводчик</option><option value="Превьюмейкер">Превьюмейкер</option></select></div>
+        <div id="credit-voice-block">
+            <label class="order-label">Имя персонажа</label>
+            <input type="text" id="credit-character" placeholder="Например: Наруто Узумаки" style="margin-bottom:0;">
+        </div>
+        <div id="credit-tech-block" style="display:none;">
+            <label class="order-label">Должность</label>
+            <select id="credit-tech-role" style="margin-bottom:0;">
+                <option value="Монтажёр">Монтажёр</option>
+                <option value="Локализатор">Локализатор</option>
+                <option value="Сводчик">Сводчик</option>
+                <option value="Превьюмейкер">Превьюмейкер</option>
+            </select>
+        </div>
         <button class="btn btn-blue" style="width:100%;margin-top:12px;" onclick="addCredit()"><i class="fas fa-plus"></i> Добавить</button>
     </div>
     <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="closeModals()">Закрыть</button>
@@ -638,11 +598,9 @@
 <div id="m-role" class="modal"><div class="modal-content" style="max-width:500px;">
     <h3 style="margin-bottom:6px;"><i class="fas fa-user-shield"></i> Управление ролями</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">
-        <b style="color:var(--teal);">dub</b> — Актёр дубляжа.<br>
-        <b style="color:#fbbf24;">curator</b> — Куратор проекта.<br>
-        <b style="color:var(--lavender-lt);">moderator</b> — Модератор.<br>
-        <b style="color:#60a5fa;">proxyadmin</b> — Прокси-администратор (доступ к техработам).<br>
-        <b style="color:#34d399;">developer</b> — Разработчик (доступ к техработам).
+        <b style="color:var(--teal);">dub</b> — Актёр дубляжа (DUB-in).<br>
+        <b style="color:#fbbf24;">curator</b> — Куратор проекта (DUB-in + Оценка).<br>
+        <b style="color:var(--lavender-lt);">moderator</b> — Модератор.
     </p>
     <label class="order-label">Email пользователя</label>
     <input type="email" id="role-email" placeholder="user@example.com">
@@ -651,8 +609,6 @@
         <option value="moderator">moderator — Модератор</option>
         <option value="dub">dub — Актёр дубляжа</option>
         <option value="curator">curator — Куратор проекта</option>
-        <option value="proxyadmin">proxyadmin — Прокси-администратор</option>
-        <option value="developer">developer — Разработчик</option>
         <option value="admin">admin — Администратор</option>
     </select>
     <div id="curator-project-block" style="display:none;">
@@ -703,7 +659,7 @@
 </div></div>
 
 <div id="m-user-profile" class="modal"><div class="modal-content" style="text-align:center;">
-    <img id="mu-ava" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);margin-bottom:12px;" src="" alt="">
+    <img id="mu-ava" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);margin-bottom:12px;">
     <h2 id="mu-nick" style="margin-bottom:8px;font-family:var(--font-display);"></h2>
     <div id="mu-role-badge" style="margin-bottom:14px;display:flex;justify-content:center;"></div>
     <p id="mu-bio" class="mu-bio-text"></p>
@@ -718,6 +674,8 @@
     <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
+<!-- Rating modals -->
+<!-- Rating detail modal -->
 <div id="m-rating-detail" class="modal"><div class="modal-content" style="max-width:660px;">
     <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;">
         <img id="rd-ava" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);flex-shrink:0;" src="" alt="">
@@ -735,11 +693,17 @@
     </div>
     <div style="margin-bottom:16px;">
         <label class="order-label">Заметки об оборудовании</label>
-        <textarea id="rd-equip-note" rows="3" placeholder="Описание оборудования..."></textarea>
+        <textarea id="rd-equip-note" rows="3" placeholder="Описание оборудования, комментарии куратора..."></textarea>
     </div>
-    <button id="rd-preview-btn" class="btn btn-blue" style="width:100%;display:none;margin-bottom:8px;" onclick="previewRank()"><i class="fas fa-eye"></i> Предпросмотр ранга</button>
-    <button id="rd-save-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;"><i class="fas fa-save"></i> Сохранить оценки</button>
-    <button id="rd-delete-btn" class="btn btn-outline" style="width:100%;display:none;border-color:rgba(239,68,68,0.4);color:#ef4444;margin-bottom:8px;"><i class="fas fa-trash"></i> Удалить карточку</button>
+    <button id="rd-preview-btn" class="btn btn-blue" style="width:100%;display:none;margin-bottom:8px;" onclick="previewRank()">
+        <i class="fas fa-eye"></i> Предпросмотр ранга
+    </button>
+    <button id="rd-save-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;">
+        <i class="fas fa-save"></i> Сохранить оценки
+    </button>
+    <button id="rd-delete-btn" class="btn btn-outline" style="width:100%;display:none;border-color:rgba(239,68,68,0.4);color:#ef4444;margin-bottom:8px;">
+        <i class="fas fa-trash"></i> Удалить карточку
+    </button>
     <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
@@ -819,109 +783,7 @@
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
-<div id="m-notifications" class="modal"><div class="modal-content" style="max-width:480px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="margin:0;"><i class="fas fa-bell" style="color:var(--teal);margin-right:8px;"></i>Уведомления</h3>
-        <button class="btn btn-outline btn-sm" onclick="markAllNotifsRead()">Прочитать все</button>
-    </div>
-    <div id="notif-list" style="max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-game" class="modal"><div class="modal-content" style="max-width:480px;">
-    <h3 id="m-game-title" style="margin-bottom:18px;"></h3>
-    <div id="game-wrap"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-vcoin-history" class="modal"><div class="modal-content" style="max-width:480px;">
-    <h3 style="margin-bottom:16px;"><i class="fas fa-history" style="color:#fbbf24;margin-right:8px;"></i>История транзакций</h3>
-    <div id="vcoin-history-list" style="max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-gift-vcoins" class="modal"><div class="modal-content" style="max-width:420px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-gift" style="color:#fbbf24;margin-right:8px;"></i>Подарить VCoins</h3>
-    <label class="order-label">Ник получателя</label>
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input type="text" id="gift-nick" placeholder="Никнейм" style="margin-bottom:0;flex:1;">
-        <button class="btn btn-sm btn-outline" onclick="searchGiftTarget()"><i class="fas fa-search"></i></button>
-    </div>
-    <div id="gift-target-info" style="margin-bottom:12px;"></div>
-    <label class="order-label">Сумма VCoins</label>
-    <input type="number" id="gift-amount" placeholder="Например: 100" min="1">
-    <button class="btn" style="width:100%;" onclick="sendGift()"><i class="fas fa-paper-plane"></i> Отправить</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
-</div></div>
-
-<div id="m-nick-color" class="modal"><div class="modal-content" style="max-width:380px;text-align:center;">
-    <h3 style="margin-bottom:6px;">🎨 Выбор цвета ника</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;font-style:italic;">Стоимость: <b id="nc-price" style="color:#fbbf24;"></b> VCoins</p>
-    <div id="nc-color-grid" class="nc-color-grid"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Отмена</button>
-</div></div>
-
-<div id="m-vcoins-admin" class="modal"><div class="modal-content" style="max-width:440px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-cog" style="color:#fbbf24;margin-right:8px;"></i>Цены в магазине</h3>
-    <label class="order-label">Цветной никнейм</label>
-    <input type="number" id="price-colorNick" min="1" placeholder="500">
-    <label class="order-label">Префикс перед ником</label>
-    <input type="number" id="price-prefix" min="1" placeholder="300">
-    <label class="order-label">Дополнительный слот ачивки</label>
-    <input type="number" id="price-achSlot" min="1" placeholder="200">
-    <button class="btn btn-blue" style="width:100%;margin-top:4px;" onclick="saveVcoinPrices()">Сохранить цены</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
-</div></div>
-
-<div id="m-find-friends" class="modal"><div class="modal-content" style="max-width:520px;">
-    <div style="text-align:center;margin-bottom:22px;">
-        <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>
-        <h3 style="font-family:var(--font-display);">Найти друзей</h3>
-        <p style="font-size:12px;color:var(--text-dim);margin-top:6px;font-style:italic;">Поиск по нику или email</p>
-    </div>
-    <div class="friend-search-wrap">
-        <i class="fas fa-search friend-search-icon"></i>
-        <input type="text" id="friend-search-input" class="friend-search-input" placeholder="Введите ник или email..." oninput="onFriendSearchInput()" autocomplete="off">
-    </div>
-    <div id="friend-search-results" style="margin-top:16px;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
-        <p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Введите имя для поиска</p>
-    </div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-wall-settings" class="modal"><div class="modal-content" style="max-width:420px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-cog"></i> Настройки стены</h3>
-    <label class="checkbox-row"><input type="radio" name="wall-mode" id="wall-allow-all" checked> Все пользователи</label>
-    <label class="checkbox-row"><input type="radio" name="wall-mode" id="wall-friends-only"> Только подписчики</label>
-    <label class="checkbox-row"><input type="radio" name="wall-mode" id="wall-disabled"> Никто (закрыта)</label>
-    <button class="btn btn-purple" style="width:100%;margin-top:14px;" onclick="saveWallSettings()">Сохранить</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
-</div></div>
-
-<div id="m-admin-roles" class="modal"><div class="modal-content" style="max-width:640px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-users-cog" style="color:var(--violet-light);margin-right:8px;"></i>Пользователи с ролями</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Все пользователи кроме обычных</p>
-    <div id="admin-roles-list" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<!-- Куки баннер -->
-<div id="cookie-banner" class="cookie-banner" style="display:none;">
-    <div class="cookie-banner-inner">
-        <div class="cookie-banner-icon">🍪</div>
-        <div class="cookie-banner-text">
-            <p class="cookie-banner-title">Мы используем файлы cookie</p>
-            <p class="cookie-banner-desc">Для улучшения работы сайта и аналитики.</p>
-        </div>
-        <div class="cookie-banner-btns">
-            <button class="btn btn-sm" onclick="acceptCookies()">Принять</button>
-            <button class="btn btn-sm btn-outline" onclick="declineCookies()">Отклонить</button>
-        </div>
-    </div>
-</div>
-
 <!-- ===== SCRIPTS ===== -->
-<!-- ИСПРАВЛЕН путь: js/app.js вместо js/app.js (проверь что структура совпадает) -->
 <script type="module" src="js/app.js"></script>
 
 <canvas id="bg-canvas"></canvas>
@@ -939,6 +801,8 @@
         {x:0.15,y:0.2,r:260,col:[124,58,237],t:0,alpha:0.06},
         {x:0.85,y:0.75,r:300,col:[20,184,166],t:1.8,alpha:0.05},
         {x:0.5,y:0.5,r:350,col:[139,92,246],t:3.2,alpha:0.04},
+        {x:0.1,y:0.8,r:180,col:[20,184,166],t:0.5,alpha:0.04},
+        {x:0.9,y:0.15,r:200,col:[124,58,237],t:2.5,alpha:0.05},
     ];
     const shoots = [];
     function spawnShoot(){ if(shoots.length<3&&Math.random()<0.006) shoots.push({x:Math.random()*W*0.7,y:Math.random()*H*0.5,len:Math.random()*120+60,speed:Math.random()*6+4,a:1,angle:Math.PI/4+(Math.random()-0.5)*0.4}); }
@@ -967,29 +831,6 @@ document.addEventListener('click', function(e){
     btn.style.overflow = 'hidden';
     btn.appendChild(r);
     setTimeout(function(){ r.remove(); }, 600);
-});
-</script>
-<script>
-(function(){
-    if (!localStorage.getItem('cookieConsent')) {
-        setTimeout(function(){
-            const b = document.getElementById('cookie-banner');
-            if (b) { b.style.display='flex'; requestAnimationFrame(function(){ b.classList.add('cookie-banner--visible'); }); }
-        }, 1500);
-    }
-})();
-window.acceptCookies = function() {
-    localStorage.setItem('cookieConsent','accepted');
-    const b = document.getElementById('cookie-banner');
-    if (b) { b.classList.remove('cookie-banner--visible'); setTimeout(function(){ b.style.display='none'; }, 500); }
-};
-window.declineCookies = function() {
-    localStorage.setItem('cookieConsent','declined');
-    const b = document.getElementById('cookie-banner');
-    if (b) { b.classList.remove('cookie-banner--visible'); setTimeout(function(){ b.style.display='none'; }, 500); }
-};
-document.addEventListener('DOMContentLoaded', function(){
-    if (window.renderNickColorPicker) window.renderNickColorPicker();
 });
 </script>
 </body>
