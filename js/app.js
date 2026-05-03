@@ -19,7 +19,7 @@ import { bindOrder }       from './order.js';
 import { bindPlaylists }   from './playlists.js';
 import { bindRatings }     from './ratings.js';
 import { bindVCoins, awardVCoins } from './vcoins.js';
-import { bindNotifications, listenNotifications, requestPushPermission } from './notifications.js';
+import { bindNotifications, listenNotifications } from './notifications.js';
 import { bindUserSearch, bindProfileWall } from './users_search.js';
 import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js';
 import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js';
@@ -41,7 +41,7 @@ const state = {
 };
 const getState = () => state;
 
-// ── Инициализируем стили техработ сразу ──
+// ── Инжектируем стили техработ сразу при загрузке ──
 injectMaintenanceStyles();
 
 // ── Привязываем все модули ──
@@ -96,15 +96,15 @@ window.navigate = function(page, pushState) {
 
 // ── Обновить видимость сайдбара ──
 function updateSidebarVisibility() {
-    const dubinLink   = document.getElementById('sn-dubin');
-    const ratingsLink = document.getElementById('sn-ratings');
-    const shopLink    = document.getElementById('sn-shop');
-    const statsLink   = document.getElementById('sn-stats');
-
-    if (dubinLink)   dubinLink.style.display   = canAccessDubin(state.userData)   ? 'flex' : 'none';
-    if (ratingsLink) ratingsLink.style.display = canAccessRatings(state.userData) ? 'flex' : 'none';
-    if (shopLink)    shopLink.style.display    = state.userData ? 'flex' : 'none';
-    if (statsLink)   statsLink.style.display   = state.isAdmin  ? 'flex' : 'none';
+    const show = (id, visible) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = visible ? 'flex' : 'none';
+    };
+    show('sn-dubin',   canAccessDubin(state.userData));
+    show('sn-ratings', canAccessRatings(state.userData));
+    show('sn-shop',    !!state.userData);
+    show('sn-stats',   state.isAdmin);
+    show('sn-playlists', !!state.userData);
 }
 
 // ── Главный Auth слушатель ──
@@ -153,19 +153,17 @@ onAuthStateChanged(auth, async function(user) {
 
     updateSidebarVisibility();
 
-    // ── Проверка режима техработ ──
+    // ── Проверка режима техработ (читает из Firestore settings/maintenance) ──
     const userRole = state.userData?.role || null;
-    const inMaintenance = await checkMaintenance(userRole);
+    const inMaintenance = await checkMaintenance(db, userRole);
 
-    // Если в режиме техработ — не загружаем дальше
+    // Запускаем периодическую проверку в любом случае
+    startMaintenancePolling(db, () => state.userData?.role || null);
+
     if (inMaintenance) {
-        // Запускаем периодическую проверку
-        startMaintenancePolling(() => state.userData?.role || null);
+        // В режиме техработ — не загружаем остальное
         return;
     }
-
-    // Запускаем периодическую проверку даже если сейчас нет техработ
-    startMaintenancePolling(() => state.userData?.role || null);
 
     await loadReleases(db, state.isAdmin);
     initAuthListeners(auth, db);
