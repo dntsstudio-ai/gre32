@@ -4,7 +4,7 @@
 //  Роли proxyadmin и developer — полный доступ
 // ============================================================
 
-import { MAINTENANCE_CONFIG_URL } from '../config/config.js';
+import { MAINTENANCE_CONFIG_URL } from '../main/config.js';
 
 let _maintenanceConfig = null;
 let _checkInterval = null;
