@@ -7,7 +7,7 @@ import {
     signOut, sendPasswordResetEmail, updatePassword, updateEmail
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
-    doc, setDoc, updateDoc, getDocs, collection, query, where, serverTimestamp
+    doc, setDoc, updateDoc, getDocs, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js';
@@ -32,14 +32,15 @@ function authErrorMsg(code) {
 }
 
 export function initAuthListeners(auth, db) {
-    const btnLogin = document.getElementById('btn-login');
-    const btnReg   = document.getElementById('btn-reg');
-    const btnLogout= document.getElementById('btn-logout');
+    const btnLogin  = document.getElementById('btn-login');
+    const btnReg    = document.getElementById('btn-reg');
+    const btnLogout = document.getElementById('btn-logout');
 
-    if (btnLogin) {
+    if (btnLogin && !btnLogin._bound) {
+        btnLogin._bound = true;
         btnLogin.onclick = async function() {
-            const e = document.getElementById('email').value.trim();
-            const p = document.getElementById('pass').value;
+            const e = document.getElementById('email')?.value.trim();
+            const p = document.getElementById('pass')?.value;
             if (!e || !p) return showToast('Введите email и пароль!', 'error');
             try {
                 await signInWithEmailAndPassword(auth, e, p);
@@ -56,23 +57,25 @@ export function initAuthListeners(auth, db) {
         };
     }
 
-    if (btnReg) {
+    if (btnReg && !btnReg._bound) {
+        btnReg._bound = true;
         btnReg.onclick = async function() {
-            const e = document.getElementById('email').value.trim();
-            const p = document.getElementById('pass').value;
-            if (!e || p.length < 6) return showToast('Email и пароль (мин. 6 символов)!', 'error');
+            const e = document.getElementById('email')?.value.trim();
+            const p = document.getElementById('pass')?.value;
+            if (!e || !p || p.length < 6) return showToast('Email и пароль (мин. 6 символов)!', 'error');
             try {
                 const cred = await createUserWithEmailAndPassword(auth, e, p);
                 await setDoc(doc(db, 'users', cred.user.uid), {
-                    nickname:  'User_' + Math.floor(Math.random() * 10000),
-                    email:     e,
-                    role:      'user',
-                    views:     0,
-                    subscribers: 0,
-                    publicBio: '',
-                    publicLink: '',
+                    nickname:       'User_' + Math.floor(Math.random() * 10000),
+                    email:          e,
+                    role:           'user',
+                    views:          0,
+                    subscribers:    0,
+                    vcoins:         0,
+                    publicBio:      '',
+                    publicLink:     '',
                     curatorProject: '',
-                    createdAt: Date.now(),
+                    createdAt:      Date.now(),
                     achievements: [{
                         id: 'newcomer', name: 'Новичок',
                         desc: 'Зарегистрировался на сайте',
@@ -87,7 +90,8 @@ export function initAuthListeners(auth, db) {
         };
     }
 
-    if (btnLogout) {
+    if (btnLogout && !btnLogout._bound) {
+        btnLogout._bound = true;
         btnLogout.onclick = function() {
             signOut(auth).then(function() {
                 showToast('Вы вышли');
@@ -98,83 +102,87 @@ export function initAuthListeners(auth, db) {
 }
 
 export function applyUserUI(userData, isAdmin, hasDubAccess) {
+    // Переключаем auth/user блоки
     const authUi = document.getElementById('auth-ui');
     const userUi = document.getElementById('user-ui');
     if (authUi) authUi.style.display = 'none';
     if (userUi) userUi.style.display = 'block';
 
+    // Комменты
     const commForm    = document.getElementById('comm-form');
     const commAuthMsg = document.getElementById('comm-auth-msg');
     if (commForm)    commForm.style.display    = 'block';
     if (commAuthMsg) commAuthMsg.style.display = 'none';
 
-    const uNick = document.getElementById('u-nick');
-    const edNick= document.getElementById('ed-nick');
-    const uAva  = document.getElementById('u-ava');
-    const edAva = document.getElementById('ed-ava');
-    const uRole = document.getElementById('u-role-badge');
-    const uViews= document.getElementById('u-views');
-    const uSubs = document.getElementById('u-subs');
-    const uVC   = document.getElementById('u-vcoins');
-    const prefEl= document.getElementById('u-nick-prefix');
+    // Основные поля профиля
+    const uNick  = document.getElementById('u-nick');
+    const edNick = document.getElementById('ed-nick');
+    const uAva   = document.getElementById('u-ava');
+    const edAva  = document.getElementById('ed-ava');
+    const uRole  = document.getElementById('u-role-badge');
+    const uViews = document.getElementById('u-views');
+    const uSubs  = document.getElementById('u-subs');
+    const uVC    = document.getElementById('u-vcoins');
+    const prefEl = document.getElementById('u-nick-prefix');
 
     if (uNick)  uNick.innerText  = userData.nickname || '';
     if (edNick) edNick.value     = userData.nickname || '';
-    if (uAva)   uAva.src         = userData.avatar || 'https://api.dicebear.com/7.x/identicon/svg';
-    if (edAva)  edAva.value      = userData.avatar || '';
+    if (uAva)   uAva.src         = userData.avatar   || 'https://api.dicebear.com/7.x/identicon/svg';
+    if (edAva)  edAva.value      = userData.avatar   || '';
     if (uRole)  uRole.innerHTML  = getRoleBadgeHTML(userData.role, userData.curatorProject);
-    if (uViews) uViews.innerText = userData.views || 0;
+    if (uViews) uViews.innerText = userData.views     || 0;
     if (uSubs)  uSubs.innerText  = userData.subscribers || 0;
-    if (uVC)    uVC.textContent  = userData.vcoins || 0;
+    if (uVC)    uVC.textContent  = userData.vcoins    || 0;
 
-    // Nick color
+    // Цвет ника
     if (uNick && userData.nickColor) uNick.style.color = userData.nickColor;
 
-    // Prefix
+    // Префикс
     if (prefEl) {
         if (userData.activePrefix) {
-            prefEl.textContent = '[' + userData.activePrefix + ']';
+            prefEl.textContent   = '[' + userData.activePrefix + ']';
             prefEl.style.display = 'inline';
         } else {
             prefEl.style.display = 'none';
         }
     }
 
+    // Публичный профиль
+    const pubBio  = document.getElementById('pub-bio');
+    const pubLink = document.getElementById('pub-link');
+    if (pubBio)  pubBio.value  = userData.publicBio  || '';
+    if (pubLink) pubLink.value = userData.publicLink  || '';
+
     renderAchProfile(userData);
 
-    // Admin controls
-    const setDisplay = (id, show) => {
+    // Admin кнопки
+    const setDsp = (id, show, displayType) => {
         const el = document.getElementById(id);
-        if (el) el.style.display = show ? 'inline-flex' : 'none';
+        if (el) el.style.display = show ? (displayType || 'inline-flex') : 'none';
     };
-    setDisplay('adm-btn-rel',  isAdmin);
-    setDisplay('adm-btn-team', isAdmin);
-    setDisplay('adm-btn-role', isAdmin);
-    setDisplay('btn-admin-roles', isAdmin);
-    setDisplay('btn-admin-vcoins', isAdmin);
+    setDsp('adm-btn-rel',      isAdmin);
+    setDsp('adm-btn-team',     isAdmin);
+    setDsp('adm-btn-role',     isAdmin);
+    setDsp('btn-admin-roles',  isAdmin);
+    setDsp('btn-admin-vcoins', isAdmin);
 
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = isAdmin ? 'block' : 'none';
 
-    // Sidebar playlists
-    const npl = document.getElementById('sn-playlists');
-    if (npl) npl.style.display = 'flex';
+    // Sidebar
+    const sideItems = [
+        ['sn-playlists', true, 'flex'],
+        ['sn-shop',      true, 'flex'],
+        ['notif-btn',    true, 'flex'],
+    ];
+    sideItems.forEach(([id, show, dt]) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = show ? dt : 'none';
+    });
 
-    // Notif bell
-    const notifBtn = document.getElementById('notif-btn');
-    if (notifBtn) notifBtn.style.display = 'flex';
-
-    // Shop sidebar
-    const shopLink  = document.getElementById('sn-shop');
-    const shopBal   = document.getElementById('sn-shop-balance');
-    if (shopLink) shopLink.style.display = 'flex';
-    if (shopBal)  shopBal.textContent    = userData.vcoins || 0;
-
-    // Public profile fields
-    const pubBio  = document.getElementById('pub-bio');
-    const pubLink = document.getElementById('pub-link');
-    if (pubBio)  pubBio.value  = userData.publicBio  || '';
-    if (pubLink) pubLink.value = userData.publicLink || '';
+    // VCoins баланс в sidebar
+    const shopBal = document.getElementById('sn-shop-balance');
+    if (shopBal) shopBal.textContent = userData.vcoins || 0;
 }
 
 export function resetUserUI() {
@@ -189,32 +197,21 @@ export function resetUserUI() {
     if (commAuthMsg) commAuthMsg.style.display = 'block';
 
     ['adm-btn-rel','adm-btn-team','adm-btn-role','adm-ach-panel',
-     'btn-admin-roles','btn-admin-vcoins'].forEach(function(id) {
+     'btn-admin-roles','btn-admin-vcoins',
+     'sn-playlists','sn-shop','notif-btn'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-
-    const npl = document.getElementById('sn-playlists');
-    if (npl) npl.style.display = 'none';
-
-    const notifBtn = document.getElementById('notif-btn');
-    if (notifBtn) notifBtn.style.display = 'none';
-
-    const shopLink = document.getElementById('sn-shop');
-    if (shopLink) shopLink.style.display = 'none';
 }
 
 export function bindAuthActions(auth, db, getState) {
     window.resetPassword = async function() {
-        const emailEl = document.getElementById('email');
-        const e = emailEl ? emailEl.value.trim() : '';
+        const e = document.getElementById('email')?.value.trim();
         if (!e) return showToast('Введите email!', 'error');
         try {
             await sendPasswordResetEmail(auth, e);
             showToast('Письмо отправлено!');
-        } catch(err) {
-            showToast(authErrorMsg(err.code), 'error');
-        }
+        } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
     };
 
     window.changeUserEmail = async function() {
@@ -224,9 +221,7 @@ export function bindAuthActions(auth, db, getState) {
             await updateEmail(auth.currentUser, newEmail);
             showToast('Email изменён!');
             closeModals();
-        } catch(err) {
-            showToast(authErrorMsg(err.code), 'error');
-        }
+        } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
     };
 
     window.changeUserPass = async function() {
@@ -236,9 +231,7 @@ export function bindAuthActions(auth, db, getState) {
             await updatePassword(auth.currentUser, newPass);
             showToast('Пароль изменён!');
             closeModals();
-        } catch(err) {
-            showToast(authErrorMsg(err.code), 'error');
-        }
+        } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
     };
 
     window.saveProfile = async function() {
@@ -258,8 +251,6 @@ export function bindAuthActions(auth, db, getState) {
             if (uAva)  uAva.src        = ava || 'https://api.dicebear.com/7.x/identicon/svg';
             showToast('Профиль обновлён!');
             closeModals();
-        } catch(err) {
-            showToast('Ошибка: ' + err.message, 'error');
-        }
+        } catch(err) { showToast('Ошибка: ' + err.message, 'error'); }
     };
 }
