@@ -5,22 +5,20 @@
 export const esc = (s) =>
     s ? s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
 
-// ── Все роли сайта ──
 export const ROLE_LABELS = {
-    admin:      { label: 'АДМИНИСТРАТОР',   cls: 'role-admin',    icon: 'fa-shield-alt'      },
-    proxyadmin: { label: 'ПРОКСИ-АДМИН',    cls: 'role-proxyadmin',icon: 'fa-user-shield'    },
-    developer:  { label: 'РАЗРАБОТЧИК',     cls: 'role-developer', icon: 'fa-code'           },
-    moderator:  { label: 'МОДЕРАТОР',       cls: 'role-mod',      icon: 'fa-user-check'      },
-    dub:        { label: 'АКТЁР ДУБЛЯЖА',   cls: 'role-dub',      icon: 'fa-microphone-alt'  },
-    curator:    { label: 'КУРАТОР',         cls: 'role-curator',  icon: 'fa-crown'           },
-    subber:     { label: 'САББЕР',          cls: 'role-subber',   icon: 'fa-closed-captioning'},
-    previewer:  { label: 'ПРЕВЬЮМЕЙКЕР',    cls: 'role-previewer',icon: 'fa-image'           },
-    editor:     { label: 'МОНТАЖЁР',        cls: 'role-editor',   icon: 'fa-film'            },
-    mixer:      { label: 'СВОДЧИК',         cls: 'role-mixer',    icon: 'fa-sliders-h'       },
-    user:       { label: 'ПОЛЬЗОВАТЕЛЬ',    cls: 'role-user',     icon: 'fa-user'            }
+    admin:      { label:'АДМИНИСТРАТОР',  cls:'role-admin',      icon:'fa-shield-alt'       },
+    proxyadmin: { label:'ПРОКСИ-АДМИН',   cls:'role-proxyadmin', icon:'fa-user-shield'       },
+    developer:  { label:'РАЗРАБОТЧИК',    cls:'role-developer',  icon:'fa-code'              },
+    moderator:  { label:'МОДЕРАТОР',      cls:'role-mod',        icon:'fa-user-check'        },
+    dub:        { label:'АКТЁР ДУБЛЯЖА',  cls:'role-dub',        icon:'fa-microphone-alt'    },
+    curator:    { label:'КУРАТОР',        cls:'role-curator',    icon:'fa-crown'             },
+    subber:     { label:'САББЕР',         cls:'role-subber',     icon:'fa-closed-captioning' },
+    previewer:  { label:'ПРЕВЬЮМЕЙКЕР',   cls:'role-previewer',  icon:'fa-image'             },
+    editor:     { label:'МОНТАЖЁР',       cls:'role-editor',     icon:'fa-film'              },
+    mixer:      { label:'СВОДЧИК',        cls:'role-mixer',      icon:'fa-sliders-h'         },
+    user:       { label:'ПОЛЬЗОВАТЕЛЬ',   cls:'role-user',       icon:'fa-user'              }
 };
 
-// Все роли с доступом к DUB-in
 const DUBIN_ACCESS = ['admin','dub','curator','subber','previewer','editor','mixer','proxyadmin','developer'];
 
 export function getRoleBadgeHTML(role, curatorProject) {
@@ -65,11 +63,11 @@ export function showAchievementPopup(ach, isFullscreen) {
     const popup = document.createElement('div');
     popup.id = 'ach-popup';
     popup.className = isFullscreen ? 'ach-popup ach-popup--fs' : 'ach-popup';
-    const imgDiv = document.createElement('div'); imgDiv.className='ach-popup-img'; imgDiv.textContent=ach.img;
-    const textDiv = document.createElement('div'); textDiv.className='ach-popup-text';
+    const imgDiv   = document.createElement('div'); imgDiv.className='ach-popup-img'; imgDiv.textContent=ach.img;
+    const textDiv  = document.createElement('div'); textDiv.className='ach-popup-text';
     const labelDiv = document.createElement('div'); labelDiv.className='ach-popup-label'; labelDiv.textContent='Новое достижение!';
-    const nameDiv = document.createElement('div'); nameDiv.className='ach-popup-name'; nameDiv.textContent=ach.name;
-    const descDiv = document.createElement('div'); descDiv.className='ach-popup-desc'; descDiv.textContent=ach.desc;
+    const nameDiv  = document.createElement('div'); nameDiv.className='ach-popup-name'; nameDiv.textContent=ach.name;
+    const descDiv  = document.createElement('div'); descDiv.className='ach-popup-desc'; descDiv.textContent=ach.desc;
     textDiv.appendChild(labelDiv); textDiv.appendChild(nameDiv); textDiv.appendChild(descDiv);
     popup.appendChild(imgDiv); popup.appendChild(textDiv);
     document.body.appendChild(popup);
@@ -77,14 +75,13 @@ export function showAchievementPopup(ach, isFullscreen) {
     setTimeout(function() { popup.classList.remove('ach-popup--visible'); setTimeout(function(){ popup.remove(); },500); }, 5000);
 }
 
-// ── VCoins popup ──
 export function showVCoinsPopup(amount, reason) {
     const popup = document.createElement('div');
     popup.className = 'vcoins-popup';
-    popup.innerHTML = '<span class="vcoins-popup-coin">🪙</span><span>+' + amount + ' VC</span><span class="vcoins-popup-reason">' + esc(reason) + '</span>';
+    popup.innerHTML = '<span class="vcoins-popup-coin">🪙</span><span style="font-size:15px;font-weight:900;color:#fbbf24;">+' + amount + ' VC</span><span class="vcoins-popup-reason">' + esc(reason) + '</span>';
     document.body.appendChild(popup);
     requestAnimationFrame(function() { popup.classList.add('vcoins-popup--visible'); });
-    setTimeout(function() { popup.classList.remove('vcoins-popup--visible'); setTimeout(function(){ popup.remove(); }, 600); }, 3000);
+    setTimeout(function() { popup.classList.remove('vcoins-popup--visible'); setTimeout(function(){ popup.remove(); },600); }, 3000);
 }
 
 export function closeModals() {
@@ -93,6 +90,8 @@ export function closeModals() {
 
 export function navigate(page, pushState) {
     if (pushState === undefined) pushState = true;
+
+    // Скрываем все секции и убираем активные классы
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
     document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
     document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.remove('active'); });
@@ -100,23 +99,38 @@ export function navigate(page, pushState) {
     const target = document.getElementById(page);
     if (target) target.classList.add('active');
 
-    const navMap  = { home:'n-home', view:'n-home', team:'n-team', 'team-page':'n-team', order:'n-order' };
-    const sideMap = { profile:'sn-profile', playlists:'sn-playlists', dubin:'sn-dubin',
-                      ratings:'sn-ratings', shop:'sn-shop', stats:'sn-stats' };
+    // Карта nav-кнопок
+    const navMap = {
+        home:'n-home', view:'n-home',
+        team:'n-team', 'team-page':'n-team',
+        order:'n-order'
+    };
+    // Карта sidebar-ссылок
+    const sideMap = {
+        profile:'sn-profile',
+        playlists:'sn-playlists',
+        dubin:'sn-dubin',
+        ratings:'sn-ratings',
+        shop:'sn-shop',
+        stats:'sn-stats'
+    };
 
     const navEl  = document.getElementById(navMap[page]);
     if (navEl)  navEl.classList.add('active');
     const sideEl = document.getElementById(sideMap[page]);
     if (sideEl) sideEl.classList.add('active');
 
+    // Останавливаем видео при уходе со страницы просмотра
     if (page !== 'view') {
         document.querySelectorAll('.swsp-iframe').forEach(function(f){ try { f.src=''; } catch(e){} });
     }
+
     if (pushState) history.pushState(null, '', '#' + page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    window.closeSidebar && window.closeSidebar();
+    window.closeSidebar?.();
 }
 
+// ── Sidebar управление ──
 window.openSidebar = function() {
     document.getElementById('sidebar-overlay')?.classList.add('active');
     document.getElementById('app-sidebar')?.classList.add('open');
@@ -128,12 +142,16 @@ window.closeSidebar = function() {
     document.body.style.overflow = '';
 };
 
+// ── Поиск ──
 window.openSearch = function() {
     const wrap = document.getElementById('search-wrap');
     if (!wrap) return;
     wrap.classList.add('search-open');
     if (window._releasesEnableSearch) window._releasesEnableSearch();
-    setTimeout(function(){ const input=document.getElementById('main-search'); if(input){input.focus();input.select();} }, 350);
+    setTimeout(function(){
+        const input = document.getElementById('main-search');
+        if (input) { input.focus(); input.select(); }
+    }, 350);
 };
 window.closeSearch = function() {
     const wrap = document.getElementById('search-wrap');
