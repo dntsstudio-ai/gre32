@@ -204,50 +204,83 @@ function renderGame(type) {
 
     if (type === 'coinflip') {
         wrap.innerHTML = `
-        <div class="game-header"><div class="game-title">🪙 Монетка</div><div class="game-balance">Баланс: <b>${balance} VC</b></div></div>
-        <div class="game-desc">Угадай — орёл или решка. Угадал — удваиваешь. Нет — теряешь.</div>
-        <div class="game-coin-display" id="game-coin-img">🪙</div>
-        <div class="game-bet-row">
-            <label class="order-label">Ставка (VC)</label>
-            <input type="number" id="game-bet" min="1" max="${balance}" value="10" style="text-align:center;max-width:140px;margin:0 auto;">
-        </div>
-        <div style="display:flex;gap:12px;margin-top:18px;justify-content:center;">
-            <button class="btn btn-purple" onclick="playCoinflip('heads')">👑 Орёл</button>
-            <button class="btn btn-blue"   onclick="playCoinflip('tails')">🪙 Решка</button>
-        </div>
-        <div id="game-result" style="margin-top:20px;text-align:center;font-size:1.1rem;font-weight:700;min-height:32px;"></div>`;
+        <div class="game-wrap-inner">
+            <div class="game-header">
+                <div class="game-title">🪙 Монетка</div>
+                <div class="game-balance">Баланс: <b>${balance} VC</b></div>
+            </div>
+            <div class="game-desc">Угадай — орёл или решка. Угадал — удваиваешь. Нет — теряешь.</div>
+            <div class="game-coin-arena">
+                <div class="game-coin-display" id="game-coin-img">🪙</div>
+            </div>
+            <div class="game-bet-row">
+                <label class="order-label">Ставка (VC)</label>
+                <input type="number" id="game-bet" min="1" max="${balance}" value="10">
+            </div>
+            <div class="coin-choice-row">
+                <button class="coin-choice-btn coin-btn-heads" onclick="playCoinflip('heads')">👑 Орёл</button>
+                <button class="coin-choice-btn coin-btn-tails" onclick="playCoinflip('tails')">🪙 Решка</button>
+            </div>
+            <div id="game-result"></div>
+        </div>`;
     } else if (type === 'slots') {
         wrap.innerHTML = `
-        <div class="game-header"><div class="game-title">🎰 Слоты</div><div class="game-balance">Баланс: <b>${balance} VC</b></div></div>
-        <div class="game-desc">3 одинаковых символа — выигрыш!</div>
-        <div class="slots-display" id="slots-display">
-            <div class="slot-reel" id="reel-0">❓</div>
-            <div class="slot-reel" id="reel-1">❓</div>
-            <div class="slot-reel" id="reel-2">❓</div>
-        </div>
-        <div class="game-bet-row">
-            <label class="order-label">Ставка (VC)</label>
-            <input type="number" id="game-bet" min="1" max="${balance}" value="10" style="text-align:center;max-width:140px;margin:0 auto;">
-        </div>
-        <button class="btn btn-purple" style="width:100%;margin-top:16px;" onclick="playSlots()">🎰 Крутить!</button>
-        <div id="game-result" style="margin-top:16px;text-align:center;font-size:1.1rem;font-weight:700;min-height:32px;"></div>`;
+        <div class="game-wrap-inner">
+            <div class="game-header">
+                <div class="game-title">🎰 Слоты</div>
+                <div class="game-balance">Баланс: <b>${balance} VC</b></div>
+            </div>
+            <div class="game-desc">3 одинаковых символа — выигрыш! Два совпадения — ×3.</div>
+            <div class="slots-arena">
+                <div class="slots-display" id="slots-display">
+                    <div class="slot-reel" id="reel-0">❓</div>
+                    <div class="slot-divider"></div>
+                    <div class="slot-reel" id="reel-1">❓</div>
+                    <div class="slot-divider"></div>
+                    <div class="slot-reel" id="reel-2">❓</div>
+                </div>
+                <button class="slots-spin-btn" id="slots-spin-btn" onclick="playSlots()">🎰 Крутить!</button>
+            </div>
+            <div class="game-bet-row">
+                <label class="order-label">Ставка (VC)</label>
+                <input type="number" id="game-bet" min="1" max="${balance}" value="10">
+            </div>
+            <div id="game-result"></div>
+        </div>`;
     } else if (type === 'rocket') {
         wrap.innerHTML = `
-        <div class="game-header"><div class="game-title">🚀 Ракета</div><div class="game-balance">Баланс: <b>${balance} VC</b></div></div>
-        <div class="game-desc">Ракета взлетает — множитель растёт. Нажми «Забрать» до взрыва!</div>
-        <div class="rocket-display">
-            <div class="rocket-multiplier" id="rocket-mult">1.00×</div>
-            <div class="rocket-ship" id="rocket-ship">🚀</div>
-        </div>
-        <div class="game-bet-row">
-            <label class="order-label">Ставка (VC)</label>
-            <input type="number" id="game-bet" min="1" max="${balance}" value="10" style="text-align:center;max-width:140px;margin:0 auto;">
-        </div>
-        <div style="display:flex;gap:12px;margin-top:16px;justify-content:center;">
-            <button class="btn btn-purple" id="rocket-start-btn" onclick="startRocket()">🚀 Запустить</button>
-            <button class="btn btn-blue"   id="rocket-cash-btn"  onclick="cashOutRocket()" disabled style="opacity:0.5;">💰 Забрать</button>
-        </div>
-        <div id="game-result" style="margin-top:16px;text-align:center;font-size:1.1rem;font-weight:700;min-height:32px;"></div>`;
+        <div class="game-wrap-inner">
+            <div class="game-header">
+                <div class="game-title">🚀 Ракета</div>
+                <div class="game-balance">Баланс: <b>${balance} VC</b></div>
+            </div>
+            <div class="game-desc">Ракета взлетает — множитель растёт. Забери до взрыва!</div>
+            <div class="rocket-arena" id="rocket-arena">
+                <div class="rocket-trail" id="rocket-trail"></div>
+                <div class="rocket-multiplier" id="rocket-mult">1.00×</div>
+                <div class="rocket-ship" id="rocket-ship">🚀</div>
+                <div class="rocket-exhaust" id="rocket-exhaust"></div>
+            </div>
+            <div class="rocket-streak-bar">
+                <span>Серия:</span>
+                <div class="rocket-streak-dots" id="rocket-streak-dots">
+                    <div class="rocket-streak-dot" id="sd0"></div>
+                    <div class="rocket-streak-dot" id="sd1"></div>
+                    <div class="rocket-streak-dot" id="sd2"></div>
+                    <div class="rocket-streak-dot" id="sd3"></div>
+                    <div class="rocket-streak-dot" id="sd4"></div>
+                </div>
+            </div>
+            <div class="game-bet-row">
+                <label class="order-label">Ставка (VC)</label>
+                <input type="number" id="game-bet" min="1" max="${balance}" value="10">
+            </div>
+            <div class="rocket-actions">
+                <button class="rocket-launch-btn" id="rocket-start-btn" onclick="startRocket()">🚀 Запустить</button>
+                <button class="rocket-cash-btn" id="rocket-cash-btn" onclick="cashOutRocket()" disabled>💰 Забрать</button>
+            </div>
+            <div id="game-result"></div>
+        </div>`;
     }
 
     const titleEl = document.getElementById('m-game-title');
@@ -287,20 +320,26 @@ window.playSlots = async function() {
     if (bet <= 0) return showToast('Введите ставку', 'error');
     const ok = await spendVCoins(bet, 'Слоты — ставка');
     if (!ok) return;
+    const spinBtn = document.getElementById('slots-spin-btn');
+    if (spinBtn) spinBtn.disabled = true;
+    // Анимация вращения барабанов
+    [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('spinning-reel'); });
     let ticks = 0;
     const interval = setInterval(() => {
         [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.textContent=SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]; });
         ticks++;
         if (ticks >= 15) {
             clearInterval(interval);
+            [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.remove('spinning-reel'); });
             const reels = [0,1,2].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
             [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.textContent=reels[i]; });
             let mult = 0;
-            if (reels[0]===reels[1]&&reels[1]===reels[2]) { mult = reels[0]==='7️⃣'?10:reels[0]==='💎'?7:5; }
+            if (reels[0]===reels[1]&&reels[1]===reels[2]) { mult = reels[0]==='7️⃣'?10:reels[0]==='💸'?7:5; }
             else if (reels[0]===reels[1]||reels[1]===reels[2]||reels[0]===reels[2]) { mult = 3; }
             (async () => {
                 const resEl = document.getElementById('game-result');
                 if (mult > 0) {
+                    [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('win-reel'); });
                     const prize = bet*mult;
                     await awardVCoins(prize, 'Слоты — выигрыш ×'+mult);
                     if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">🎉 ×${mult} Выигрыш! +${prize-bet} VC</span>`;
@@ -310,6 +349,7 @@ window.playSlots = async function() {
                 }
                 const balEl = document.querySelector('.game-balance b');
                 if (balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
+                if (spinBtn) spinBtn.disabled = false;
             })();
         }
     }, 80);
@@ -388,45 +428,81 @@ window.startRocket = async function() {
     }
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
-    if (startBtn) { startBtn.disabled=true; startBtn.style.opacity='0.5'; }
-    if (cashBtn)  { cashBtn.disabled=false; cashBtn.style.opacity='1'; }
+    if (startBtn) { startBtn.disabled=true; }
+    if (cashBtn)  { cashBtn.disabled=false; }
     document.getElementById('game-result').textContent='';
-    const ship = document.getElementById('rocket-ship');
+    const ship    = document.getElementById('rocket-ship');
+    const exhaust = document.getElementById('rocket-exhaust');
+    const trail   = document.getElementById('rocket-trail');
+    const multEl  = document.getElementById('rocket-mult');
+    // Анимация полёта
+    if (ship)    { ship.classList.add('flying'); }
+    if (exhaust) { exhaust.classList.add('active'); }
+    // Обновляем точки серии
+    _updateStreakDots();
     let pos = 0;
     _rocketInterval = setInterval(async () => {
-        _rocketMult += 0.05; pos = Math.min(pos+2, 120);
-        const multEl = document.getElementById('rocket-mult');
-        if (multEl) multEl.textContent = _rocketMult.toFixed(2)+'×';
-        if (ship) ship.style.transform = `translateY(-${pos}px)`;
+        _rocketMult += 0.05;
+        pos = Math.min(pos + 2, 130);
+        if (multEl) {
+            multEl.textContent = _rocketMult.toFixed(2)+'×';
+            // Красный множитель когда близко к взрыву
+            if (_rocketMult >= _rocketCrashAt * 0.85) multEl.classList.add('danger');
+        }
+        if (ship) ship.style.bottom = (32 + pos) + 'px';
+        if (trail) trail.style.height = pos + 'px';
+        if (exhaust) exhaust.style.height = (12 + Math.random() * 10) + 'px';
         if (_rocketMult >= _rocketCrashAt) {
             clearInterval(_rocketInterval); _rocketRunning=false;
-            if (ship) ship.textContent='💥';
+            if (ship) { ship.textContent='💥'; ship.classList.remove('flying'); ship.classList.add('exploded'); }
+            if (exhaust) { exhaust.classList.remove('active'); exhaust.style.height='0'; }
+            if (multEl) multEl.classList.remove('danger');
             const resEl = document.getElementById('game-result');
-            _rocketWinStreak = 0; // Серия побед сбрасывается при взрыве
+            _rocketWinStreak = 0;
+            _updateStreakDots();
             if (resEl) resEl.innerHTML=`<span style="color:#ef4444">💥 Взрыв на ${_rocketMult.toFixed(2)}×! Проигрыш -${_rocketBet} VC</span>`;
-            if (startBtn) { startBtn.disabled=false; startBtn.style.opacity='1'; }
-            if (cashBtn)  { cashBtn.disabled=true;   cashBtn.style.opacity='0.5'; }
+            if (startBtn) { startBtn.disabled=false; }
+            if (cashBtn)  { cashBtn.disabled=true; }
             const balEl = document.querySelector('.game-balance b');
             if (balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
         }
     }, 100);
 };
 
+function _updateStreakDots() {
+    for (let i = 0; i < 5; i++) {
+        const dot = document.getElementById('sd'+i);
+        if (!dot) continue;
+        dot.classList.remove('active','danger');
+        if (i < _rocketWinStreak) {
+            dot.classList.add(i >= 3 ? 'danger' : 'active');
+        }
+    }
+}
+
 window.cashOutRocket = async function() {
     if (!_rocketRunning) return;
     clearInterval(_rocketInterval); _rocketRunning=false;
     const { userData } = _getState();
+    // Останавливаем визуальные эффекты
+    const ship    = document.getElementById('rocket-ship');
+    const exhaust = document.getElementById('rocket-exhaust');
+    const multEl  = document.getElementById('rocket-mult');
+    if (ship)    { ship.classList.remove('flying'); }
+    if (exhaust) { exhaust.classList.remove('active'); exhaust.style.height='0'; }
+    if (multEl)  { multEl.classList.remove('danger'); }
     // Максимальный выигрыш ограничен: не более 2000 VC за раунд
     const rawPrize = Math.floor(_rocketBet * _rocketMult);
     const prize = Math.min(rawPrize, 2000);
-    _rocketWinStreak++; // Увеличиваем счётчик побед подряд
+    _rocketWinStreak++;
+    _updateStreakDots();
     await awardVCoins(prize, 'Ракета — выигрыш ×'+_rocketMult.toFixed(2));
     const resEl = document.getElementById('game-result');
     if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">💰 Забрал на ${_rocketMult.toFixed(2)}×! +${prize-_rocketBet} VC</span>`;
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
-    if (startBtn) { startBtn.disabled=false; startBtn.style.opacity='1'; }
-    if (cashBtn)  { cashBtn.disabled=true;   cashBtn.style.opacity='0.5'; }
+    if (startBtn) { startBtn.disabled=false; }
+    if (cashBtn)  { cashBtn.disabled=true; }
     const balEl = document.querySelector('.game-balance b');
     if (balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
     if (_rocketMult >= 3) await checkAndAwardAch(_db, _auth, userData, 'game_win');
