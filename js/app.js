@@ -19,6 +19,8 @@ import { bindOrder }       from './order.js';
 import { bindPlaylists }   from './playlists.js';
 import { bindRatings }     from './ratings.js';
 import { bindVCoins, awardVCoins } from './vcoins.js';
+import { bindInventory } from './inventory.js';
+import { bindLootbox } from './lootbox.js';
 import { bindNotifications, listenNotifications } from './notifications.js';
 import { bindUserSearch, bindProfileWall } from './users_search.js';
 import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js';
@@ -46,6 +48,8 @@ bindOrder(db, auth, getState);
 bindPlaylists(db, auth, getState);
 bindRatings(db, auth, getState);
 bindVCoins(db, auth, getState);
+bindInventory(db, auth, getState);
+bindLootbox(db, auth, getState);
 bindNotifications(db, auth, getState);
 bindUserSearch(db, auth, getState);
 bindProfileWall(db, auth, getState);
@@ -68,6 +72,8 @@ window.navigate = function(page, pushState) {
     if (page === 'ratings')   window.loadRatingsPage?.();
     if (page === 'shop')      window.loadShopPage?.();
     if (page === 'stats')     window.loadStatsPage?.();
+    if (page === 'inventory') { if (!state.userData) { navigate('profile', pushState); return; } window.loadInventory?.(); }
+    if (page === 'lootbox')   { if (!state.userData) { navigate('profile', pushState); return; } window.renderLootboxGame?.(document.getElementById('lootbox-wrap'), state.userData?.vcoins || 0); }
     if (page === 'playlists') { if (!state.userData) { navigate('profile', pushState); return; } window.loadPlaylistsPage?.(); }
     if (page === 'profile' && state.userData) { window.loadMyLists?.(); window.loadProfileWall?.(auth.currentUser?.uid); }
 };
@@ -79,6 +85,7 @@ function updateSidebarVisibility() {
     show('sn-dubin',         canAccessDubin(u));
     show('sn-ratings',       canAccessRatings(u));
     show('sn-shop',          !!u);
+    show('sn-inventory',     !!u);
     show('sn-playlists',     !!u);
     show('sn-stats',         a);
     show('notif-btn',        !!u);
@@ -91,6 +98,8 @@ function updateSidebarVisibility() {
     if (admAch) admAch.style.display = a ? 'block' : 'none';
     const shopBal = document.getElementById('sn-shop-balance');
     if (shopBal && u) shopBal.textContent = u.vcoins || 0;
+    const invCount = document.getElementById('sn-inv-count');
+    if (invCount && u) invCount.textContent = (u.inventory?.cards?.length || 0);
 }
 
 onAuthStateChanged(auth, async function(user) {
