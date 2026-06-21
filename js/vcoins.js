@@ -316,6 +316,8 @@ window.playSlots = async function() {
 };
 
 let _rocketInterval=null, _rocketMult=1.0, _rocketBet=0, _rocketRunning=false, _rocketCrashAt=1.0;
+// Счётчик побед подряд — чем больше, тем выше шанс взрыва
+let _rocketWinStreak = 0;
 
 window.startRocket = async function() {
     const { userData } = _getState();
@@ -327,17 +329,18 @@ window.startRocket = async function() {
     // Жёсткое ограничение ставки — не более 100 VC за раз
     const cappedBet = Math.min(bet, 100);
     _rocketBet=cappedBet; _rocketMult=1.0; _rocketRunning=true;
-    // Жёсткие шансы: ракета взрывается очень рано в большинстве случаев
-    // 50% шанс взрыва почти сразу (1.0x - 1.2x)
-    // 35% шанс взрыва до 1.8x
-    // 14% шанс взрыва до 3.0x
-    //  1% шанс долететь до 3.0x - 4.0x (максимум!)
+    // ── Адаптивный алгоритм: чем больше побед подряд, тем выше шанс раннего взрыва ──
+    // Базовый шанс взрыва сразу: 50%
+    // После 3+ побед подряд каждая дополнительная победа прибавляет +10% к базовому шансу
+    const streakBonus = _rocketWinStreak > 3 ? Math.min((_rocketWinStreak - 3) * 0.10, 0.45) : 0;
+    const earlyBoom = 0.50 + streakBonus;   // максимум 95% при долгой серии
     const rand = Math.random();
-    if (rand < 0.50) {
+    if (rand < earlyBoom) {
+        // Ранний взрыв — почти сразу
         _rocketCrashAt = 1.0 + Math.random() * 0.2;
-    } else if (rand < 0.85) {
+    } else if (rand < earlyBoom + 0.35) {
         _rocketCrashAt = 1.2 + Math.random() * 0.6;
-    } else if (rand < 0.99) {
+    } else if (rand < earlyBoom + 0.49) {
         _rocketCrashAt = 1.8 + Math.random() * 1.2;
     } else {
         _rocketCrashAt = 3.0 + Math.random() * 1.0;
@@ -358,6 +361,7 @@ window.startRocket = async function() {
             clearInterval(_rocketInterval); _rocketRunning=false;
             if (ship) ship.textContent='💥';
             const resEl = document.getElementById('game-result');
+            _rocketWinStreak = 0; // Серия побед сбрасывается при взрыве
             if (resEl) resEl.innerHTML=`<span style="color:#ef4444">💥 Взрыв на ${_rocketMult.toFixed(2)}×! Проигрыш -${_rocketBet} VC</span>`;
             if (startBtn) { startBtn.disabled=false; startBtn.style.opacity='1'; }
             if (cashBtn)  { cashBtn.disabled=true;   cashBtn.style.opacity='0.5'; }
@@ -374,6 +378,7 @@ window.cashOutRocket = async function() {
     // Максимальный выигрыш ограничен 400 VC (100 ставка × 4.0x)
     const rawPrize = Math.floor(_rocketBet * _rocketMult);
     const prize = Math.min(rawPrize, 400);
+    _rocketWinStreak++; // Увеличиваем счётчик побед подряд
     await awardVCoins(prize, 'Ракета — выигрыш ×'+_rocketMult.toFixed(2));
     const resEl = document.getElementById('game-result');
     if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">💰 Забрал на ${_rocketMult.toFixed(2)}×! +${prize-_rocketBet} VC</span>`;
