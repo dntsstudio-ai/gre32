@@ -518,6 +518,207 @@ window.cashOutRocket = async function() {
     if (_rocketMult >= 3) await checkAndAwardAch(_db, _auth, userData, 'game_win');
 };
 
+// ═══════════════════════════════════════════════════════
+//  🌌 PLINKO «ЧЁРНАЯ ДЫРА»
+// ═══════════════════════════════════════════════════════
+(function(){
+    'use strict';
+    const _P_ROWS=10, _P_BALL_R=7, _P_PEG_R=4;
+    const _P_GRAVITY=0.28, _P_FRICTION=0.995, _P_BOUNCE=0.52;
+    const _P_MULTS=[0,0.5,1,1.5,2,2,1.5,1,0.5,0,0];
+    let _plinkoRunning=false, _plinkoWinStreak=0, _plinkoAvgBet=0, _plinkoBetCount=0;
+
+    function _buildPegs(cw,ch){
+        const pegs=[],topPad=56,botPad=80,rowH=(ch-topPad-botPad)/(_P_ROWS-1);
+        for(let r=0;r<_P_ROWS;r++){
+            const cols=r+3,totalW=(cols-1)*(cw/(_P_ROWS+2)),startX=(cw-totalW)/2;
+            for(let c=0;c<cols;c++) pegs.push({x:startX+c*(totalW/(cols-1)),y:topPad+r*rowH});
+        }
+        return pegs;
+    }
+    function _buildBuckets(cw,ch){
+        const n=_P_MULTS.length,bw=cw/n,y=ch-62;
+        return _P_MULTS.map((m,i)=>({x:i*bw,y,w:bw,h:52,mult:m,idx:i}));
+    }
+    function _pBias(bet){
+        _plinkoBetCount++;
+        _plinkoAvgBet=_plinkoAvgBet+(bet-_plinkoAvgBet)/_plinkoBetCount;
+        if(bet>=Math.max(_plinkoAvgBet*1.6,80)) return 0.55;
+        if(_plinkoWinStreak>=3) return 0.2+Math.min((_plinkoWinStreak-2)*0.12,0.45);
+        return -0.15;
+    }
+    function _pCreateBall(cx,bias){
+        return{x:cx+(Math.random()-0.5)*4,y:20,vx:(Math.random()-0.5+bias*0.3)*1.5,vy:1.5,
+               r:_P_BALL_R,trail:[],landed:false,bucketIdx:-1};
+    }
+    function _pStep(ball,pegs,buckets,bias,cw){
+        if(ball.landed) return;
+        ball.vy+=_P_GRAVITY; ball.vx*=_P_FRICTION; ball.vy*=_P_FRICTION;
+        ball.vx+=bias*0.018; ball.x+=ball.vx; ball.y+=ball.vy;
+        if(ball.x-ball.r<0){ball.x=ball.r;ball.vx=Math.abs(ball.vx)*_P_BOUNCE;}
+        if(ball.x+ball.r>cw){ball.x=cw-ball.r;ball.vx=-Math.abs(ball.vx)*_P_BOUNCE;}
+        for(const p of pegs){
+            const dx=ball.x-p.x,dy=ball.y-p.y,d=Math.sqrt(dx*dx+dy*dy),minD=ball.r+_P_PEG_R;
+            if(d<minD&&d>0.01){
+                const nx=dx/d,ny=dy/d;
+                ball.x=p.x+nx*(minD+0.5); ball.y=p.y+ny*(minD+0.5);
+                const dot=ball.vx*nx+ball.vy*ny;
+                ball.vx=(ball.vx-2*dot*nx)*_P_BOUNCE+(Math.random()-0.5)*0.6;
+                ball.vy=(ball.vy-2*dot*ny)*_P_BOUNCE;
+                if(ball.vy<0.5) ball.vy=0.5;
+            }
+        }
+        ball.trail.push({x:ball.x,y:ball.y});
+        if(ball.trail.length>18) ball.trail.shift();
+        for(const b of buckets){
+            if(ball.y+ball.r>=b.y&&ball.x>=b.x&&ball.x<=b.x+b.w){
+                ball.landed=true; ball.bucketIdx=b.idx;
+                ball.x=b.x+b.w/2; ball.y=b.y+b.h/2-10; ball.vx=0; ball.vy=0; break;
+            }
+        }
+    }
+    function _pDraw(ctx,pegs,buckets,ball,hlIdx,cw,ch,tick){
+        ctx.clearRect(0,0,cw,ch);
+        ctx.fillStyle='#07041a'; ctx.fillRect(0,0,cw,ch);
+        ctx.save();
+        for(let i=0;i<45;i++){
+            const sx=((i*137+17)%cw),sy=((i*97+31)%(ch-80));
+            ctx.globalAlpha=0.15+0.3*Math.abs(Math.sin(tick*0.02+i));
+            ctx.fillStyle=i%3===0?'#c4b5fd':i%3===1?'#5eead4':'#fff';
+            ctx.beginPath(); ctx.arc(sx,sy,0.8,0,Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+        if(ball.trail.length>1){
+            for(let i=1;i<ball.trail.length;i++){
+                const t=ball.trail[i],tp=ball.trail[i-1];
+                ctx.save(); ctx.globalAlpha=(i/ball.trail.length)*0.5;
+                ctx.strokeStyle='#14b8a6'; ctx.lineWidth=_P_BALL_R*2*(i/ball.trail.length);
+                ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(tp.x,tp.y); ctx.lineTo(t.x,t.y); ctx.stroke();
+                ctx.restore();
+            }
+        }
+        for(const p of pegs){
+            const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,_P_PEG_R*3.5);
+            g.addColorStop(0,'rgba(167,139,250,0.22)'); g.addColorStop(1,'rgba(167,139,250,0)');
+            ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,_P_PEG_R*3.5,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle='#a78bfa'; ctx.shadowColor='#7c3aed'; ctx.shadowBlur=7;
+            ctx.beginPath(); ctx.arc(p.x,p.y,_P_PEG_R,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+        }
+        for(const b of buckets){
+            const isHL=b.idx===hlIdx,isZ=b.mult===0,isH=b.mult>=2;
+            ctx.fillStyle=isHL?(isZ?'rgba(239,68,68,0.75)':'rgba(20,184,166,0.75)'):(isZ?'rgba(239,68,68,0.14)':isH?'rgba(124,58,237,0.22)':'rgba(20,184,166,0.09)');
+            ctx.beginPath(); ctx.roundRect(b.x+1,b.y+2,b.w-2,b.h-4,8); ctx.fill();
+            ctx.strokeStyle=isHL?(isZ?'#ef4444':'#14b8a6'):(isZ?'rgba(239,68,68,0.4)':isH?'rgba(124,58,237,0.45)':'rgba(20,184,166,0.25)');
+            ctx.lineWidth=isHL?2:1; ctx.stroke();
+            if(isHL){
+                ctx.save(); ctx.globalAlpha=0.35;
+                const gw=ctx.createRadialGradient(b.x+b.w/2,b.y+b.h/2,0,b.x+b.w/2,b.y+b.h/2,b.w);
+                gw.addColorStop(0,isZ?'#ef4444':'#14b8a6'); gw.addColorStop(1,'transparent');
+                ctx.fillStyle=gw; ctx.beginPath(); ctx.roundRect(b.x+1,b.y+2,b.w-2,b.h-4,8); ctx.fill(); ctx.restore();
+            }
+            ctx.fillStyle=isHL?'#fff':(isZ?'#ef4444':isH?'#c4b5fd':'#5eead4');
+            ctx.font=`bold ${isHL?13:11}px 'Exo 2',sans-serif`;
+            ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText(b.mult===0?'✕':`×${b.mult}`,b.x+b.w/2,b.y+b.h/2);
+        }
+        if(!ball.landed||hlIdx>=0){
+            const bg=ctx.createRadialGradient(ball.x-ball.r*0.3,ball.y-ball.r*0.3,1,ball.x,ball.y,ball.r*1.6);
+            bg.addColorStop(0,'#fff'); bg.addColorStop(0.3,'#5eead4'); bg.addColorStop(1,'#0d9488');
+            ctx.fillStyle=bg; ctx.shadowColor='#14b8a6'; ctx.shadowBlur=16;
+            ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+            ctx.fillStyle='rgba(255,255,255,0.65)';
+            ctx.beginPath(); ctx.arc(ball.x-ball.r*0.3,ball.y-ball.r*0.3,ball.r*0.35,0,Math.PI*2); ctx.fill();
+        }
+    }
+
+    window._renderPlinko = function(wrap, balance){
+        wrap.innerHTML=`
+        <div class="game-wrap-inner">
+            <div class="game-header">
+                <div class="game-title">🌌 Чёрная дыра</div>
+                <div class="game-balance">Баланс: <b>${balance} VC</b></div>
+            </div>
+            <div class="game-desc">Шарик падает через штыри. Попади в высокий множитель — выиграй!</div>
+            <div class="plinko-arena">
+                <canvas id="plinko-canvas" width="360" height="400"></canvas>
+            </div>
+            <div class="plinko-quick-bets">
+                <button class="plinko-quick-bet" onclick="document.getElementById('plinko-bet').value=10">10</button>
+                <button class="plinko-quick-bet" onclick="document.getElementById('plinko-bet').value=25">25</button>
+                <button class="plinko-quick-bet" onclick="document.getElementById('plinko-bet').value=50">50</button>
+                <button class="plinko-quick-bet" onclick="document.getElementById('plinko-bet').value=100">100</button>
+                <button class="plinko-quick-bet" onclick="document.getElementById('plinko-bet').value=250">250</button>
+            </div>
+            <div class="game-bet-row">
+                <label class="order-label">Ставка (VC)</label>
+                <input type="number" id="plinko-bet" min="1" max="${Math.min(balance,500)}" value="25">
+            </div>
+            <div style="display:flex;justify-content:center;margin-top:14px;padding:0 18px;">
+                <button class="plinko-drop-btn" id="plinko-drop-btn" onclick="startPlinko()">🌌 Бросить шарик</button>
+            </div>
+            <div id="plinko-result" style="min-height:36px;text-align:center;font-size:1rem;font-weight:700;padding:10px 18px 16px;"></div>
+        </div>`;
+        const canvas=document.getElementById('plinko-canvas');
+        const ctx=canvas.getContext('2d');
+        const pegs=_buildPegs(canvas.width,canvas.height);
+        const buckets=_buildBuckets(canvas.width,canvas.height);
+        const dummy={x:-100,y:-100,r:_P_BALL_R,trail:[],landed:false,bucketIdx:-1};
+        _pDraw(ctx,pegs,buckets,dummy,-1,canvas.width,canvas.height,0);
+    };
+
+    window.startPlinko = async function(){
+        if(_plinkoRunning) return;
+        const {userData}=_getState();
+        const bet=parseInt(document.getElementById('plinko-bet')?.value)||0;
+        if(bet<=0) return showToast('Введите ставку','error');
+        if(bet>500) return showToast('Максимальная ставка — 500 VC','error');
+        const ok=await spendVCoins(bet,'Чёрная дыра — ставка');
+        if(!ok) return;
+        _plinkoRunning=true;
+        const btn=document.getElementById('plinko-drop-btn');
+        if(btn) btn.disabled=true;
+        const canvas=document.getElementById('plinko-canvas');
+        if(!canvas){_plinkoRunning=false;return;}
+        const ctx=canvas.getContext('2d');
+        const cw=canvas.width,ch=canvas.height;
+        const pegs=_buildPegs(cw,ch),buckets=_buildBuckets(cw,ch);
+        const bias=_pBias(bet),ball=_pCreateBall(cw/2,bias);
+        let tick=0,hlIdx=-1,done=false;
+        const loop=async()=>{
+            tick++;
+            if(!ball.landed) _pStep(ball,pegs,buckets,bias,cw);
+            _pDraw(ctx,pegs,buckets,ball,hlIdx,cw,ch,tick);
+            if(ball.landed&&!done){
+                done=true; hlIdx=ball.bucketIdx;
+                _pDraw(ctx,pegs,buckets,ball,hlIdx,cw,ch,tick);
+                const mult=_P_MULTS[ball.bucketIdx];
+                const prize=Math.floor(bet*mult);
+                const resEl=document.getElementById('plinko-result');
+                if(mult===0){
+                    _plinkoWinStreak=0;
+                    if(resEl) resEl.innerHTML=`<span style="color:#ef4444">💥 Чёрная дыра! Потерял ${bet} VC</span>`;
+                } else if(prize>bet){
+                    _plinkoWinStreak++;
+                    await awardVCoins(prize,'Чёрная дыра — выигрыш ×'+mult);
+                    if(resEl) resEl.innerHTML=`<span style="color:var(--teal)">✨ ×${mult} Выигрыш! +${prize-bet} VC</span>`;
+                    await checkAndAwardAch(_db,_auth,userData,'game_win');
+                } else {
+                    _plinkoWinStreak=0;
+                    if(prize>0) await awardVCoins(prize,'Чёрная дыра — возврат ×'+mult);
+                    if(resEl) resEl.innerHTML=`<span style="color:#a78bfa">↩️ ×${mult} Возврат ${prize} VC</span>`;
+                }
+                const balEl=document.querySelector('.game-balance b');
+                if(balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
+                _plinkoRunning=false;
+                if(btn) btn.disabled=false;
+                return;
+            }
+            requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+    };
+})();
+
 async function openVcoinHistory() {
     if (!_auth?.currentUser) return;
     try {
