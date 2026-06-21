@@ -1,7 +1,7 @@
 // ============================================================
 // js/lootbox.js — Мини-игра: Открытие ящиков (Brawl Stars style)
 // ============================================================
-import { collection, getDocs, query, orderBy }
+import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { esc, showToast } from './core.js';
 import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js';
@@ -53,13 +53,30 @@ function pickRarity(weights) {
     return 'common';
 }
 
+// ── Загрузка кастомных карточек из Firebase ────────────────────
+async function loadCustomCards() {
+    try {
+        const snap = await getDocs(collection(_db, 'custom_cards'));
+        return snap.docs.map(d => ({ id: d.id, ...d.data(), isCustom: true }));
+    } catch(e) {
+        console.warn('loadCustomCards:', e);
+        return [];
+    }
+}
+
 // ── Рендер страницы лутбоксов ──────────────────────────────────
-function renderLootboxPage(wrap, balance) {
+async function renderLootboxPage(wrap, balance) {
+    const { userData, isAdmin } = _getState();
+    const customCards = await loadCustomCards();
+
     wrap.innerHTML = `
     <div class="lootbox-page">
         <div class="lootbox-header">
             <div class="lootbox-title">🎁 Открытие ящиков</div>
-            <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
+                ${isAdmin ? `<button class="btn btn-outline btn-sm" onclick="openCreateCardModal()"><i class="fas fa-plus"></i> Создать карточку</button>` : ''}
+            </div>
         </div>
         <p class="lootbox-desc">Открывай ящики и собирай карточки участников студии. Продавай или добавляй в избранное!</p>
         <div class="lootbox-boxes">
@@ -90,6 +107,41 @@ function renderLootboxPage(wrap, balance) {
                 </div>`).join('')}
             </div>
         </div>
+        ${customCards.length > 0 ? `
+        <div class="lootbox-custom-section">
+            <div class="lootbox-drop-title">✨ Особые карточки</div>
+            <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;font-style:italic;">Эксклюзивные карточки с особыми шансами выпадения</p>
+            <div class="inv-cards-grid">
+                ${customCards.map(c => {
+                    const r = RARITIES[c.rarity] || RARITIES.common;
+                    return `
+                    <div class="inv-card inv-card--${c.rarity}" style="--card-glow:${r.glow};--card-color:${r.color};cursor:default;">
+                        <div class="inv-card__shine"></div>
+                        <div class="inv-card__rarity-bar"></div>
+                        <div class="inv-card__img-wrap">
+                            <img src="${esc(c.img||'')}" alt="${esc(c.name)}"
+                                 onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=${esc(c.name)}'">
+                        </div>
+                        <div class="inv-card__body">
+                            ${c.prefix ? `<div class="inv-card__prefix" style="color:${r.color};">${esc(c.prefix)}</div>` : ''}
+                            <div class="inv-card__name">${esc(c.name)}</div>
+                            <div class="inv-card__role">${esc(c.role||'')}</div>
+                            ${c.description ? `<div class="inv-card__desc">${esc(c.description)}</div>` : ''}
+                            <div class="inv-card__rarity-label" style="color:${r.color};">
+                                <span class="inv-card__stars">${'★'.repeat(r.stars)}${'☆'.repeat(4-r.stars)}</span>
+                                ${r.label}
+                            </div>
+                            <div class="inv-card__chance-badge">🎲 Шанс: ${c.dropChance || 1}%</div>
+                        </div>
+                        ${isAdmin ? `
+                        <div class="inv-card__actions">
+                            <button class="inv-card__btn" onclick="editCustomCard('${esc(c.id)}')" title="Редактировать">✏️</button>
+                            <button class="inv-card__btn inv-card__btn--sell" onclick="deleteCustomCard('${esc(c.id)}')" title="Удалить">🗑️</button>
+                        </div>` : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>` : ''}
     </div>`;
 }
 
@@ -104,32 +156,48 @@ window.openLootbox = async function(boxId) {
     const balance = userData.vcoins || 0;
     if (balance < box.price) return showToast(`Недостаточно VCoins! Нужно ${box.price} VC`, 'error');
 
-    // Списываем VCoins
     if (!window.spendVCoinsGlobal) return showToast('Ошибка системы VCoins', 'error');
     const ok = await window.spendVCoinsGlobal(box.price, `Открытие: ${box.name}`);
     if (!ok) return;
 
-    // Загружаем участников из Firebase
     try {
-        const snap = await getDocs(query(collection(_db, 'team'), orderBy('order')));
-        const allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (!allMembers.length) return showToast('Нет участников в базе', 'error');
+        // Загружаем обычных участников и кастомные карточки
+        const [teamSnap, customCards] = await Promise.all([
+            getDocs(query(collection(_db, 'team'), orderBy('order'))),
+            loadCustomCards()
+        ]);
+        const allMembers = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
 
-        // Выбираем редкость
-        const rarity = pickRarity(box.weights);
+        // Проверяем кастомные карточки с учётом их шанса выпадения
+        let winner = null;
+        let winnerRarity = null;
+        let isCustomWinner = false;
 
-        // Фильтруем по редкости
-        let pool = allMembers.filter(m => getRarityByCat(m.cat) === rarity);
-        if (!pool.length) pool = allMembers; // fallback
+        for (const cc of customCards) {
+            const chance = parseFloat(cc.dropChance) || 1;
+            if (Math.random() * 100 < chance) {
+                winner = cc;
+                winnerRarity = cc.rarity || 'rare';
+                isCustomWinner = true;
+                break;
+            }
+        }
 
-        // Случайный участник
-        const winner = pool[Math.floor(Math.random() * pool.length)];
+        // Если кастомная не выпала — обычная логика
+        if (!winner) {
+            const rarity = pickRarity(box.weights);
+            winnerRarity = rarity;
+            let pool = allMembers.filter(m => getRarityByCat(m.cat) === rarity);
+            if (!pool.length) pool = allMembers;
+            winner = pool[Math.floor(Math.random() * pool.length)];
+        }
 
         // Сохраняем карточку в инвентарь
-        await addCardToInventory(winner.id);
+        await addCardToInventory(winner.id, isCustomWinner);
 
         // Показываем анимацию
-        showCardReveal(winner, rarity, box);
+        showCardReveal(winner, winnerRarity, box, isCustomWinner);
 
     } catch(e) {
         showToast('Ошибка: ' + e.message, 'error');
@@ -137,14 +205,16 @@ window.openLootbox = async function(boxId) {
     }
 };
 
-// ── Анимация раскрытия карточки (Brawl Stars style) ────────────
-function showCardReveal(member, rarity, box) {
-    const r = RARITIES[rarity];
+// ── Анимация раскрытия карточки ────────────────────────────────
+function showCardReveal(member, rarity, box, isCustom) {
+    const r = RARITIES[rarity] || RARITIES.common;
 
-    // Создаём оверлей
     const overlay = document.createElement('div');
     overlay.id = 'lootbox-reveal-overlay';
     overlay.className = 'lb-reveal-overlay';
+
+    const cardHtml = renderCard({ ...member, rarity }, { showActions: false, showDesc: true });
+
     overlay.innerHTML = `
     <div class="lb-reveal-bg" style="--rarity-color:${r.color};--rarity-glow:${r.glow};"></div>
     <div class="lb-reveal-particles" id="lb-particles"></div>
@@ -157,17 +227,18 @@ function showCardReveal(member, rarity, box) {
     <div class="lb-reveal-card-wrap" id="lb-card-wrap" style="display:none;">
         <div class="lb-reveal-card-inner" id="lb-card-inner">
             <div class="lb-reveal-card-front">
-                ${renderCard({ ...member, rarity }, { showActions: false })}
+                ${cardHtml}
+                ${isCustom ? '<div class="lb-custom-badge">✨ Особая карточка!</div>' : ''}
             </div>
         </div>
         <div class="lb-reveal-rarity-text" style="color:${r.color};">
-            ${r.label.toUpperCase()}
+            ${r.label.toUpperCase()}${isCustom ? ' · ОСОБАЯ' : ''}
         </div>
         <div class="lb-reveal-actions">
             <button class="btn lb-btn-keep" onclick="keepCard()">
                 🎒 В инвентарь
             </button>
-            <button class="btn lb-btn-sell" onclick="quickSellCard('${esc(member.id)}', ${r.sellPrice})">
+            <button class="btn lb-btn-sell" onclick="quickSellCard('${esc(member.id)}', ${r.sellPrice}, ${isCustom})">
                 💰 Продать за ${r.sellPrice} VC
             </button>
         </div>
@@ -176,44 +247,50 @@ function showCardReveal(member, rarity, box) {
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('lb-reveal-overlay--visible'));
 
-    // Звук открытия
-    playSound('open');
+    // Звук открытия (или кастомный звук карточки)
+    if (isCustom && member.soundUrl) {
+        playCustomSound(member.soundUrl);
+    } else {
+        playSound('open');
+    }
 
-    // Частицы
     spawnParticles(r.color);
 
-    // Клик по ящику — раскрываем карточку
     const boxWrap = document.getElementById('lb-box-wrap');
     if (boxWrap) {
         boxWrap.addEventListener('click', function onBoxClick() {
             boxWrap.removeEventListener('click', onBoxClick);
-            revealCard(r);
+            revealCard(r, isCustom, member);
         }, { once: true });
     }
 
-    // Закрытие по клику вне карточки
     overlay.addEventListener('click', function(e) {
         if (e.target === overlay) closeReveal();
     });
 }
 
-function revealCard(r) {
+function revealCard(r, isCustom, member) {
     const boxWrap  = document.getElementById('lb-box-wrap');
     const cardWrap = document.getElementById('lb-card-wrap');
     if (!boxWrap || !cardWrap) return;
 
-    // Анимация ящика — встряска и исчезновение
     boxWrap.classList.add('lb-box--shake');
     playSound('shake');
 
     setTimeout(() => {
         boxWrap.classList.add('lb-box--explode');
-        playSound('reveal');
+
+        // Звук при выпадении (кастомный или стандартный по редкости)
+        if (isCustom && member.soundUrl) {
+            playCustomSound(member.soundUrl);
+        } else {
+            playSound('reveal', r);
+        }
+
         setTimeout(() => {
             boxWrap.style.display = 'none';
             cardWrap.style.display = 'flex';
             requestAnimationFrame(() => cardWrap.classList.add('lb-card--appear'));
-            // Вспышка света
             const bg = document.querySelector('.lb-reveal-bg');
             if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
         }, 400);
@@ -225,22 +302,33 @@ window.keepCard = function() {
     closeReveal();
 };
 
-window.quickSellCard = async function(cardId, price) {
+window.quickSellCard = async function(cardId, price, isCustom) {
     const { userData } = _getState();
     if (!userData || !_auth.currentUser) return;
     try {
-        // Удаляем последнюю добавленную карточку этого типа из инвентаря
-        const { doc, getDoc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-        const userRef = doc(_db, 'users', _auth.currentUser.uid);
-        const snap = await getDoc(userRef);
-        const cards = snap.data()?.inventory?.cards || [];
-        const idx = cards.lastIndexOf(cardId);
-        if (idx !== -1) {
-            const newCards = [...cards];
-            newCards.splice(idx, 1);
-            await updateDoc(userRef, { 'inventory.cards': newCards });
-            if (userData.inventory) userData.inventory.cards = newCards;
+        const { doc: fDoc, getDoc: fGetDoc, updateDoc: fUpdateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+        const userRef = fDoc(_db, 'users', _auth.currentUser.uid);
+        const snap = await fGetDoc(userRef);
+        const inv = snap.data()?.inventory || {};
+
+        if (isCustom) {
+            const customCards = inv.customCards || [];
+            const idx = customCards.lastIndexOf(cardId);
+            if (idx !== -1) {
+                const nc = [...customCards]; nc.splice(idx, 1);
+                await fUpdateDoc(userRef, { 'inventory.customCards': nc });
+                if (userData.inventory) userData.inventory.customCards = nc;
+            }
+        } else {
+            const cards = inv.cards || [];
+            const idx = cards.lastIndexOf(cardId);
+            if (idx !== -1) {
+                const nc = [...cards]; nc.splice(idx, 1);
+                await fUpdateDoc(userRef, { 'inventory.cards': nc });
+                if (userData.inventory) userData.inventory.cards = nc;
+            }
         }
+
         if (window.awardVCoins) await window.awardVCoins(price, 'Быстрая продажа карточки');
         showToast(`💰 Продано за ${price} VC!`);
         closeReveal();
@@ -255,7 +343,6 @@ function closeReveal() {
         overlay.classList.remove('lb-reveal-overlay--visible');
         setTimeout(() => overlay.remove(), 400);
     }
-    // Обновляем баланс в интерфейсе
     if (window.loadShopPage) window.loadShopPage();
 }
 
@@ -263,20 +350,20 @@ function closeReveal() {
 function spawnParticles(color) {
     const container = document.getElementById('lb-particles');
     if (!container) return;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
         const p = document.createElement('div');
         p.className = 'lb-particle';
         const angle = Math.random() * 360;
-        const dist  = 80 + Math.random() * 200;
-        const size  = 4 + Math.random() * 8;
+        const dist  = 80 + Math.random() * 220;
+        const size  = 4 + Math.random() * 10;
         const delay = Math.random() * 0.5;
         p.style.cssText = `
-            left: 50%; top: 50%;
-            width: ${size}px; height: ${size}px;
-            background: ${Math.random() > 0.5 ? color : '#fff'};
-            border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
-            animation: lb-particle-fly 1.2s ${delay}s ease-out forwards;
-            --angle: ${angle}deg; --dist: ${dist}px;`;
+            left:50%;top:50%;
+            width:${size}px;height:${size}px;
+            background:${Math.random()>0.5?color:'#fff'};
+            border-radius:${Math.random()>0.5?'50%':'2px'};
+            animation:lb-particle-fly 1.4s ${delay}s ease-out forwards;
+            --angle:${angle}deg;--dist:${dist}px;`;
         container.appendChild(p);
     }
 }
@@ -288,15 +375,22 @@ function getAudioCtx() {
     return _audioCtx;
 }
 
-function playSound(type) {
+// Кастомный звук по URL
+function playCustomSound(url) {
+    try {
+        const audio = new Audio(url);
+        audio.volume = 0.7;
+        audio.play().catch(() => {});
+    } catch(e) {}
+}
+
+function playSound(type, rarityObj) {
     try {
         const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
         if (type === 'open') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
             osc.type = 'sine';
             osc.frequency.setValueAtTime(300, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
@@ -304,6 +398,9 @@ function playSound(type) {
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
             osc.start(); osc.stop(ctx.currentTime + 0.3);
         } else if (type === 'shake') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(80, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
@@ -311,22 +408,133 @@ function playSound(type) {
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
             osc.start(); osc.stop(ctx.currentTime + 0.4);
         } else if (type === 'reveal') {
-            // Аккорд из 3 нот
-            [523, 659, 784].forEach((freq, i) => {
-                const o2 = ctx.createOscillator();
-                const g2 = ctx.createGain();
-                o2.connect(g2); g2.connect(ctx.destination);
-                o2.type = 'sine';
-                o2.frequency.value = freq;
-                g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
-                g2.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.08 + 0.05);
-                g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.5);
-                o2.start(ctx.currentTime + i * 0.08);
-                o2.stop(ctx.currentTime + i * 0.08 + 0.5);
+            // Разные аккорды в зависимости от редкости
+            const freqSets = {
+                legendary: [523, 659, 784, 1047],
+                epic:      [440, 554, 659, 880],
+                rare:      [392, 494, 587],
+                common:    [330, 415, 494],
+            };
+            const rLabel = rarityObj ? Object.keys(RARITIES).find(k => RARITIES[k] === rarityObj) : 'common';
+            const freqs = freqSets[rLabel] || freqSets.common;
+            freqs.forEach((freq, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.type = 'sine';
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+                g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.08 + 0.05);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.6);
+                o.start(ctx.currentTime + i * 0.08);
+                o.stop(ctx.currentTime + i * 0.08 + 0.7);
             });
         }
-    } catch(e) { /* Тихо игнорируем ошибки аудио */ }
+    } catch(e) {}
 }
+
+// ── Создание / редактирование кастомной карточки (только для админов) ──
+window.openCreateCardModal = function(existingId) {
+    const modal = document.getElementById('m-create-card');
+    if (!modal) return;
+
+    // Сброс формы
+    document.getElementById('cc-id').value      = existingId || '';
+    document.getElementById('cc-name').value    = '';
+    document.getElementById('cc-prefix').value  = '';
+    document.getElementById('cc-role').value    = '';
+    document.getElementById('cc-img').value     = '';
+    document.getElementById('cc-desc').value    = '';
+    document.getElementById('cc-rarity').value  = 'rare';
+    document.getElementById('cc-chance').value  = '5';
+    document.getElementById('cc-sound').value   = '';
+    document.getElementById('cc-preview-wrap').innerHTML = '';
+
+    if (existingId) {
+        // Загружаем данные для редактирования
+        getDoc(doc(_db, 'custom_cards', existingId)).then(snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
+            document.getElementById('cc-name').value   = d.name || '';
+            document.getElementById('cc-prefix').value = d.prefix || '';
+            document.getElementById('cc-role').value   = d.role || '';
+            document.getElementById('cc-img').value    = d.img || '';
+            document.getElementById('cc-desc').value   = d.description || '';
+            document.getElementById('cc-rarity').value = d.rarity || 'rare';
+            document.getElementById('cc-chance').value = d.dropChance || '5';
+            document.getElementById('cc-sound').value  = d.soundUrl || '';
+            updateCardPreview();
+        });
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.editCustomCard = function(id) {
+    window.openCreateCardModal(id);
+};
+
+window.updateCardPreview = function() {
+    const name    = document.getElementById('cc-name')?.value || 'Имя';
+    const prefix  = document.getElementById('cc-prefix')?.value || '';
+    const role    = document.getElementById('cc-role')?.value || '';
+    const img     = document.getElementById('cc-img')?.value || '';
+    const rarity  = document.getElementById('cc-rarity')?.value || 'rare';
+    const desc    = document.getElementById('cc-desc')?.value || '';
+    const wrap    = document.getElementById('cc-preview-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = renderCard({ id: '_preview', name, prefix, role, img, rarity, description: desc }, { showActions: false, showDesc: true });
+};
+
+window.saveCustomCard = async function() {
+    const { isAdmin } = _getState();
+    if (!isAdmin) return showToast('Нет прав', 'error');
+
+    const id      = document.getElementById('cc-id')?.value?.trim() || `custom_${Date.now()}`;
+    const name    = document.getElementById('cc-name')?.value?.trim();
+    const prefix  = document.getElementById('cc-prefix')?.value?.trim();
+    const role    = document.getElementById('cc-role')?.value?.trim();
+    const img     = document.getElementById('cc-img')?.value?.trim();
+    const desc    = document.getElementById('cc-desc')?.value?.trim();
+    const rarity  = document.getElementById('cc-rarity')?.value || 'rare';
+    const chance  = parseFloat(document.getElementById('cc-chance')?.value) || 5;
+    const sound   = document.getElementById('cc-sound')?.value?.trim();
+
+    if (!name) return showToast('Введите имя карточки', 'error');
+
+    try {
+        await setDoc(doc(_db, 'custom_cards', id), {
+            name, prefix: prefix || '', role: role || '',
+            img: img || '', description: desc || '',
+            rarity, dropChance: chance,
+            soundUrl: sound || '',
+            createdAt: Date.now(),
+        });
+        showToast('✅ Карточка сохранена!');
+        document.getElementById('m-create-card').style.display = 'none';
+        // Перерендер страницы ящиков
+        const wrap = document.getElementById('lootbox-wrap');
+        const { userData } = _getState();
+        if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);
+    } catch(e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+};
+
+window.deleteCustomCard = async function(id) {
+    const { isAdmin } = _getState();
+    if (!isAdmin) return showToast('Нет прав', 'error');
+    if (!confirm('Удалить эту карточку?')) return;
+    try {
+        await deleteDoc(doc(_db, 'custom_cards', id));
+        showToast('🗑️ Карточка удалена');
+        const wrap = document.getElementById('lootbox-wrap');
+        const { userData } = _getState();
+        if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);
+    } catch(e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+};
 
 // ── Рендер в renderGame ────────────────────────────────────────
 export function renderLootboxGame(wrap, balance) {
