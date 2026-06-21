@@ -316,8 +316,14 @@ window.playSlots = async function() {
 };
 
 let _rocketInterval=null, _rocketMult=1.0, _rocketBet=0, _rocketRunning=false, _rocketCrashAt=1.0;
-// Счётчик побед подряд — чем больше, тем выше шанс взрыва
+
+// ── Психологический ИИ ракеты ──
+// _rocketAvgBet   — скользящее среднее ставок игрока (обновляется каждый раунд)
+// _rocketBetCount — сколько раундов сыграно (для нормализации среднего)
+// _rocketWinStreak — победы подряд (для дофаминового разогрева)
 let _rocketWinStreak = 0;
+let _rocketAvgBet    = 0;
+let _rocketBetCount  = 0;
 
 window.startRocket = async function() {
     const { userData } = _getState();
@@ -326,24 +332,59 @@ window.startRocket = async function() {
     if (_rocketRunning) return;
     const ok = await spendVCoins(bet, 'Ракета — ставка');
     if (!ok) return;
-    // Жёсткое ограничение ставки — не более 100 VC за раз
-    const cappedBet = Math.min(bet, 100);
-    _rocketBet=cappedBet; _rocketMult=1.0; _rocketRunning=true;
-    // ── Адаптивный алгоритм: чем больше побед подряд, тем выше шанс раннего взрыва ──
-    // Базовый шанс взрыва сразу: 50%
-    // После 3+ побед подряд каждая дополнительная победа прибавляет +10% к базовому шансу
-    const streakBonus = _rocketWinStreak > 3 ? Math.min((_rocketWinStreak - 3) * 0.10, 0.45) : 0;
-    const earlyBoom = 0.50 + streakBonus;   // максимум 95% при долгой серии
-    const rand = Math.random();
-    if (rand < earlyBoom) {
-        // Ранний взрыв — почти сразу
-        _rocketCrashAt = 1.0 + Math.random() * 0.2;
-    } else if (rand < earlyBoom + 0.35) {
-        _rocketCrashAt = 1.2 + Math.random() * 0.6;
-    } else if (rand < earlyBoom + 0.49) {
-        _rocketCrashAt = 1.8 + Math.random() * 1.2;
+
+    // Ограничение ставки — не более 500 VC за раз
+    const cappedBet = Math.min(bet, 500);
+    _rocketBet = cappedBet; _rocketMult = 1.0; _rocketRunning = true;
+
+    // ── Обновляем скользящее среднее ставок ──
+    _rocketBetCount++;
+    _rocketAvgBet = _rocketAvgBet + (cappedBet - _rocketAvgBet) / _rocketBetCount;
+
+    // ── Психологический ИИ: определяем режим раунда ──
+    //
+    // «Большая ставка» = ставка >= 1.5× от среднего (или >= половины баланса)
+    // При большой ставке — почти гарантированный ранний взрыв (90%+)
+    //
+    // При малой/средней ставке — дофаминовый режим:
+    //   первые 3 победы подряд дают хорошие множители (до 4–8×)
+    //   после 3 побед подряд шанс раннего взрыва начинает расти
+
+    const balance = userData?.vcoins || 0;
+    const isBigBet = (_rocketBetCount > 2) &&
+                     (cappedBet >= _rocketAvgBet * 1.5 || cappedBet >= balance * 0.5);
+
+    let rand = Math.random();
+
+    if (isBigBet) {
+        // ── БОЛЬШАЯ СТАВКА: взрыв почти гарантирован ──
+        if (rand < 0.92) {
+            _rocketCrashAt = 1.0 + Math.random() * 0.15;   // взрыв сразу
+        } else {
+            _rocketCrashAt = 1.15 + Math.random() * 0.35;  // чуть выше, но всё равно проигрыш
+        }
+    } else if (_rocketWinStreak < 3) {
+        // ── ДОФАМИНОВЫЙ РЕЖИМ: даём выигрывать, разогреваем азарт ──
+        if (rand < 0.20) {
+            _rocketCrashAt = 1.0 + Math.random() * 0.2;    // 20% — ранний взрыв (не скучно)
+        } else if (rand < 0.55) {
+            _rocketCrashAt = 1.5 + Math.random() * 1.5;    // 35% — средний полёт (1.5–3.0×)
+        } else if (rand < 0.85) {
+            _rocketCrashAt = 3.0 + Math.random() * 2.0;    // 30% — хороший полёт (3–5×)
+        } else {
+            _rocketCrashAt = 5.0 + Math.random() * 3.0;    // 15% — большой полёт (5–8×) 🔥
+        }
     } else {
-        _rocketCrashAt = 3.0 + Math.random() * 1.0;
+        // ── СЕРИЯ 3+ ПОБЕД: постепенно ужесточаем ──
+        const streakPenalty = Math.min((_rocketWinStreak - 2) * 0.12, 0.55);
+        const earlyBoom = 0.35 + streakPenalty; // растёт с каждой победой
+        if (rand < earlyBoom) {
+            _rocketCrashAt = 1.0 + Math.random() * 0.2;
+        } else if (rand < earlyBoom + 0.35) {
+            _rocketCrashAt = 1.2 + Math.random() * 0.8;
+        } else {
+            _rocketCrashAt = 2.0 + Math.random() * 1.5;
+        }
     }
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
@@ -375,9 +416,9 @@ window.cashOutRocket = async function() {
     if (!_rocketRunning) return;
     clearInterval(_rocketInterval); _rocketRunning=false;
     const { userData } = _getState();
-    // Максимальный выигрыш ограничен 400 VC (100 ставка × 4.0x)
+    // Максимальный выигрыш ограничен: не более 2000 VC за раунд
     const rawPrize = Math.floor(_rocketBet * _rocketMult);
-    const prize = Math.min(rawPrize, 400);
+    const prize = Math.min(rawPrize, 2000);
     _rocketWinStreak++; // Увеличиваем счётчик побед подряд
     await awardVCoins(prize, 'Ракета — выигрыш ×'+_rocketMult.toFixed(2));
     const resEl = document.getElementById('game-result');
