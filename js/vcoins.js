@@ -324,21 +324,24 @@ window.startRocket = async function() {
     if (_rocketRunning) return;
     const ok = await spendVCoins(bet, 'Ракета — ставка');
     if (!ok) return;
-    _rocketBet=bet; _rocketMult=1.0; _rocketRunning=true;
-    
-    // Новая логика: шансы на выигрыш снижены
+    // Жёсткое ограничение ставки — не более 100 VC за раз
+    const cappedBet = Math.min(bet, 100);
+    _rocketBet=cappedBet; _rocketMult=1.0; _rocketRunning=true;
+    // Жёсткие шансы: ракета взрывается очень рано в большинстве случаев
+    // 50% шанс взрыва почти сразу (1.0x - 1.2x)
+    // 35% шанс взрыва до 1.8x
+    // 14% шанс взрыва до 3.0x
+    //  1% шанс долететь до 3.0x - 4.0x (максимум!)
     const rand = Math.random();
-    if (rand < 0.3) {
-        // 30% шанс: быстрый взрыв (1.0x - 1.1x)
-        _rocketCrashAt = 1.0 + Math.random() * 0.1;
-    } else if (rand < 0.8) {
-        // 50% шанс: взрыв до 2.0x
-        _rocketCrashAt = 1.1 + Math.random() * 0.9;
+    if (rand < 0.50) {
+        _rocketCrashAt = 1.0 + Math.random() * 0.2;
+    } else if (rand < 0.85) {
+        _rocketCrashAt = 1.2 + Math.random() * 0.6;
+    } else if (rand < 0.99) {
+        _rocketCrashAt = 1.8 + Math.random() * 1.2;
     } else {
-        // 20% шанс: долет максимум до ~5.0x
-        _rocketCrashAt = 2.0 + Math.pow(Math.random(), 2) * 3;
+        _rocketCrashAt = 3.0 + Math.random() * 1.0;
     }
-
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
     if (startBtn) { startBtn.disabled=true; startBtn.style.opacity='0.5'; }
@@ -368,7 +371,9 @@ window.cashOutRocket = async function() {
     if (!_rocketRunning) return;
     clearInterval(_rocketInterval); _rocketRunning=false;
     const { userData } = _getState();
-    const prize = Math.floor(_rocketBet * _rocketMult);
+    // Максимальный выигрыш ограничен 400 VC (100 ставка × 4.0x)
+    const rawPrize = Math.floor(_rocketBet * _rocketMult);
+    const prize = Math.min(rawPrize, 400);
     await awardVCoins(prize, 'Ракета — выигрыш ×'+_rocketMult.toFixed(2));
     const resEl = document.getElementById('game-result');
     if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">💰 Забрал на ${_rocketMult.toFixed(2)}×! +${prize-_rocketBet} VC</span>`;
