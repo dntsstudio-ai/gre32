@@ -146,6 +146,12 @@ function renderShopPage() {
             <div class="shop-game-desc">Чем дольше летит — тем больше множитель</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
+        <div class="shop-game-card" onclick="openGame('plinko')">
+            <div class="shop-game-icon">🌌</div>
+            <div class="shop-game-name">Чёрная дыра</div>
+            <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
+            <button class="btn btn-sm btn-purple">Играть</button>
+        </div>
     </div>`;
 }
 
@@ -281,10 +287,14 @@ function renderGame(type) {
             </div>
             <div id="game-result"></div>
         </div>`;
+    } else if (type === 'plinko') {
+        if (typeof _renderPlinko === 'function') {
+            _renderPlinko(wrap, balance);
+        }
     }
 
     const titleEl = document.getElementById('m-game-title');
-    if (titleEl) titleEl.textContent = type==='coinflip'?'🪙 Монетка':type==='slots'?'🎰 Слоты':'🚀 Ракета';
+    if (titleEl) titleEl.textContent = type==='coinflip'?'🪙 Монетка':type==='slots'?'🎰 Слоты':type==='rocket'?'🚀 Ракета':'🌌 Чёрная дыра';
     window._currentGame = type;
 }
 
