@@ -152,6 +152,12 @@ function renderShopPage() {
             <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
+        <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
+            <div class="shop-game-icon">🎁</div>
+            <div class="shop-game-name">Ящики</div>
+            <div class="shop-game-desc">Открывай ящики и собирай карточки участников студии</div>
+            <button class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;">Открыть</button>
+        </div>
     </div>`;
 }
 
@@ -294,7 +300,8 @@ function renderGame(type) {
     }
 
     const titleEl = document.getElementById('m-game-title');
-    if (titleEl) titleEl.textContent = type==='coinflip'?'🪙 Монетка':type==='slots'?'🎰 Слоты':type==='rocket'?'🚀 Ракета':'🌌 Чёрная дыра';
+    const gameTitles = { coinflip:'🪙 Монетка', slots:'🎰 Слоты', rocket:'🚀 Ракета', plinko:'🌌 Чёрная дыра' };
+    if (titleEl) titleEl.textContent = gameTitles[type] || type;
     window._currentGame = type;
 }
 
@@ -822,6 +829,9 @@ window.selectNickColor = async function(hex) {
 
 export function bindVCoins(db, auth, getState) {
     _db = db; _auth = auth; _getState = getState;
+
+    // Глобальный хелпер для lootbox.js (не может импортировать spendVCoins напрямую)
+    window.spendVCoinsGlobal = spendVCoins;
 
     window.openGame         = openGame;
     window.buyShopItem      = buyShopItem;
