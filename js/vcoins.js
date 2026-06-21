@@ -325,7 +325,20 @@ window.startRocket = async function() {
     const ok = await spendVCoins(bet, 'Ракета — ставка');
     if (!ok) return;
     _rocketBet=bet; _rocketMult=1.0; _rocketRunning=true;
-    _rocketCrashAt = 1.0 + Math.pow(Math.random(), 0.5) * 9;
+    
+    // Новая логика: шансы на выигрыш снижены
+    const rand = Math.random();
+    if (rand < 0.3) {
+        // 30% шанс: быстрый взрыв (1.0x - 1.1x)
+        _rocketCrashAt = 1.0 + Math.random() * 0.1;
+    } else if (rand < 0.8) {
+        // 50% шанс: взрыв до 2.0x
+        _rocketCrashAt = 1.1 + Math.random() * 0.9;
+    } else {
+        // 20% шанс: долет максимум до ~5.0x
+        _rocketCrashAt = 2.0 + Math.pow(Math.random(), 2) * 3;
+    }
+
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
     if (startBtn) { startBtn.disabled=true; startBtn.style.opacity='0.5'; }
