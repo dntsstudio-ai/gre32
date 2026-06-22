@@ -39,23 +39,39 @@ export function bindUserSearch(db, auth, getState) {
         res.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Поиск...</div>';
 
         try {
-            const byNick = await getDocs(query(
-                collection(_db, 'users'),
-                where('nickname', '>=', q),
-                where('nickname', '<=', q + '\uf8ff'),
-                limit(10)
-            ));
-
-            let byEmail = { docs: [] };
-            try {
-                byEmail = await getDocs(query(collection(_db, 'users'), where('email', '==', q)));
-            } catch(e) {}
-
-            const seen    = new Set();
-            const results = [];
-            [...byNick.docs, ...byEmail.docs].forEach(d => {
-                if (!seen.has(d.id)) { seen.add(d.id); results.push({ id: d.id, ...d.data() }); }
-            });
+            // Получаем всех пользователей и фильтруем клиентской стороной для лучших результатов
+            const allUsersSnap = await getDocs(collection(_db, 'users'));
+            const qLower = q.toLowerCase();
+            
+            const results = allUsersSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(u => {
+                    const nick = (u.nickname || '').toLowerCase();
+                    const email = (u.email || '').toLowerCase();
+                    const bio = (u.publicBio || '').toLowerCase();
+                    
+                    // Точное совпадение в начале имени имеет приоритет
+                    if (nick.startsWith(qLower)) return true;
+                    // Затем ищем в любом месте имени
+                    if (nick.includes(qLower)) return true;
+                    // Затем ищем в email
+                    if (email.includes(qLower)) return true;
+                    // И в биографии
+                    if (bio.includes(qLower)) return true;
+                    
+                    return false;
+                })
+                .sort((a, b) => {
+                    // Сортируем: сначала начинающиеся с поиска, потом остальные
+                    const aNick = (a.nickname || '').toLowerCase();
+                    const bNick = (b.nickname || '').toLowerCase();
+                    const aStarts = aNick.startsWith(qLower) ? 0 : 1;
+                    const bStarts = bNick.startsWith(qLower) ? 0 : 1;
+                    if (aStarts !== bStarts) return aStarts - bStarts;
+                    // Затем по количеству подписчиков
+                    return (b.subscribers || 0) - (a.subscribers || 0);
+                })
+                .slice(0, 20); // Ограничиваем результаты
 
             if (!results.length) {
                 res.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли 🔍</p>';
