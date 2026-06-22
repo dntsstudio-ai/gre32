@@ -379,7 +379,7 @@ window.openGiftCardModal = function(cardId, isCustom) {
     if (!modal) return;
     document.getElementById('gift-card-id').value      = cardId;
     document.getElementById('gift-card-custom').value  = isCustom ? '1' : '0';
-    document.getElementById('gift-card-nick').value    = '';
+    document.getElementById('gift-card-nick').value    = 'nickname';
     document.getElementById('gift-card-target-info').innerHTML = '';
     document.getElementById('gift-card-confirm-btn').style.display = 'none';
     window._giftCardTargetUid = null;
