@@ -379,7 +379,7 @@ window.openGiftCardModal = function(cardId, isCustom) {
     if (!modal) return;
     document.getElementById('gift-card-id').value      = cardId;
     document.getElementById('gift-card-custom').value  = isCustom ? '1' : '0';
-    document.getElementById('gift-card-nick').value    = '';
+    document.getElementById('gift-card-nickname').value    = '';
     document.getElementById('gift-card-target-info').innerHTML = '';
     document.getElementById('gift-card-confirm-btn').style.display = 'none';
     window._giftCardTargetUid = null;
@@ -387,7 +387,7 @@ window.openGiftCardModal = function(cardId, isCustom) {
 };
 
 window.searchGiftCardTarget = async function() {
-    const nick = document.getElementById('gift-card-nick')?.value?.trim();
+    const nick = document.getElementById('gift-card-nickname')?.value?.trim();
     const info = document.getElementById('gift-card-target-info');
     const btn  = document.getElementById('gift-card-confirm-btn');
     if (!nick) return;
@@ -396,7 +396,7 @@ window.searchGiftCardTarget = async function() {
     window._giftCardTargetUid = null;
 
     try {
-        const snap = await getDocs(query(collection(_db, 'users'), where('nick', '==', nick)));
+        const snap = await getDocs(query(collection(_db, 'users'), where('nickname', '==', nickname)));
         if (snap.empty) {
             info.innerHTML = '<span style="color:#ef4444;font-size:13px;">Пользователь не найден</span>';
             return;
