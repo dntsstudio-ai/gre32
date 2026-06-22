@@ -396,25 +396,7 @@ window.searchGiftCardTarget = async function() {
     window._giftCardTargetUid = null;
 
     try {
-        // Попытка поиска по никнейму (правильное поле)
-        let snap = await getDocs(query(collection(_db, 'users'), where('nickname', '==', nick)));
-        
-        // Если не найдено, попытка по старому полю 'nick'
-        if (snap.empty) {
-            snap = await getDocs(query(collection(_db, 'users'), where('nick', '==', nick)));
-        }
-        
-        // Если все еще не найдено, получаем всех и фильтруем клиентской стороной
-        if (snap.empty) {
-            const allUsers = await getDocs(collection(_db, 'users'));
-            const nickLower = nick.toLowerCase();
-            const filtered = allUsers.docs.filter(d => {
-                const userNick = (d.data().nickname || '').toLowerCase();
-                return userNick === nickLower || userNick.includes(nickLower);
-            });
-            snap = { docs: filtered, empty: filtered.length === 0 };
-        }
-        
+        const snap = await getDocs(query(collection(_db, 'users'), where('nick', '==', nick)));
         if (snap.empty) {
             info.innerHTML = '<span style="color:#ef4444;font-size:13px;">Пользователь не найден</span>';
             return;
@@ -426,7 +408,7 @@ window.searchGiftCardTarget = async function() {
         <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(20,184,166,0.08);border-radius:8px;border:1px solid rgba(20,184,166,0.2);">
             <img src="${esc(td.avatar||'https://api.dicebear.com/7.x/identicon/svg')}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
             <div>
-                <div style="font-weight:700;font-size:14px;">${esc(td.nickname||td.nick||nick)}</div>
+                <div style="font-weight:700;font-size:14px;">${esc(td.nick||nick)}</div>
                 <div style="font-size:11px;color:var(--text-dim);">${esc(td.role||'')}</div>
             </div>
         </div>`;
