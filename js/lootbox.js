@@ -541,6 +541,187 @@ export function renderLootboxGame(wrap, balance) {
     renderLootboxPage(wrap, balance);
 }
 
+ // Звук открытия (или кастомный звук карточки)
+        if (isCustom && member.soundUrl) {
+            playCustomSound(member.soundUrl);
+        } else {
+            playSound('open');
+        }
+
+        spawnParticles(r.color);
+
+        const boxWrap = document.getElementById('lb-box-wrap');
+        if (boxWrap) {
+            // Обработка клика
+            const handleBoxClick = () => {
+                boxWrap.removeEventListener('click', handleBoxClick);
+                boxWrap.removeEventListener('touchend', handleBoxClick);
+                revealCard(r, isCustom, member);
+            };
+            
+            boxWrap.addEventListener('click', handleBoxClick);
+            boxWrap.addEventListener('touchend', handleBoxClick);
+        }
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeReveal();
+        });
+    }
+
+    function revealCard(r, isCustom, member) {
+        const boxWrap  = document.getElementById('lb-box-wrap');
+        const cardWrap = document.getElementById('lb-card-wrap');
+        if (!boxWrap || !cardWrap) return;
+
+        boxWrap.classList.add('lb-box--shake');
+        playSound('shake');
+
+        setTimeout(() => {
+            boxWrap.classList.add('lb-box--explode');
+
+            // Звук при выпадении (кастомный или стандартный по редкости)
+            if (isCustom && member.soundUrl) {
+                playCustomSound(member.soundUrl);
+            } else {
+                playSound('reveal', r);
+            }
+
+            setTimeout(() => {
+                boxWrap.style.display = 'none';
+                cardWrap.style.display = 'flex';
+                requestAnimationFrame(() => cardWrap.classList.add('lb-card--appear'));
+                const bg = document.querySelector('.lb-reveal-bg');
+                if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
+            }, 400);
+        }, 600);
+    }
+
+    window.keepCard = function() {
+        closeReveal();
+        showToast('✨ Карточка добавлена в инвентарь!');
+    };
+
+    window.closeReveal = function() {
+        const overlay = document.getElementById('lootbox-reveal-overlay');
+        if (overlay) {
+            overlay.classList.remove('lb-reveal-overlay--visible');
+            setTimeout(() => overlay.remove(), 300);
+        }
+    };
+
+    window.quickSellCard = async function(cardId, price, isCustom) {
+        const { userData } = getState();
+        if (!userData || !auth.currentUser) return;
+
+        try {
+            const field = isCustom ? 'customCards' : 'cards';
+            const inv = userData.inventory || {};
+            inv[field] = inv[field] || [];
+            inv[field] = inv[field].filter(id => id !== cardId);
+            userData.inventory = inv;
+
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+                inventory: inv,
+                vcoins: increment(price)
+            });
+
+            closeReveal();
+            showToast(`💰 Продано за ${price} VC!`);
+        } catch(e) {
+            showToast('Ошибка: ' + e.message, 'error');
+        }
+    };
+}
+
+// ── Звуки (Web Audio API) ──────────────────────────────────────
+let _audioCtx = null;
+let _currentAudioElements = [];
+const MAX_CONCURRENT_SOUNDS = 5;
+
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+}
+
+// Управление одновременным воспроизведением звуков
+function cleanupOldAudio() {
+    _currentAudioElements = _currentAudioElements.filter(audio => !audio.paused);
+    if (_currentAudioElements.length >= MAX_CONCURRENT_SOUNDS) {
+        const oldest = _currentAudioElements.shift();
+        oldest.pause();
+        oldest.currentTime = 0;
+    }
+}
+
+// Кастомный звук по URL
+function playCustomSound(url) {
+    try {
+        cleanupOldAudio();
+        const audio = new Audio(url);
+        audio.volume = 0.7;
+        _currentAudioElements.push(audio);
+        audio.play().catch(() => {});
+        
+        // Очистка после завершения
+        audio.addEventListener('ended', () => {
+            _currentAudioElements = _currentAudioElements.filter(a => a !== audio);
+        }, { once: true });
+    } catch(e) {
+        console.error('playCustomSound error:', e);
+    }
+}
+
+function playSound(type, rarityObj) {
+    try {
+        const ctx = getAudioCtx();
+        if (type === 'open') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+            osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'shake') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(80, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(); osc.stop(ctx.currentTime + 0.4);
+        } else if (type === 'reveal') {
+            // Разные аккорды в зависимости от редкости
+            const freqSets = {
+                legendary: [523, 659, 784, 1047],
+                epic:      [440, 554, 659, 880],
+                rare:      [392, 494, 587],
+                common:    [330, 415, 494],
+            };
+            const rLabel = rarityObj ? Object.keys(RARITIES).find(k => RARITIES[k] === rarityObj) : 'common';
+            const freqs = freqSets[rLabel] || freqSets.common;
+            freqs.forEach((freq, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.type = 'sine';
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+                g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.08 + 0.05);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.6);
+                o.start(ctx.currentTime + i * 0.08);
+                o.stop(ctx.currentTime + i * 0.08 + 0.7);
+            });
+        }
+    } catch(e) {
+        console.error('playSound error:', e);
+    }
+}
+
 // ── Экспорт ────────────────────────────────────────────────────
 export function bindLootbox(db, auth, getState) {
     _db = db; _auth = auth; _getState = getState;
