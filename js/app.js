@@ -1,5 +1,5 @@
 // ============================================================
-// js/app.js — Voice Acting Team — Главный модуль (V2.3 FULL RESTORED)
+// js/app.js — Voice Acting Team — Главный модуль (V2.3 FINAL FIXED)
 // ============================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -34,6 +34,7 @@ if (window.emailjs) emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
 const state = { userData: null, isAdmin: false, isDub: false, isMod: false, isCurator: false, curProj: null };
 const getState = () => state;
 
+// Инициализация всех модулей
 injectMaintenanceStyles();
 bindReleases(db, auth, getState);
 bindComments(db, auth, getState);
@@ -59,12 +60,30 @@ window._releasesEnableSearch = enableSearch;
 window._releasesDisableSearch = disableSearch;
 window.awardVCoins = awardVCoins;
 
+// --- ФУНКЦИИ БОКОВОЙ ПАНЕЛИ (SIDEBAR) ---
+window.openSidebar = function() {
+    const sidebar = document.getElementById('app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeSidebar = function() {
+    const sidebar = document.getElementById('app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+};
+
 const _pendingNav = window._navQueue || [];
 
 window.navigate = function(page, pushState) {
   if (pushState === undefined) pushState = true;
   navigate(page, pushState);
   incrementPageView();
+  window.closeSidebar(); // Закрываем меню при переходе
   
   if (page === 'team') window.loadTeam?.();
   if (page === 'dubin') {
