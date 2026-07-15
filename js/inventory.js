@@ -1,5 +1,5 @@
 // ============================================================
-// js/inventory.js — Система инвентаря (V2.3 FULL)
+// js/inventory.js — Система инвентаря (V2.3 FIXED FINAL)
 // ============================================================
 
 import { doc, getDoc, updateDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -100,16 +100,14 @@ window.loadInventory = async function() {
         
         let html = '';
         
-        // Рендерим обычные карты
         for (const [id, count] of Object.entries(stacked)) {
             const member = allMembers.find(m => m.id === id);
-            if (member) html += renderCard(member, { count });
+            if (member && count > 0) html += renderCard(member, { count });
         }
         
-        // Рендерим кастомные карты
         for (const [id, count] of Object.entries(customStacked)) {
             const card = allCustom.find(c => c.id === id);
-            if (card) html += renderCard(card, { count });
+            if (card && count > 0) html += renderCard(card, { count });
         }
         
         wrap.innerHTML = html || '<div class="empty-hint">Ваш инвентарь пуст</div>';
@@ -131,21 +129,30 @@ window.openGiftCardModal = function(cardId, isCustom) {
 window.searchGiftRecipient = async function() {
     const q = document.getElementById('gift-user-input').value.trim().toLowerCase();
     const res = document.getElementById('gift-search-results');
-    if (q.length < 2) return;
+    if (q.length < 2) {
+        res.innerHTML = '<p style="font-size:12px;color:var(--text-dim);text-align:center;padding:10px;">Введите минимум 2 символа</p>';
+        return;
+    }
     
-    res.innerHTML = 'Поиск...';
-    const snap = await getDocs(collection(_db, 'users'));
-    const users = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(u => u.id !== _auth.currentUser.uid && (u.nickname||'').toLowerCase().includes(q))
-        .slice(0, 5);
-        
-    res.innerHTML = users.map(u => `
-        <div class="user-select-card" onclick="confirmGift('${u.id}', '${esc(u.nickname)}')">
-            <img src="${u.avatar || ''}" style="width:30px;height:30px;border-radius:50%">
-            <span>${esc(u.nickname)}</span>
-        </div>
-    `).join('') || 'Никого не нашли';
+    res.innerHTML = '<p style="font-size:12px;color:var(--text-dim);text-align:center;padding:10px;">Поиск...</p>';
+    try {
+        const snap = await getDocs(collection(_db, 'users'));
+        const users = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(u => u.id !== _auth.currentUser.uid && (u.nickname||'').toLowerCase().includes(q))
+            .slice(0, 5);
+            
+        res.innerHTML = users.map(u => `
+            <div class="friend-result-card" onclick="confirmGift('${u.id}', '${esc(u.nickname)}')">
+                <img src="${u.avatar || 'https://api.dicebear.com/7.x/identicon/svg'}" class="friend-result-ava">
+                <div class="friend-result-info">
+                    <div class="friend-result-nick">${esc(u.nickname)}</div>
+                </div>
+            </div>
+        `).join('') || '<p style="font-size:12px;color:var(--text-dim);text-align:center;padding:10px;">Никого не нашли</p>';
+    } catch(e) {
+        res.innerHTML = 'Ошибка поиска';
+    }
 };
 
 window.confirmGift = async function(toUid, toNick) {
@@ -166,8 +173,8 @@ window.confirmGift = async function(toUid, toNick) {
         const toData = toSnap.data();
         const toCount = (toData.inventory?.[isCustom ? 'customCardsStacked' : 'cardsStacked']?.[cardId] || 0);
         
-        const updFrom = {}; updFrom[`${field}.${cardId}`] = fromCount - 1;
-        const updTo = {}; updTo[`${field}.${cardId}`] = toCount + 1;
+        const updFrom = {}; updFrom[field + '.' + cardId] = fromCount - 1;
+        const updTo = {}; updTo[field + '.' + cardId] = toCount + 1;
         
         await updateDoc(fromRef, updFrom);
         await updateDoc(toRef, updTo);
@@ -189,7 +196,7 @@ window.sellCard = async function(cardId, price, isCustom) {
         const count = _getState().userData.inventory[isCustom ? 'customCardsStacked' : 'cardsStacked'][cardId];
         
         const upd = {}; 
-        upd[`${field}.${cardId}`] = count - 1;
+        upd[field + '.' + cardId] = count - 1;
         upd['vcoins'] = (_getState().userData.vcoins || 0) + price;
         
         await updateDoc(userRef, upd);
