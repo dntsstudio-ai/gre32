@@ -3510,3 +3510,136 @@ select option { background: var(--modal-bg); color: var(--text); }
     0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.4); }
     50%       { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
 }
+
+/* ============================================================
+   VAT — ON V2.3 Стили для новых функций
+   ============================================================ */
+
+/* ── РЕДКОСТЬ: ТОП-СИКРЕТ ── */
+.inv-card--topsecret {
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), inset 0 0 15px rgba(239, 68, 68, 0.2) !important;
+    background: linear-gradient(135deg, #1a0505, #2d0a0a) !important;
+}
+
+.inv-card--topsecret .inv-card__rarity-bar {
+    background: #ef4444 !important;
+}
+
+.inv-card--topsecret .inv-card__shine {
+    background: linear-gradient(135deg, transparent, rgba(239, 68, 68, 0.3), transparent) !important;
+}
+
+/* ── СЕКРЕТНЫЕ КАРТОЧКИ (ЗАСЕКРЕЧЕННО) ── */
+.inv-card__img-wrap--secret {
+    background: #000 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.inv-card__secret-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+}
+
+.inv-card__secret-icon {
+    font-size: 4rem;
+    color: #333;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    animation: secretPulse 2s infinite ease-in-out;
+}
+
+.inv-card__secret-label {
+    margin-top: 10px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #ef4444;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+@keyframes secretPulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.6; }
+}
+
+/* ── СТАКИНГ: БЕЙДЖ КОЛИЧЕСТВА ── */
+.inv-card__count-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid var(--border);
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* ── ЛУТБОКСЫ: АНИМАЦИИ ── */
+.lb-box--shake {
+    animation: boxShake 0.5s infinite linear;
+}
+
+.lb-box--explode {
+    animation: boxExplode 0.5s forwards ease-out;
+}
+
+@keyframes boxShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2px, 2px) rotate(1deg); }
+    50% { transform: translate(-2px, -2px) rotate(-1deg); }
+    75% { transform: translate(2px, -2px) rotate(1deg); }
+    100% { transform: translate(-2px, 2px) rotate(0deg); }
+}
+
+@keyframes boxExplode {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; filter: brightness(2); }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.lb-card--appear {
+    animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes cardAppear {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── ПРОМАХ (MISS) ── */
+.lb-reveal-overlay--miss .inv-card {
+    filter: grayscale(1) brightness(0.7);
+    border-style: dashed !important;
+}
+
+/* ── АДМИН-ПАНЕЛЬ: СЕКРЕТНЫЙ ЧЕКБОКС ── */
+.admin-secret-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+/* ── МОБИЛЬНЫЕ ОПТИМИЗАЦИИ ── */
+@media (max-width: 768px) {
+    .inv-card {
+        will-change: transform;
+    }
+    .lb-reveal-overlay {
+        backdrop-filter: blur(10px);
+    }
+}
