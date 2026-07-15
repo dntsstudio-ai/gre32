@@ -2,10 +2,48 @@
 // js/admin_panel.js — Админ-панель (V2.3 с Секретными картами)
 // ============================================================
 
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { esc, showToast, closeModals } from './core.js';
 
 let _db, _auth, _getState;
+
+// ── Обновить lastSeen ──
+export async function updateLastSeen(uid) {
+    if (!uid || !_db) return;
+    try {
+        await updateDoc(doc(_db, 'users', uid), { lastSeen: Date.now() });
+    } catch(e) {}
+}
+
+// ── Счётчик страниц ──
+export async function incrementPageView() {
+    if (!_db) return;
+    try {
+        const ref = doc(_db, 'settings', 'siteStats');
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+            await updateDoc(ref, { totalPageViews: (snap.data().totalPageViews || 0) + 1 });
+        } else {
+            await setDoc(ref, { totalPageViews: 1 });
+        }
+    } catch(e) {}
+}
+
+// ── Учёт времени на сайте ──
+export function startSessionTimer(uid) {
+    if (!uid || !_db) return;
+    const interval = setInterval(async () => {
+        if (!document.hidden) {
+            await updateLastSeen(uid);
+            try {
+                const snap = await getDoc(doc(_db, 'users', uid));
+                const cur = snap.exists() ? (snap.data().totalMinutes || 0) : 0;
+                await updateDoc(doc(_db, 'users', uid), { totalMinutes: cur + 2 });
+            } catch(e) {}
+        }
+    }, 2 * 60 * 1000);
+    window.addEventListener('beforeunload', () => clearInterval(interval));
+}
 
 // ── Модальное окно создания кастомной карточки ───────────────
 window.openCreateCardModal = function(cardData = null) {
