@@ -1,8 +1,0 @@
-{
-  "enabled": true,
-  "duration": 60,
-  "ends_at": null,
-  "title": "Технические работы",
-  "message": "Мы обновляем сайт и скоро вернёмся. Спасибо за терпение!",
-  "allowed_roles": ["", "proxyadmin", "developer"]
-}

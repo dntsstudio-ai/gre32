@@ -30,6 +30,15 @@ const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
+// ── Защита от зависания сайта, если Firestore недоступен (медленная сеть,
+//    блокировки провайдера и т.п.) — не ждём ответ дольше указанного времени
+function withTimeout(promise, ms, fallback) {
+    return Promise.race([
+        promise,
+        new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+    ]);
+}
+
 if (window.emailjs) emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
 
 const state = { userData: null, isAdmin: false, isDub: false, isMod: false, isCurator: false, curProj: null };
@@ -105,8 +114,8 @@ function updateSidebarVisibility() {
 onAuthStateChanged(auth, async function(user) {
     if (user) {
         try {
-            const snap = await getDoc(doc(db, 'users', user.uid));
-            if (snap.exists()) {
+            const snap = await withTimeout(getDoc(doc(db, 'users', user.uid)), 6000, null);
+            if (snap && snap.exists()) {
                 state.userData  = snap.data();
                 state.isAdmin   = ['admin', 'proxyadmin'].includes(state.userData.role);
                 state.isDub     = canAccessDubin(state.userData);
@@ -138,11 +147,13 @@ onAuthStateChanged(auth, async function(user) {
     updateSidebarVisibility();
 
     const userRole = state.userData?.role || null;
-    const inMaintenance = await checkMaintenance(db, userRole);
+    const [inMaintenance] = await Promise.all([
+        withTimeout(checkMaintenance(db, userRole), 6000, false),
+        withTimeout(loadReleases(db, state.isAdmin), 6000, null)
+    ]);
     startMaintenancePolling(db, () => state.userData?.role || null);
     if (inMaintenance) return;
 
-    await loadReleases(db, state.isAdmin);
     initAuthListeners(auth, db);
 
     const hashPage   = window.location.hash.replace('#', '') || 'home';

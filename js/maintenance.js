@@ -8,12 +8,19 @@ let _checkInterval = null;
 let _db = null;
 
 // ── Загрузить конфиг из Firestore ──
+function _withTimeout(promise, ms, fallback) {
+    return Promise.race([
+        promise,
+        new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+    ]);
+}
+
 async function fetchMaintenanceConfig() {
     if (!_db) return null;
     try {
         const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
-        const snap = await getDoc(doc(_db, 'settings', 'maintenance'));
-        if (snap.exists()) return snap.data();
+        const snap = await _withTimeout(getDoc(doc(_db, 'settings', 'maintenance')), 5000, null);
+        if (snap && snap.exists()) return snap.data();
         return null;
     } catch(e) {
         console.warn('[Maintenance] Ошибка чтения конфига:', e);
