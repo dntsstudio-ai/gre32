@@ -1,0 +1,236 @@
+// ============================================================
+//  FIREBASE SECURITY RULES — Voice Acting Team
+//  firestore.rules
+//
+//  Скопируй эти правила в Firebase Console:
+//  Firestore Database → Rules → Edit rules
+//
+//  ИЗМЕНЕНИЯ v3:
+//  - developer теперь = полный админ (как admin/proxyadmin),
+//    попадает в isAdmin() везде, где раньше был отдельно в hasTechAccess()
+// ============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ══════════════════════════════════════════
+    //  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    // ══════════════════════════════════════════
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(uid())).data;
+    }
+
+    // ── Роли ──
+    // developer теперь полноценный админ (см. запрос: "Да, полный доступ как у admin")
+    function isAdmin() {
+      return isAuth() && (
+        getUserData().role == 'admin' ||
+        getUserData().role == 'proxyadmin' ||
+        getUserData().role == 'developer'
+      );
+    }
+
+    // Оставлено для обратной совместимости — теперь синоним isAdmin()
+    function hasTechAccess() {
+      return isAdmin();
+    }
+
+    function isDub() {
+      return isAuth() && (
+        getUserData().role == 'dub'      ||
+        getUserData().role == 'curator'  ||
+        getUserData().role == 'subber'   ||
+        getUserData().role == 'previewer'||
+        getUserData().role == 'editor'   ||
+        getUserData().role == 'mixer'    ||
+        isAdmin()
+      );
+    }
+
+    function isCurator() {
+      return isAuth() && (
+        getUserData().role == 'curator'  ||
+        isAdmin()
+      );
+    }
+
+    function isMode() {
+      return isAuth() && (
+        getUserData().role == 'moderator'||
+        isAdmin()
+      );
+    }
+
+    // ══════════════════════════════════════════
+    //  USERS
+    // ══════════════════════════════════════════
+    match /users/{userId} {
+      // Читать профиль могут все авторизованные
+      allow read: if isAuth();
+
+      // Создать профиль может только сам пользователь
+      allow create: if isAuth() && uid() == userId
+        && request.resource.data.keys().hasAll(['nickname', 'email', 'role', 'views', 'subscribers'])
+        && request.resource.data.role == 'user';
+
+      // Обновить: сам пользователь или admin/proxyadmin/developer
+      allow update: if isAuth() && (
+        uid() == userId || isAdmin()
+      );
+
+      // Удалять профили только главный admin (не proxyadmin/developer)
+      allow delete: if isAuth() && getUserData().role == 'admin';
+
+      // ── Подколлекции пользователя ──
+      match /watchlist/{relId} {
+        allow read, write: if isAuth() && uid() == userId;
+      }
+      match /viewed/{relId} {
+        allow read, write: if isAuth() && uid() == userId;
+      }
+      match /watched/{relId} {
+        allow read, write: if isAuth() && uid() == userId;
+      }
+      match /playlists/{playlistId} {
+        allow read, write: if isAuth() && uid() == userId;
+        match /items/{itemId} {
+          allow read, write: if isAuth() && uid() == userId;
+        }
+      }
+      match /notifications/{notifId} {
+        allow read, write: if isAuth() && uid() == userId;
+        // Сервис может писать уведомления другим пользователям
+        allow create: if isAuth();
+      }
+      match /vcoinLog/{logId} {
+        allow read: if isAuth() && uid() == userId;
+        allow write: if isAuth() && (uid() == userId || isAdmin());
+      }
+      match /wall/{postId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        allow delete: if isAuth() && (
+          uid() == userId ||
+          resource.data.authorUid == uid() ||
+          isAdmin()
+        );
+        allow update: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════════
+    //  RELEASES
+    // ══════════════════════════════════════════
+    match /releases/{releaseId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      // Обновление: admin/proxyadmin/developer или авторизованный (лайки, просмотры)
+      allow update: if isAdmin() || isAuth();
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow delete: if isAuth() && (
+          resource.data.uid == uid() || isAdmin()
+        );
+        allow update: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════════
+    //  RELEASE SUBSCRIBERS
+    // ══════════════════════════════════════════
+    match /releaseSubscribers/{subId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow delete: if isAuth() && (
+        resource.data.uid == uid() || isAdmin()
+      );
+    }
+
+    // ══════════════════════════════════════════
+    //  TEAM
+    // ══════════════════════════════════════════
+    match /team/{memberId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isDub() &&
+        get(/databases/$(database)/documents/users/$(uid())).data.linkedCardId == memberId
+      );
+    }
+
+    // ══════════════════════════════════════════
+    //  RATINGS
+    // ══════════════════════════════════════════
+    match /ratings/{ratingId} {
+      allow read: if isCurator() || hasTechAccess();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
+    //  DUBIN PROJECTS
+    // ══════════════════════════════════════════
+    match /dubinProjects/{projectId} {
+      allow read:   if isDub();
+      allow create, delete: if isAdmin();
+      allow update: if isDub();
+    }
+
+    // ══════════════════════════════════════════
+    //  SUGGESTIONS
+    // ══════════════════════════════════════════
+    match /suggestions/{suggestionId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
+    //  REPORTS
+    // ══════════════════════════════════════════
+    match /reports/{reportId} {
+      allow read: if isAdmin() || isMode();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
+    //  SETTINGS
+    // ══════════════════════════════════════════
+    match /settings/{settingId} {
+      // Все могут читать настройки (privacy, vcoins prices, maintenance)
+      allow read: if true;
+
+      // Писать: только admin/proxyadmin/developer
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
+    //  SITE STATS (только для admin/proxyadmin/developer)
+    // ══════════════════════════════════════════
+    match /siteStats/{statId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Кастомные карточки (лутбокс): читать всем залогиненным, писать только админам
+    match /custom_cards/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+  }
+}
