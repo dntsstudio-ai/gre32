@@ -64,7 +64,7 @@ async function giftVCoins(targetUid, targetNick, amount) {
     const { userData } = _getState();
     if (!userData) return;
     if (amount <= 0) return showToast('Введите корректную сумму', 'error');
-    const ok = await spendVCoins(amount, 'Подарок <i class="fas fa-arrow-right"></i> ' + targetNick);
+    const ok = await spendVCoins(amount, 'Подарок пользователю ' + targetNick);
     if (!ok) return;
     try {
         await updateDoc(doc(_db, 'users', targetUid), { vcoins: increment(amount) });
@@ -230,8 +230,8 @@ function renderGame(type) {
                 <input type="number" id="game-bet" min="1" max="${balance}" value="10">
             </div>
             <div class="coin-choice-row">
-                <button class="coin-choice-btn coin-btn-heads" onclick="playCoinflip('heads')"><i class="fas fa-crown"></i> Орёл</button>
-                <button class="coin-choice-btn coin-btn-tails" onclick="playCoinflip('tails')"><i class="fas fa-coins"></i> Решка</button>
+                <button class="coin-choice-btn coin-btn-heads" id="coin-btn-heads" onclick="playCoinflip('heads')"><i class="fas fa-crown"></i> Орёл</button>
+                <button class="coin-choice-btn coin-btn-tails" id="coin-btn-tails" onclick="playCoinflip('tails')"><i class="fas fa-coins"></i> Решка</button>
             </div>
             <div id="game-result"></div>
         </div>`;
@@ -306,17 +306,22 @@ function renderGame(type) {
 }
 
 window.playCoinflip = async function(choice) {
+    const btnH = document.getElementById('coin-btn-heads');
+    const btnT = document.getElementById('coin-btn-tails');
+    if (btnH?.disabled || btnT?.disabled) return; // защита от заклика — розыгрыш уже идёт
+    if (btnH) btnH.disabled = true;
+    if (btnT) btnT.disabled = true;
     const { userData } = _getState();
     const bet = parseInt(document.getElementById('game-bet')?.value) || 0;
-    if (bet <= 0) return showToast('Введите ставку', 'error');
+    if (bet <= 0) { if(btnH)btnH.disabled=false; if(btnT)btnT.disabled=false; return showToast('Введите ставку', 'error'); }
     const ok = await spendVCoins(bet, 'Монетка — ставка');
-    if (!ok) return;
+    if (!ok) { if(btnH)btnH.disabled=false; if(btnT)btnT.disabled=false; return; }
     const result = Math.random() < 0.5 ? 'heads' : 'tails';
     const win    = result === choice;
     const imgEl  = document.getElementById('game-coin-img');
     if (imgEl) { imgEl.textContent=''; imgEl.classList.add('spinning'); }
     setTimeout(async () => {
-        if (imgEl) { imgEl.classList.remove('spinning'); imgEl.textContent = result==='heads'?'<i class="fas fa-crown"></i>':'<i class="fas fa-coins"></i>'; }
+        if (imgEl) { imgEl.classList.remove('spinning'); imgEl.innerHTML = result==='heads'?'<i class="fas fa-crown"></i>':'<i class="fas fa-coins"></i>'; }
         const resEl = document.getElementById('game-result');
         if (win) {
             await awardVCoins(bet*2, 'Монетка — выигрыш');
@@ -327,6 +332,8 @@ window.playCoinflip = async function(choice) {
         }
         const balEl = document.querySelector('.game-balance b');
         if (balEl) balEl.textContent = (userData?.vcoins||0) + ' VC';
+        if (btnH) btnH.disabled = false;
+        if (btnT) btnT.disabled = false;
     }, 900);
 };
 
@@ -341,13 +348,14 @@ const SLOT_SYMBOLS = [
 ];
 const SLOT_JACKPOT_SYMBOL = SLOT_SYMBOLS[5]; // корона — джекпот x10
 window.playSlots = async function() {
+    const spinBtn = document.getElementById('slots-spin-btn');
+    if (spinBtn?.disabled) return; // защита от заклика
+    if (spinBtn) spinBtn.disabled = true;
     const { userData } = _getState();
     const bet = parseInt(document.getElementById('game-bet')?.value) || 0;
-    if (bet <= 0) return showToast('Введите ставку', 'error');
+    if (bet <= 0) { if (spinBtn) spinBtn.disabled = false; return showToast('Введите ставку', 'error'); }
     const ok = await spendVCoins(bet, 'Слоты — ставка');
-    if (!ok) return;
-    const spinBtn = document.getElementById('slots-spin-btn');
-    if (spinBtn) spinBtn.disabled = true;
+    if (!ok) { if (spinBtn) spinBtn.disabled = false; return; }
     // Анимация вращения барабанов
     [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('spinning-reel'); });
     let ticks = 0;
@@ -392,16 +400,17 @@ let _rocketAvgBet    = 0;
 let _rocketBetCount  = 0;
 
 window.startRocket = async function() {
+    if (_rocketRunning) return; // защита от заклика
     const { userData } = _getState();
     const bet = parseInt(document.getElementById('game-bet')?.value) || 0;
     if (bet<=0) return showToast('Введите ставку','error');
-    if (_rocketRunning) return;
+    _rocketRunning = true;
     const ok = await spendVCoins(bet, 'Ракета — ставка');
-    if (!ok) return;
+    if (!ok) { _rocketRunning = false; return; }
 
     // Ограничение ставки — не более 500 VC за раз
     const cappedBet = Math.min(bet, 500);
-    _rocketBet = cappedBet; _rocketMult = 1.0; _rocketRunning = true;
+    _rocketBet = cappedBet; _rocketMult = 1.0;
 
     // ── Обновляем скользящее среднее ставок ──
     _rocketBetCount++;
@@ -480,7 +489,7 @@ window.startRocket = async function() {
         if (exhaust) exhaust.style.height = (12 + Math.random() * 10) + 'px';
         if (_rocketMult >= _rocketCrashAt) {
             clearInterval(_rocketInterval); _rocketRunning=false;
-            if (ship) { ship.textContent='<i class="fas fa-explosion"></i>'; ship.classList.remove('flying'); ship.classList.add('exploded'); }
+            if (ship) { ship.innerHTML='<i class="fas fa-explosion"></i>'; ship.classList.remove('flying'); ship.classList.add('exploded'); }
             if (exhaust) { exhaust.classList.remove('active'); exhaust.style.height='0'; }
             if (multEl) multEl.classList.remove('danger');
             const resEl = document.getElementById('game-result');
@@ -688,11 +697,11 @@ window.cashOutRocket = async function() {
         const bet=parseInt(document.getElementById('plinko-bet')?.value)||0;
         if(bet<=0) return showToast('Введите ставку','error');
         if(bet>500) return showToast('Максимальная ставка — 500 VC','error');
-        const ok=await spendVCoins(bet,'Чёрная дыра — ставка');
-        if(!ok) return;
         _plinkoRunning=true;
         const btn=document.getElementById('plinko-drop-btn');
         if(btn) btn.disabled=true;
+        const ok=await spendVCoins(bet,'Чёрная дыра — ставка');
+        if(!ok) { _plinkoRunning=false; if(btn) btn.disabled=false; return; }
         const canvas=document.getElementById('plinko-canvas');
         if(!canvas){_plinkoRunning=false;return;}
         const ctx=canvas.getContext('2d');

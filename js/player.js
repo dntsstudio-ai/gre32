@@ -272,6 +272,9 @@ function attachVideoEvents(containerId, startSec) {
 
     attachSettingsMenu(containerId);
     attachFullscreen(containerId, root);
+
+    const eplistBtnTop = document.getElementById(`swsp-eplist-btn-${containerId}`);
+    if (eplistBtnTop) eplistBtnTop.addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(containerId); });
 }
 
 // ── Kodik / YouTube / Drive / прочее — как раньше, через iframe ─
@@ -283,11 +286,11 @@ function buildIframeHTML(containerId, src, st) {
     const base = buildEmbedSrc(src.url);
     const embedSrc = (src.type !== 'drive' && st.muted) ? appendMuteParam(base) : base;
     if (src.type === 'drive') {
-        return `<iframe class="swsp-iframe swsp-iframe--drive" id="swsp-iframe-${containerId}" src="${buildEmbedSrc(src.url)}" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen frameborder="0" title="${st.title}"></iframe>
+        return `<iframe class="swsp-iframe swsp-iframe--drive" id="swsp-iframe-${containerId}" src="${buildEmbedSrc(src.url)}" allow="autoplay;fullscreen;picture-in-picture" frameborder="0" title="${st.title}"></iframe>
         ${!st.isTrailer?`<button class="swsp-skip-btn" id="swsp-skip-${containerId}" style="display:none;"><i class="fas fa-forward"></i> Пропустить заставку</button><button class="swsp-next-btn" id="swsp-next-${containerId}" style="display:none;">Следующая серия <i class="fas fa-step-forward"></i></button><button class="swsp-drive-menu-btn" id="swsp-menu-btn-${containerId}" title="Меню"><i class="fas fa-chevron-up"></i></button>`:''}
         ${buildSettingsMenuHTML(containerId, st)}`;
     }
-    return `<iframe class="swsp-iframe" id="swsp-iframe-${containerId}" src="${embedSrc}" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen frameborder="0" title="${st.title}"></iframe>
+    return `<iframe class="swsp-iframe" id="swsp-iframe-${containerId}" src="${embedSrc}" allow="autoplay;fullscreen;picture-in-picture" frameborder="0" title="${st.title}"></iframe>
     <div class="swsp-overlay" id="swsp-ov-${containerId}">
         ${st.title?`<div class="swsp-top"><span class="swsp-title">${st.title}</span></div>`:''}
         <div class="swsp-midzone" id="swsp-mid-${containerId}"></div>

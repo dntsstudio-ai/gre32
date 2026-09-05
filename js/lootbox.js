@@ -146,7 +146,9 @@ async function renderLootboxPage(wrap, balance) {
 }
 
 // ── Открытие ящика ─────────────────────────────────────────────
+let _lootboxOpening = false;
 window.openLootbox = async function(boxId) {
+    if (_lootboxOpening) return; // защита от заклика
     const { userData } = _getState();
     if (!userData) return showToast('Войдите в аккаунт', 'error');
 
@@ -157,8 +159,9 @@ window.openLootbox = async function(boxId) {
     if (balance < box.price) return showToast(`Недостаточно VCoins! Нужно ${box.price} VC`, 'error');
 
     if (!window.spendVCoinsGlobal) return showToast('Ошибка системы VCoins', 'error');
+    _lootboxOpening = true;
     const ok = await window.spendVCoinsGlobal(box.price, `Открытие: ${box.name}`);
-    if (!ok) return;
+    if (!ok) { _lootboxOpening = false; return; }
 
     try {
         // Загружаем обычных участников и кастомные карточки
@@ -202,6 +205,8 @@ window.openLootbox = async function(boxId) {
     } catch(e) {
         showToast('Ошибка: ' + e.message, 'error');
         console.error('openLootbox:', e);
+    } finally {
+        _lootboxOpening = false;
     }
 };
 

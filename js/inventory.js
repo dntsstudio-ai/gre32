@@ -399,7 +399,7 @@ window.openSellCardModal = function(cardId, isCustom, count, sellPrice) {
   document.getElementById('sell-card-qty').addEventListener('input', function() {
     const qty = parseInt(this.value) || 1;
     const total = qty * sellPrice;
-    document.getElementById('sell-card-total').textContent = `<i class="fas fa-coins"></i> ${total} VC`;
+    document.getElementById('sell-card-total').innerHTML = `<i class="fas fa-coins"></i> ${total} VC`;
   });
 };
 
