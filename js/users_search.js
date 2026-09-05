@@ -3,7 +3,7 @@
 // ============================================================
 
 import { collection, getDocs, getDoc, addDoc, deleteDoc, doc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast, closeModals } from './core.js';
+import { esc, showToast, closeModals } from './core.js?v=20260905a';
 
 let _db, _auth, _getState;
 let _searchTimeout = null;

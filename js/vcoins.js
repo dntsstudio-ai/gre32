@@ -3,13 +3,13 @@
 // ============================================================
 
 import {
-    doc, getDoc, getDocs, setDoc, updateDoc, addDoc,
+    doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc,
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js';
-import { VCOINS_DEFAULT_PRICES } from '../config/config.js';
-import { checkAndAwardAch } from './achievements.js';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260905a';
+import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260905a';
+import { checkAndAwardAch } from './achievements.js?v=20260905a';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -67,12 +67,36 @@ async function giftVCoins(targetUid, targetNick, amount) {
     const ok = await spendVCoins(amount, 'Подарок пользователю ' + targetNick);
     if (!ok) return;
     try {
-        await updateDoc(doc(_db, 'users', targetUid), { vcoins: increment(amount) });
-        await addDoc(collection(_db, `users/${targetUid}/vcoinLog`), { amount, reason: 'Подарок от ' + userData.nickname, date: Date.now(), type: 'gift' });
+        // Нельзя напрямую менять баланс чужого документа (запрещено правилами безопасности) —
+        // вместо этого создаём "отложенный подарок", который получатель сам себе зачислит при заходе.
+        await addDoc(collection(_db, 'pendingGifts'), {
+            fromUid: _auth.currentUser.uid, fromNick: userData.nickname,
+            toUid: targetUid, amount, date: Date.now(),
+        });
         await addDoc(collection(_db, `users/${targetUid}/notifications`), { type:'gift', text: userData.nickname + ' подарил вам ' + amount + ' VCoins!', date: Date.now(), read: false, icon: '<i class="fas fa-gift"></i>' });
         showToast('<i class="fas fa-gift"></i> Отправлено ' + amount + ' VC <i class="fas fa-arrow-right"></i> ' + targetNick + '!');
         closeModals();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+}
+
+// ── Получатель забирает все отложенные подарки при заходе на сайт ──
+export async function claimPendingGifts(uid) {
+    try {
+        const q = query(collection(_db, 'pendingGifts'), where('toUid', '==', uid));
+        const snap = await getDocs(q);
+        if (snap.empty) return;
+        let total = 0;
+        for (const d of snap.docs) {
+            const g = d.data();
+            try {
+                await updateDoc(doc(_db, 'users', uid), { vcoins: increment(g.amount) });
+                await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: g.amount, reason: 'Подарок от ' + (g.fromNick || 'пользователя'), date: Date.now(), type: 'gift' });
+                await deleteDoc(doc(_db, 'pendingGifts', d.id));
+                total += g.amount;
+            } catch(e) { console.warn('claimPendingGifts item:', e); }
+        }
+        if (total > 0) showToast(`<i class="fas fa-gift"></i> Получено ${total} VC в подарок!`);
+    } catch(e) { console.warn('claimPendingGifts:', e); }
 }
 
 const SHOP_ITEMS = [

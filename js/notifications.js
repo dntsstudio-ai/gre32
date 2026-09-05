@@ -6,7 +6,7 @@ import {
     collection, addDoc, getDocs, updateDoc, deleteDoc,
     doc, query, orderBy, where, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js';
+import { esc, showToast } from './core.js?v=20260905a';
 
 let _db, _auth, _getState;
 let _unsubNotifs = null;

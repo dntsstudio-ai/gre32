@@ -3,8 +3,8 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js';
+import { esc, showToast } from './core.js?v=20260905a';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260905a';
 
 let _db, _auth, _getState;
 
@@ -252,14 +252,10 @@ function showCardReveal(member, rarity, box, isCustom) {
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('lb-reveal-overlay--visible'));
 
-    // Звук открытия (или кастомный звук карточки)
-    if (isCustom && member.soundUrl) {
-        playCustomSound(member.soundUrl);
-    } else {
-        playSound('open');
-    }
-
     spawnParticles(r.color);
+
+    // Звук должен играть ТОЛЬКО в момент клика пользователя (иначе браузер
+    // блокирует автовоспроизведение) — см. revealCard() ниже.
 
     const boxWrap = document.getElementById('lb-box-wrap');
     if (boxWrap) {
@@ -282,13 +278,28 @@ function revealCard(r, isCustom, member) {
     boxWrap.classList.add('lb-box--shake');
     playSound('shake');
 
+    // "Разблокируем" кастомный звук ПРЯМО СЕЙЧАС, пока мы ещё внутри клика
+    // пользователя (иначе браузер заблокирует запуск позже, из setTimeout).
+    let revealAudio = null;
+    if (isCustom && member.soundUrl) {
+        try {
+            revealAudio = new Audio(member.soundUrl);
+            revealAudio.volume = 0;
+            revealAudio.play().then(() => {
+                revealAudio.pause();
+                revealAudio.currentTime = 0;
+                revealAudio.volume = 1;
+            }).catch(() => { revealAudio = null; });
+        } catch(e) { revealAudio = null; }
+    }
+
     setTimeout(() => {
         boxWrap.classList.add('lb-box--explode');
 
-        // Звук при выпадении (кастомный или стандартный по редкости)
-        if (isCustom && member.soundUrl) {
-            playCustomSound(member.soundUrl);
-        } else {
+        // Звук при выпадении (кастомный, уже разблокированный выше, или стандартный по редкости)
+        if (isCustom && revealAudio) {
+            revealAudio.play().catch(() => {});
+        } else if (!isCustom) {
             playSound('reveal', r);
         }
 

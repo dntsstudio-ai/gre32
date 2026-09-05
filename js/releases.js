@@ -11,10 +11,10 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate } from './core.js';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js';
-import { loadComments } from './comments.js';
-import { checkAndAwardAch } from './achievements.js';
+import { esc, showToast, closeModals, navigate } from './core.js?v=20260905a';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260905a';
+import { loadComments } from './comments.js?v=20260905a';
+import { checkAndAwardAch } from './achievements.js?v=20260905a';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -22,8 +22,8 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js';
-import { renderPinnedPlaylists } from './playlists.js';
+} from './player.js?v=20260905a';
+import { renderPinnedPlaylists } from './playlists.js?v=20260905a';
 
 export let allRel  = [];
 export let curProj = null;
@@ -166,6 +166,7 @@ export async function openViewRelease(db, auth, id, userData, isAdmin) {
         const idx = allRel.findIndex(x => x.id === id);
         if (idx >= 0) allRel[idx] = curProj;
         navigate('view');
+        history.replaceState(null, '', '#view/' + id);
 
         let watchedEpIdx = 0;
         if (userData && auth.currentUser) {

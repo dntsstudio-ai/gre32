@@ -7,25 +7,25 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js';
-import { renderAchProfile, bindAchievements } from './achievements.js';
-import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js';
-import { bindComments }    from './comments.js';
-import { bindTeam }        from './team.js';
-import { bindUsers }       from './users.js';
-import { initDubinPanel, bindDubin } from './dubin.js';
-import { bindOrder }       from './order.js';
-import { bindPlaylists }   from './playlists.js';
-import { bindRatings }     from './ratings.js';
-import { bindVCoins, awardVCoins } from './vcoins.js';
-import { bindInventory } from './inventory.js';
-import { bindLootbox } from './lootbox.js';
-import { bindNotifications, listenNotifications } from './notifications.js';
-import { bindUserSearch, bindProfileWall } from './users_search.js';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260905a';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260905a';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260905a';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260905a';
+import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260905a';
+import { bindComments }    from './comments.js?v=20260905a';
+import { bindTeam }        from './team.js?v=20260905a';
+import { bindUsers }       from './users.js?v=20260905a';
+import { initDubinPanel, bindDubin } from './dubin.js?v=20260905a';
+import { bindOrder }       from './order.js?v=20260905a';
+import { bindPlaylists }   from './playlists.js?v=20260905a';
+import { bindRatings }     from './ratings.js?v=20260905a';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260905a';
+import { bindInventory } from './inventory.js?v=20260905a';
+import { bindLootbox } from './lootbox.js?v=20260905a';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260905a';
+import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260905a';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260905a';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260905a';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -128,6 +128,7 @@ onAuthStateChanged(auth, async function(user) {
                 listenNotifications(user.uid);
                 startSessionTimer(user.uid);
                 updateLastSeen(user.uid);
+                claimPendingGifts(user.uid);
                 const lastDaily = state.userData.lastDailyBonus || 0;
                 if (Date.now() - lastDaily > 86400000) {
                     setTimeout(async () => {
@@ -158,7 +159,8 @@ onAuthStateChanged(auth, async function(user) {
 
     initAuthListeners(auth, db);
 
-    const hashPage   = window.location.hash.replace('#', '') || 'home';
+    const rawHash    = window.location.hash.replace('#', '');
+    const hashPage   = rawHash || 'home';
     const targetPage = _pendingNav.length > 0 ? _pendingNav[_pendingNav.length - 1][0] : hashPage;
 
     if (targetPage === 'dubin'   && !canAccessDubin(state.userData))   { window.navigate('home', false); return; }
@@ -166,9 +168,20 @@ onAuthStateChanged(auth, async function(user) {
     if (targetPage === 'stats'   && !state.isAdmin)                    { window.navigate('home', false); return; }
     if (targetPage === 'shop'    && !state.userData)                   { window.navigate('home', false); return; }
 
-    window.navigate(targetPage, false);
+    const viewMatch = targetPage.match(/^view\/(.+)$/);
+    if (viewMatch && window.openView) {
+        window.openView(viewMatch[1]);
+    } else {
+        window.navigate(targetPage, false);
+    }
 });
 
 window.addEventListener('popstate', function() {
-    window.navigate(window.location.hash.replace('#', '') || 'home', false);
+    const raw = window.location.hash.replace('#', '') || 'home';
+    const viewMatch = raw.match(/^view\/(.+)$/);
+    if (viewMatch && window.openView) {
+        window.openView(viewMatch[1]);
+    } else {
+        window.navigate(raw, false);
+    }
 });

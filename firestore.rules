@@ -130,6 +130,17 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════
+    //  PENDING GIFTS (переводы VCoins между пользователями)
+    //  Отправитель создаёт запись, получатель сам её "забирает"
+    //  и зачисляет себе баланс — прямая запись в чужой vcoins запрещена.
+    // ══════════════════════════════════════════
+    match /pendingGifts/{giftId} {
+      allow create: if isAuth() && request.resource.data.fromUid == uid() && request.resource.data.amount > 0;
+      allow read, delete: if isAuth() && (resource.data.toUid == uid() || resource.data.fromUid == uid() || isAdmin());
+      allow update: if false;
+    }
+
+    // ══════════════════════════════════════════
     //  RELEASES
     // ══════════════════════════════════════════
     match /releases/{releaseId} {

@@ -7,14 +7,15 @@ import {
     query, where, increment, arrayUnion, arrayRemove, addDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, getRoleBadgeHTML } from './core.js';
-import { checkAndAwardAch } from './achievements.js';
+import { esc, showToast, closeModals, navigate, getRoleBadgeHTML } from './core.js?v=20260905a';
+import { checkAndAwardAch } from './achievements.js?v=20260905a';
 
 export function bindUsers(db, auth, getState) {
 
     window.openUserProfile = async function(uid) {
         const { userData } = getState();
         if (userData && uid === auth.currentUser?.uid) { navigate('profile'); return; }
+        closeModals();
         try {
             const snap = await getDoc(doc(db, 'users', uid));
             if (!snap.exists()) return showToast('Пользователь не найден', 'error');
