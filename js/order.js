@@ -78,7 +78,7 @@ async function doSubmitFree(db, auth, getState) {
     } catch(e) { console.warn('Firestore suggestion:', e); }
 
     const msg = [
-        '📬 Бесплатное предложение озвучки — Voice Acting Team', '',
+        '<i class="fas fa-envelope-open-text"></i> Бесплатное предложение озвучки — Voice Acting Team', '',
         'Название: ' + title, 'Тип: ' + type,
         link   ? 'Ссылка: ' + link    : '',
         'Почему: ' + reason, '',
@@ -86,7 +86,7 @@ async function doSubmitFree(db, auth, getState) {
     ].filter(Boolean).join('\n');
 
     window.open('https://t.me/' + TG_USER + '?text=' + encodeURIComponent(msg), '_blank');
-    showToast('Открываем Telegram... Спасибо! 🎉');
+    showToast('Открываем Telegram... Спасибо! <i class="fas fa-champagne-glasses"></i>');
     if (userData && auth) await checkAndAwardAch(db, auth, userData, 'suggest_1');
 
     ['ord-free-title','ord-free-link','ord-free-reason','ord-free-name','ord-free-email'].forEach(id => {
@@ -107,7 +107,7 @@ window.submitPaidOrder = () => {
     const qual = get('ord-paid-quality')?.value    || 'medium';
 
     const parts = [
-        '💎 Платный заказ озвучки — Voice Acting Team', '',
+        '<i class="fas fa-gem"></i> Платный заказ озвучки — Voice Acting Team', '',
         'Название: '   + title,
         'Тип: '        + type,
         get('ord-paid-genre')?.value    ? 'Жанр: '        + get('ord-paid-genre').value    : null,

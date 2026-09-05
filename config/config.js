@@ -33,6 +33,12 @@ export const PLACEHOLDER_TEAM_IMG = 'https://api.dicebear.com/7.x/identicon/svg'
 
 export const VIEW_COUNT_AFTER_MS  = 10 * 60 * 1000;
 
+// ⚠️ Токен виден всем в исходниках сайта (это статический фронтенд, без бэкенда).
+// Если Kodik начнёт жаловаться на чужой трафик по вашему токену — нужно
+// будет перенести запрос за прокси (Cloud Function / Cloudflare Worker).
+// Пока что это самый быстрый рабочий вариант.
+export const KODIK_TOKEN = '045964053adda3cf717778926c26a039';
+
 // ── VCoins default prices ──
 export const VCOINS_DEFAULT_PRICES = {
     colorNick:  500,

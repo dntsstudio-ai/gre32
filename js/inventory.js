@@ -34,7 +34,7 @@ export function renderCard(card, opts = {}) {
   const showDesc = opts.showDesc || false;
   const zoomable = opts.zoomable !== false && showActions;
   const count = opts.count || 1; // Количество карточек в стеке
-  const stars = '★'.repeat(r.stars) + '☆'.repeat(4 - r.stars);
+  const stars = '<i class="fas fa-star"></i>'.repeat(r.stars) + '<i class="far fa-star"></i>'.repeat(4 - r.stars);
 
   // Если карточка секретная и не раскрыта
   const isSecretHidden = card.isSecret && opts.hideSecret;
@@ -47,7 +47,7 @@ export function renderCard(card, opts = {}) {
       ${isSecretHidden ? `
         <div class="inv-card__img-wrap inv-card__img-wrap--secret">
           <div class="inv-card__secret-overlay">
-            <div class="inv-card__secret-icon">❓</div>
+            <div class="inv-card__secret-icon"><i class="fas fa-circle-question"></i></div>
             <div class="inv-card__secret-label">ЗАСЕКРЕЧЕННО</div>
           </div>
         </div>
@@ -73,13 +73,13 @@ export function renderCard(card, opts = {}) {
       ${showActions ? `
         <div class="inv-card__actions" onclick="event.stopPropagation()">
           <button class="inv-card__btn inv-card__btn--fav ${isFav ? 'active' : ''}" onclick="toggleFavCard('${esc(card.id)}', ${card.isCustom ? 'true' : 'false'})" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">
-            ${isFav ? '❤️' : '🤍'}
+            ${isFav ? '<i class="fas fa-heart"></i>️' : '<i class="far fa-heart"></i>'}
           </button>
           <button class="inv-card__btn" onclick="openGiftCardModal('${esc(card.id)}', ${card.isCustom ? 'true' : 'false'}, ${count})" title="Подарить карточку">
-            🎁
+            <i class="fas fa-gift"></i>
           </button>
           <button class="inv-card__btn inv-card__btn--sell" onclick="openSellCardModal('${esc(card.id)}', ${card.isCustom ? 'true' : 'false'}, ${count}, ${r.sellPrice})" title="Продать">
-            💰 ${r.sellPrice} VC
+            <i class="fas fa-coins"></i> ${r.sellPrice} VC
           </button>
         </div>
       ` : ''}
@@ -109,10 +109,10 @@ window.zoomCard = function(event, cardId, isCustom) {
     <div class="inv-zoom-content">
       <div class="inv-zoom-card-wrap" id="inv-zoom-card-wrap"></div>
       <div class="inv-zoom-btns">
-        <button class="btn inv-card__btn inv-card__btn--fav" id="inv-zoom-fav-btn" onclick="toggleFavCard('${esc(cardId)}', ${isCustom}); closeCardZoom();">❤️ В избранное</button>
-        <button class="btn" onclick="openGiftCardModal('${esc(cardId)}', ${isCustom}); closeCardZoom();">🎁 Подарить</button>
-        <button class="btn lb-btn-sell" onclick="openSellCardModal('${esc(cardId)}', ${isCustom}); closeCardZoom();">💰 Продать</button>
-        <button class="btn btn-outline" onclick="closeCardZoom()">✕ Закрыть</button>
+        <button class="btn inv-card__btn inv-card__btn--fav" id="inv-zoom-fav-btn" onclick="toggleFavCard('${esc(cardId)}', ${isCustom}); closeCardZoom();"><i class="fas fa-heart"></i>️ В избранное</button>
+        <button class="btn" onclick="openGiftCardModal('${esc(cardId)}', ${isCustom}); closeCardZoom();"><i class="fas fa-gift"></i> Подарить</button>
+        <button class="btn lb-btn-sell" onclick="openSellCardModal('${esc(cardId)}', ${isCustom}); closeCardZoom();"><i class="fas fa-coins"></i> Продать</button>
+        <button class="btn btn-outline" onclick="closeCardZoom()"><i class="fas fa-xmark"></i> Закрыть</button>
       </div>
     </div>
   `;
@@ -177,7 +177,7 @@ async function loadInventory() {
           🃏 Карточки <span class="inv-tab-count">${totalCards}</span>
         </button>
         <button class="inv-tab ${activeTab==='items'?'active':''}" onclick="switchInvTab('items')">
-          🎁 Привилегии <span class="inv-tab-count">${items.length}</span>
+          <i class="fas fa-gift"></i> Привилегии <span class="inv-tab-count">${items.length}</span>
         </button>
       </div>
       <div id="inv-tab-cards" class="inv-tab-content" style="display:${activeTab==='cards'?'block':'none'}">
@@ -254,7 +254,7 @@ function renderCardsTab(cardsObj, customCardsObj, favs, teamMap, customMap) {
       ${normalHtml}
       ${hasCustom ? `
         <div class="inv-section-divider" style="grid-column:1/-1;">
-          <span>✨ Особые карточки</span>
+          <span><i class="fas fa-wand-magic-sparkles"></i> Особые карточки</span>
         </div>
         ${customHtml}
       ` : ''}
@@ -264,21 +264,21 @@ function renderCardsTab(cardsObj, customCardsObj, favs, teamMap, customMap) {
 
 function renderItemsTab(items, userData) {
   const ITEM_DEFS = {
-    colorNick: { icon: '🎨', name: 'Цветной никнейм', desc: 'Изменяет цвет вашего никнейма', active: !!userData?.nickColor },
-    prefix: { icon: '🏷️', name: 'Префикс', desc: `Активный: ${userData?.activePrefix || 'нет'}`, active: !!userData?.activePrefix },
-    achSlot: { icon: '🏆', name: 'Слот достижения', desc: 'Дополнительный слот для достижения', active: true },
+    colorNick: { icon: '<i class="fas fa-palette"></i>', name: 'Цветной никнейм', desc: 'Изменяет цвет вашего никнейма', active: !!userData?.nickColor },
+    prefix: { icon: '<i class="fas fa-tag"></i>️', name: 'Префикс', desc: `Активный: ${userData?.activePrefix || 'нет'}`, active: !!userData?.activePrefix },
+    achSlot: { icon: '<i class="fas fa-trophy"></i>', name: 'Слот достижения', desc: 'Дополнительный слот для достижения', active: true },
   };
   
   if (!items.length) return `
     <div class="inv-empty">
-      <div class="inv-empty__icon">🎁</div>
+      <div class="inv-empty__icon"><i class="fas fa-gift"></i></div>
       <p>У вас пока нет привилегий</p>
       <p style="font-size:13px;color:var(--text-dim);">Купите их в разделе «Магазин VCoins»</p>
     </div>
   `;
   
   const html = items.map(id => {
-    const def = ITEM_DEFS[id] || { icon: '✨', name: id, desc: 'Привилегия', active: true };
+    const def = ITEM_DEFS[id] || { icon: '<i class="fas fa-wand-magic-sparkles"></i>', name: id, desc: 'Привилегия', active: true };
     return `
       <div class="inv-item-card ${def.active ? 'active' : ''}">
         <div class="inv-item-icon">${def.icon}</div>
@@ -329,7 +329,7 @@ window.toggleFavCard = async function(cardId, isCustom) {
     if (userData.inventory) userData.inventory.favCards = newFavs;
     else userData.inventory = { favCards: newFavs };
     
-    showToast(newFavs.includes(favKey) ? '❤️ Добавлено в избранное' : '🤍 Убрано из избранного');
+    showToast(newFavs.includes(favKey) ? '<i class="fas fa-heart"></i>️ Добавлено в избранное' : '<i class="far fa-heart"></i> Убрано из избранного');
     await loadInventory();
   } catch(e) {
     showToast('Ошибка: ' + e.message, 'error');
@@ -373,7 +373,7 @@ window.openSellCardModal = function(cardId, isCustom, count, sellPrice) {
       <div class="modal-content" style="max-width:400px;">
         <div class="modal-header">
           <h2>Продать карточку</h2>
-          <button class="modal-close" onclick="closeModals()">✕</button>
+          <button class="modal-close" onclick="closeModals()"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="modal-body">
           <p style="margin-bottom:16px;">Доступно: <strong>x${count}</strong></p>
@@ -382,7 +382,7 @@ window.openSellCardModal = function(cardId, isCustom, count, sellPrice) {
             <input type="number" id="sell-card-qty" min="1" max="${count}" value="1" style="width:100%;padding:8px;margin-top:6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);color:var(--text);">
           </label>
           <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;">
-            Получите: <strong id="sell-card-total">💰 ${sellPrice} VC</strong>
+            Получите: <strong id="sell-card-total"><i class="fas fa-coins"></i> ${sellPrice} VC</strong>
           </p>
         </div>
         <div class="modal-footer">
@@ -399,7 +399,7 @@ window.openSellCardModal = function(cardId, isCustom, count, sellPrice) {
   document.getElementById('sell-card-qty').addEventListener('input', function() {
     const qty = parseInt(this.value) || 1;
     const total = qty * sellPrice;
-    document.getElementById('sell-card-total').textContent = `💰 ${total} VC`;
+    document.getElementById('sell-card-total').textContent = `<i class="fas fa-coins"></i> ${total} VC`;
   });
 };
 
@@ -436,7 +436,7 @@ window.confirmSellCard = async function(cardId, isCustom, baseSellPrice) {
     // Добавляем VCoins
     if (window.awardVCoins) await window.awardVCoins(totalPrice, `Продажа карточек (x${qty})`);
     
-    showToast(`💰 Продано за ${totalPrice} VC!`);
+    showToast(`<i class="fas fa-coins"></i> Продано за ${totalPrice} VC!`);
     closeModals();
     await loadInventory();
   } catch(e) {
@@ -455,7 +455,7 @@ window.openGiftCardModal = function(cardId, isCustom, count) {
       <div class="modal-content" style="max-width:450px;">
         <div class="modal-header">
           <h2>Подарить карточку</h2>
-          <button class="modal-close" onclick="closeModals()">✕</button>
+          <button class="modal-close" onclick="closeModals()"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="modal-body">
           <p style="margin-bottom:16px;">Доступно: <strong>x${count}</strong></p>
@@ -582,7 +582,7 @@ window.confirmGiftCard = async function(cardId, isCustom) {
       await updateDoc(recipientRef, { 'inventory.cardsStacked': recipientCards });
     }
     
-    showToast(`🎁 Подарено x${qty} карточек!`);
+    showToast(`<i class="fas fa-gift"></i> Подарено x${qty} карточек!`);
     closeModals();
     await loadInventory();
   } catch(e) {

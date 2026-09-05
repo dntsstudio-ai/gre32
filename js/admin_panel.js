@@ -56,7 +56,7 @@ async function loadRolesPanel() {
                     <div class="admin-role-info">
                         <div class="admin-role-nick">${esc(u.nickname)}</div>
                         <div class="admin-role-email">${esc(u.email || '—')}</div>
-                        ${u.curatorProject ? `<div class="admin-role-project">📁 ${esc(u.curatorProject)}</div>` : ''}
+                        ${u.curatorProject ? `<div class="admin-role-project"><i class="fas fa-folder"></i> ${esc(u.curatorProject)}</div>` : ''}
                     </div>
                     <div class="admin-role-actions">
                         <button class="btn btn-sm btn-outline" onclick="openUserProfile('${u.id}')">
@@ -131,12 +131,12 @@ async function loadSiteStats() {
         wrap.innerHTML = `
         <div class="stats-grid">
             <div class="stats-card stats-card--online">
-                <div class="stats-card-icon">🟢</div>
+                <div class="stats-card-icon"><i class="fas fa-circle" style="color:#22c55e;font-size:8px;"></i></div>
                 <div class="stats-card-val">${onlineUsers}</div>
                 <div class="stats-card-label">Онлайн сейчас</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">👥</div>
+                <div class="stats-card-icon"><i class="fas fa-users"></i></div>
                 <div class="stats-card-val">${totalUsers}</div>
                 <div class="stats-card-label">Всего пользователей</div>
             </div>
@@ -146,7 +146,7 @@ async function loadSiteStats() {
                 <div class="stats-card-label">Регистраций сегодня</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">🎬</div>
+                <div class="stats-card-icon"><i class="fas fa-clapperboard"></i></div>
                 <div class="stats-card-val">${totalRels}</div>
                 <div class="stats-card-label">Релизов на сайте</div>
             </div>
@@ -156,7 +156,7 @@ async function loadSiteStats() {
                 <div class="stats-card-label">Суммарное время</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">👁</div>
+                <div class="stats-card-icon"><i class="fas fa-eye"></i></div>
                 <div class="stats-card-val">${stats.totalPageViews || 0}</div>
                 <div class="stats-card-label">Просмотров страниц</div>
             </div>

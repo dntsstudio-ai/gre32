@@ -78,7 +78,7 @@ export function showAchievementPopup(ach, isFullscreen) {
 export function showVCoinsPopup(amount, reason) {
     const popup = document.createElement('div');
     popup.className = 'vcoins-popup';
-    popup.innerHTML = '<span class="vcoins-popup-coin">🪙</span><span style="font-size:15px;font-weight:900;color:#fbbf24;">+' + amount + ' VC</span><span class="vcoins-popup-reason">' + esc(reason) + '</span>';
+    popup.innerHTML = '<span class="vcoins-popup-coin"><i class="fas fa-coins"></i></span><span style="font-size:15px;font-weight:900;color:#fbbf24;">+' + amount + ' VC</span><span class="vcoins-popup-reason">' + esc(reason) + '</span>';
     document.body.appendChild(popup);
     requestAnimationFrame(function() { popup.classList.add('vcoins-popup--visible'); });
     setTimeout(function() { popup.classList.remove('vcoins-popup--visible'); setTimeout(function(){ popup.remove(); },600); }, 3000);

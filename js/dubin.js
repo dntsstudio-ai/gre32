@@ -38,9 +38,9 @@ function statusColor(s) {
 
 function renderSubfolders(p) {
     const folders = [
-        { key:'raw',  label:'📹 RAW-ка',  icon:'fa-film',              desc:'Исходная видео-дорожка',     color:'#ef4444' },
-        { key:'hard', label:'📝 Hardsubs', icon:'fa-closed-captioning', desc:'Видео с вшитыми субтитрами', color:'#f59e0b' },
-        { key:'soft', label:'🗒 Softsubs', icon:'fa-file-alt',          desc:'Файлы субтитров (.ass)',     color:'var(--violet-light)' },
+        { key:'raw',  label:'<i class="fas fa-video"></i> RAW-ка',  icon:'fa-film',              desc:'Исходная видео-дорожка',     color:'#ef4444' },
+        { key:'hard', label:'<i class="fas fa-pen-to-square"></i> Hardsubs', icon:'fa-closed-captioning', desc:'Видео с вшитыми субтитрами', color:'#f59e0b' },
+        { key:'soft', label:'<i class="fas fa-note-sticky"></i> Softsubs', icon:'fa-file-alt',          desc:'Файлы субтитров (.ass)',     color:'var(--violet-light)' },
     ];
     return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
         ${folders.map(f => {
@@ -285,7 +285,7 @@ export function bindDubin(db, auth, getState) {
                     }, EMAILJS_CONFIG.publicKey);
                 }
             } catch(e) { console.warn('EmailJS:', e); }
-            showToast('Предложение отправлено! Спасибо 🎉');
+            showToast('Предложение отправлено! Спасибо <i class="fas fa-champagne-glasses"></i>');
             ['sug-title','sug-link','sug-reason'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';

@@ -82,7 +82,7 @@ export function bindUserSearch(db, auth, getState) {
         .slice(0, 20); // Ограничиваем результаты
       
       if (!results.length) {
-        res.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли 🔍</p>';
+        res.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли <i class="fas fa-magnifying-glass"></i></p>';
         return;
       }
       
@@ -105,7 +105,7 @@ export function bindUserSearch(db, auth, getState) {
             </button>
           </div>
         `)
-        .join('') || '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли 🔍</p>';
+        .join('') || '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Никого не нашли <i class="fas fa-magnifying-glass"></i></p>';
     } catch(e) {
       res.innerHTML = '<p style="color:#ef4444;font-size:13px;text-align:center;padding:20px;">Ошибка поиска</p>';
       console.error('doSearch:', e);

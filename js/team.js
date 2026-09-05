@@ -147,13 +147,13 @@ export function bindTeam(db, getState) {
             let creditsHtml  = '';
             if (credits.length) {
                 creditsHtml = `<div style="margin-top:20px;">
-                    <h4 style="margin-bottom:12px;font-family:var(--font-display);font-size:1rem;color:var(--teal);">🎬 Участие в релизах</h4>
+                    <h4 style="margin-bottom:12px;font-family:var(--font-display);font-size:1rem;color:var(--teal);"><i class="fas fa-clapperboard"></i> Участие в релизах</h4>
                     <div style="display:flex;flex-direction:column;gap:8px;">
                     ${credits.map(c => {
                         let roleLabel = '';
-                        if (c.creditRole === 'voice')   roleLabel = `<span style="color:var(--violet-light);">🎙 Озвучивал: ${esc(c.character||'')}</span>`;
-                        else if (c.creditRole === 'tech')    roleLabel = `<span style="color:var(--teal-light);">⚙️ ${esc(c.techRole||'Тех. часть')}</span>`;
-                        else if (c.creditRole === 'curator') roleLabel = `<span style="color:#f59e0b;">👑 Куратор</span>`;
+                        if (c.creditRole === 'voice')   roleLabel = `<span style="color:var(--violet-light);"><i class="fas fa-microphone"></i> Озвучивал: ${esc(c.character||'')}</span>`;
+                        else if (c.creditRole === 'tech')    roleLabel = `<span style="color:var(--teal-light);"><i class="fas fa-gear"></i>️ ${esc(c.techRole||'Тех. часть')}</span>`;
+                        else if (c.creditRole === 'curator') roleLabel = `<span style="color:#f59e0b;"><i class="fas fa-crown"></i> Куратор</span>`;
                         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--input-bg);border-radius:10px;border:1px solid var(--border);">
                             ${c.relImg ? `<img src="${esc(c.relImg)}" style="width:36px;height:50px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : ''}
                             <div style="flex:1;min-width:0;">
@@ -219,9 +219,9 @@ export function bindTeam(db, getState) {
         }
         list.innerHTML = credits.map((c, idx) => {
             let roleStr = '';
-            if (c.creditRole === 'voice')   roleStr = '🎙 ' + (c.character ? 'Озвучивал: ' + esc(c.character) : 'Озвучивал');
-            else if (c.creditRole === 'tech')    roleStr = '⚙️ ' + esc(c.techRole || 'Тех. часть');
-            else if (c.creditRole === 'curator') roleStr = '👑 Куратор';
+            if (c.creditRole === 'voice')   roleStr = '<i class="fas fa-microphone"></i> ' + (c.character ? 'Озвучивал: ' + esc(c.character) : 'Озвучивал');
+            else if (c.creditRole === 'tech')    roleStr = '<i class="fas fa-gear"></i>️ ' + esc(c.techRole || 'Тех. часть');
+            else if (c.creditRole === 'curator') roleStr = '<i class="fas fa-crown"></i> Куратор';
             return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--input-bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;">
                 ${c.relImg ? `<img src="${esc(c.relImg)}" style="width:32px;height:44px;border-radius:5px;object-fit:cover;flex-shrink:0;">` : ''}
                 <div style="flex:1;min-width:0;">

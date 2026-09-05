@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com https://yandex.ru https://an.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com https://yandex.ru https://an.yandex.ru; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com https://yandex.ru https://an.yandex.ru https://mc.yandex.ru; media-src 'self' blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com https://yandex.ru https://an.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com https://yandex.ru https://an.yandex.ru; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com https://yandex.ru https://an.yandex.ru https://mc.yandex.ru https://kodik-api.com; media-src 'self' blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app; object-src 'none';">
     <title>Voice Acting Team — Профессиональная озвучка и дубляж</title>
     <meta name="description" content="Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.">
     <link rel="icon" type="image/png" href="img/logo.jpg">
@@ -188,7 +188,7 @@ window.yaContextCb.push(() => {
 
     <!-- ===== СТРАНИЦА УЧАСТНИКА ===== -->
     <section id="team-page" class="section">
-        <button class="btn btn-outline" onclick="navigate('team')" style="margin-bottom:22px;">← Назад</button>
+        <button class="btn btn-outline" onclick="navigate('team')" style="margin-bottom:22px;"><i class="fas fa-arrow-left"></i> Назад</button>
         <div id="team-page-view" style="background:var(--card-bg);padding:32px;border-radius:var(--radius-lg);border:1px solid var(--border);"></div>
         <div id="adm-tp-controls" style="display:none;margin-top:18px;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-blue" onclick="openTPModal()">Редактировать страницу</button>
@@ -203,7 +203,7 @@ window.yaContextCb.push(() => {
 
     <!-- ===== ПРОСМОТР РЕЛИЗА ===== -->
     <section id="view" class="section">
-        <button class="btn btn-outline" onclick="navigate('home')" style="margin-bottom:22px;">← К релизам</button>
+        <button class="btn btn-outline" onclick="navigate('home')" style="margin-bottom:22px;"><i class="fas fa-arrow-left"></i> К релизам</button>
         <div id="v-info"></div>
         <div style="background:var(--card-bg);padding:24px;border-radius:var(--radius-lg);border:1px solid var(--border);margin-top:22px;">
             <h4 style="margin-bottom:16px;font-size:1.1rem;font-family:var(--font-display);">Комментарии (<span id="comm-count">0</span>)</h4>
@@ -258,7 +258,7 @@ window.yaContextCb.push(() => {
                     <div style="display:flex;gap:28px;font-size:13px;flex-wrap:wrap;">
                         <div><b id="u-views" style="font-size:1.5rem;color:var(--teal);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Просмотрено</span></div>
                         <div style="cursor:pointer;" onclick="showMySubscribers()"><b id="u-subs" style="font-size:1.5rem;color:var(--violet-light);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Подписчики</span></div>
-                        <div style="cursor:pointer;" onclick="navigate('shop')"><b id="u-vcoins" style="font-size:1.5rem;color:#fbbf24;">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">🪙 VCoins</span></div>
+                        <div style="cursor:pointer;" onclick="navigate('shop')"><b id="u-vcoins" style="font-size:1.5rem;color:#fbbf24;">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;"><i class="fas fa-coins"></i> VCoins</span></div>
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;min-width:180px;">
@@ -302,7 +302,7 @@ window.yaContextCb.push(() => {
     <section id="playlists" class="section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:14px;">
             <div>
-                <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;">← Профиль</button>
+                <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;"><i class="fas fa-arrow-left"></i> Профиль</button>
                 <h1 style="font-size:1.8rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"><i class="fas fa-layer-group" style="-webkit-text-fill-color:var(--violet-light);margin-right:10px;"></i>Мои плейлисты</h1>
                 <p style="color:var(--text-dim);font-size:13px;margin-top:6px;line-height:1.6;font-style:italic;">Создавайте плейлисты и добавляйте релизы. До 3 можно закрепить в профиле.</p>
             </div>
@@ -324,7 +324,7 @@ window.yaContextCb.push(() => {
         </div>
         <div id="dubin-files-panel" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-                <h2 style="font-size:1.4rem;font-weight:700;font-family:var(--font-display);">📁 Архив проектов</h2>
+                <h2 style="font-size:1.4rem;font-weight:700;font-family:var(--font-display);"><i class="fas fa-folder"></i> Архив проектов</h2>
                 <button id="dubin-adm-add-project" class="btn btn-blue" style="display:none;" onclick="openDubinProjectModal()"><i class="fas fa-plus"></i> Добавить проект</button>
             </div>
             <div id="dubin-projects-list"></div>
@@ -355,7 +355,7 @@ window.yaContextCb.push(() => {
                 <button class="btn" style="width:100%;" onclick="sendSuggestion()"><i class="fas fa-paper-plane"></i> Отправить предложение</button>
             </div>
             <div id="join-cta-block" style="margin-top:26px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(20,184,166,0.06));border:1px solid rgba(124,58,237,0.2);border-radius:var(--radius-lg);padding:32px;text-align:center;">
-                <div style="font-size:2.5rem;margin-bottom:14px;">🎙️</div>
+                <div style="font-size:2.5rem;margin-bottom:14px;"><i class="fas fa-microphone"></i>️</div>
                 <h3 style="margin-bottom:8px;font-size:1.2rem;font-family:var(--font-display);">Хотите стать частью команды?</h3>
                 <p style="color:var(--text-dim);font-size:13px;margin-bottom:22px;line-height:1.6;font-style:italic;">Если вы хотите попробовать себя в роли актёра дубляжа, звукорежиссёра или сценариста — напишите нам.</p>
                 <a href="https://t.me/VoiceActingTeam1" target="_blank" class="btn" style="text-decoration:none;font-size:12px;"><i class="fab fa-telegram-plane"></i> Написать в Telegram</a>
@@ -397,7 +397,7 @@ window.yaContextCb.push(() => {
         </div>
         <div id="order-free-form" class="order-form-wrap" style="display:none;">
             <div class="order-form-header">
-                <button class="btn btn-outline btn-sm" onclick="backToOrderType()">← Назад</button>
+                <button class="btn btn-outline btn-sm" onclick="backToOrderType()"><i class="fas fa-arrow-left"></i> Назад</button>
                 <h2><i class="fas fa-heart" style="color:var(--teal);margin-right:8px;"></i>Бесплатное предложение</h2>
             </div>
             <div class="order-form-card">
@@ -418,7 +418,7 @@ window.yaContextCb.push(() => {
         </div>
         <div id="order-paid-form" class="order-form-wrap" style="display:none;">
             <div class="order-form-header">
-                <button class="btn btn-outline btn-sm" onclick="backToOrderType()">← Назад</button>
+                <button class="btn btn-outline btn-sm" onclick="backToOrderType()"><i class="fas fa-arrow-left"></i> Назад</button>
                 <h2><i class="fas fa-star" style="color:var(--violet-light);margin-right:8px;"></i>Платный заказ</h2>
             </div>
             <div class="order-form-card">
@@ -473,7 +473,7 @@ window.yaContextCb.push(() => {
 <section id="lootbox" class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
         <div>
-            <button class="btn btn-outline btn-sm" onclick="navigate('shop')" style="margin-bottom:12px;">← Магазин</button>
+            <button class="btn btn-outline btn-sm" onclick="navigate('shop')" style="margin-bottom:12px;"><i class="fas fa-arrow-left"></i> Магазин</button>
             <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
                 <i class="fas fa-box-open" style="-webkit-text-fill-color:#fbbf24;margin-right:10px;"></i>Открытие ящиков
             </h1>
@@ -488,7 +488,7 @@ window.yaContextCb.push(() => {
 <section id="inventory" class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
         <div>
-            <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;">← Профиль</button>
+            <button class="btn btn-outline btn-sm" onclick="navigate('profile')" style="margin-bottom:12px;"><i class="fas fa-arrow-left"></i> Профиль</button>
             <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,var(--violet-pale),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
                 <i class="fas fa-box-open" style="-webkit-text-fill-color:var(--violet-light);margin-right:10px;"></i>Мой инвентарь
             </h1>
@@ -567,11 +567,13 @@ window.yaContextCb.push(() => {
     <input type="text" id="ad-year" placeholder="Год выпуска">
     <input type="text" id="ad-voiceover" placeholder="Озвучка (Voice Acting Team)">
     <input type="text" id="ad-authors" placeholder="Студия / Авторы">
-    <input type="text" id="ad-img" placeholder="URL постера (или загрузите файл ниже)">
-    <label class="file-upload-btn">
-        <i class="fas fa-upload"></i> Загрузить постер с компьютера
-        <input type="file" id="ad-img-file" accept="image/*" style="display:none;" onchange="uploadPosterFile(this)">
-    </label>
+    <div class="field-with-action">
+        <input type="text" id="ad-img" placeholder="URL постера">
+        <label class="btn btn-outline btn-sm field-action-btn">
+            <i class="fas fa-upload"></i> Файл
+            <input type="file" id="ad-img-file" accept="image/*" style="display:none;" onchange="uploadPosterFile(this)">
+        </label>
+    </div>
     <div class="upload-progress-wrap" id="poster-upload-wrap" style="display:none;">
         <div class="upload-progress-bar" id="poster-upload-bar"></div>
     </div>
@@ -586,20 +588,31 @@ window.yaContextCb.push(() => {
     <select id="ad-ep-type"><option value="series">Серия / Фильм</option><option value="trailer">Трейлер (автоплей без звука)</option></select>
     <input type="text" id="ad-ep-name" placeholder="Название кнопки (Серия 1 / Трейлер)">
     <input type="text" id="ad-ep-title" placeholder="Полное название серии (необязательно)">
-    <input type="text" id="ad-ep-url" placeholder="URL видео VAT (Google Drive, YouTube или прямая ссылка на файл)">
-    <label class="file-upload-btn">
-        <i class="fas fa-upload"></i> Загрузить видео с компьютера (VAT)
-        <input type="file" id="ad-ep-file" accept="video/*" style="display:none;" onchange="uploadEpVideoFile(this)">
-    </label>
+    <div class="field-with-action">
+        <input type="text" id="ad-ep-url" placeholder="URL видео VAT (Drive, YouTube или прямая ссылка)">
+        <label class="btn btn-outline btn-sm field-action-btn">
+            <i class="fas fa-upload"></i> Файл
+            <input type="file" id="ad-ep-file" accept="video/*" style="display:none;" onchange="uploadEpVideoFile(this)">
+        </label>
+    </div>
     <div class="upload-progress-wrap" id="ep-upload-wrap" style="display:none;">
         <div class="upload-progress-bar" id="ep-upload-bar">0%</div>
     </div>
-    <input type="text" id="ad-ep-kodik" placeholder="Kodik — ссылка на embed (необязательно, второй источник)">
-    <input type="text" id="ad-ep-thumb" placeholder="URL превью серии (необязательно)">
-    <label class="file-upload-btn file-upload-btn--sm">
-        <i class="fas fa-upload"></i> Загрузить превью файлом
-        <input type="file" id="ad-ep-thumb-file" accept="image/*" style="display:none;" onchange="uploadEpThumbFile(this)">
-    </label>
+
+    <div class="kodik-search-block">
+        <div class="kodik-search-label"><i class="fas fa-magnifying-glass"></i> Найти на Kodik (второй источник)</div>
+        <input type="text" id="ad-ep-kodik-search" placeholder="Название тайтла…" oninput="onKodikSearchInput(this.value)">
+        <div class="kodik-results" id="kodik-results" style="display:none;"></div>
+        <input type="text" id="ad-ep-kodik" placeholder="Kodik-ссылка (подставится сама или вставьте вручную)">
+    </div>
+
+    <div class="field-with-action">
+        <input type="text" id="ad-ep-thumb" placeholder="URL превью серии (необязательно)">
+        <label class="btn btn-outline btn-sm field-action-btn">
+            <i class="fas fa-upload"></i> Файл
+            <input type="file" id="ad-ep-thumb-file" accept="image/*" style="display:none;" onchange="uploadEpThumbFile(this)">
+        </label>
+    </div>
     <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:12px;">
         <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏱ Тайминги заставки (формат мм:сс)</p>
         <p style="font-size:10px;color:var(--text-muted);margin-bottom:10px;font-style:italic;">Указывайте время относительно начала видео. Например: заставка с 0:30 до 1:45</p>
@@ -614,7 +627,7 @@ window.yaContextCb.push(() => {
             </div>
         </div>
         <div style="margin-top:10px;">
-            <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;">🎬 Предложить следующую серию с</label>
+            <label style="font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;"><i class="fas fa-clapperboard"></i> Предложить следующую серию с</label>
             <input type="text" id="ad-ep-outro-start" placeholder="21:30" style="margin-bottom:0;">
         </div>
     </div>
@@ -679,7 +692,7 @@ window.yaContextCb.push(() => {
 </div></div>
 
 <div id="m-public-prof" class="modal"><div class="modal-content">
-    <h3 style="margin-bottom:6px;">🎭 Мой публичный профиль</h3>
+    <h3 style="margin-bottom:6px;"><i class="fas fa-masks-theater"></i> Мой публичный профиль</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Эту информацию смогут видеть другие пользователи.</p>
     <label class="order-label">О себе</label>
     <textarea id="pub-bio" rows="5" placeholder="Расскажите о себе..."></textarea>
@@ -704,7 +717,7 @@ window.yaContextCb.push(() => {
 </div></div>
 
 <div id="m-my-tp-edit" class="modal"><div class="modal-content">
-    <h3 style="margin-bottom:16px;">✏️ Редактировать мою страницу</h3>
+    <h3 style="margin-bottom:16px;"><i class="fas fa-pen"></i>️ Редактировать мою страницу</h3>
     <div id="my-tp-name-block" style="display:none;"><label class="order-label">Имя / Псевдоним</label><input type="text" id="my-tp-name" placeholder="Ваш псевдоним"></div>
     <div id="my-tp-img-block" style="display:none;"><label class="order-label">URL Аватара</label><input type="text" id="my-tp-img" placeholder="Ссылка на фото"></div>
     <label class="order-label">О себе</label>
@@ -756,7 +769,7 @@ window.yaContextCb.push(() => {
     <input type="text" id="ga-uid" placeholder="Email пользователя">
     <input type="text" id="ga-name" placeholder="Название достижения">
     <input type="text" id="ga-desc" placeholder="Описание">
-    <input type="text" id="ga-img" placeholder="Эмодзи (например: 🏆)">
+    <input type="text" id="ga-img" placeholder="Эмодзи (например: <i class="fas fa-trophy"></i>)">
     <button class="btn btn-blue" style="width:100%;" onclick="giveAch()">Выдать</button>
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
 </div></div>
@@ -859,17 +872,17 @@ window.yaContextCb.push(() => {
 </div></div>
 
 <div id="m-dubin-project" class="modal"><div class="modal-content" style="max-width:600px;">
-    <h3 style="margin-bottom:6px;">📁 Управление проектом DUB-in</h3>
+    <h3 style="margin-bottom:6px;"><i class="fas fa-folder"></i> Управление проектом DUB-in</h3>
     <input type="hidden" id="dubin-proj-id">
     <input type="text" id="dp-name" placeholder="Название проекта *">
     <select id="dp-genre" style="margin-bottom:12px;"><option value="Аниме">Аниме</option><option value="Сериал">Сериал</option><option value="Фильм">Фильм</option><option value="Мультфильм">Мультфильм</option><option value="Трейлер">Трейлер</option><option value="Тизер">Тизер</option></select>
     <select id="dp-status" style="margin-bottom:12px;"><option value="В работе">В работе</option><option value="Завершён">Завершён</option><option value="На паузе">На паузе</option></select>
     <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:14px;">
-        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🔗 Ссылки на папки Google Drive</p>
-        <input type="text" id="dp-raw" placeholder="📹 RAW-ка" style="margin-bottom:8px;">
-        <input type="text" id="dp-hard" placeholder="📝 Hardsubs" style="margin-bottom:8px;">
-        <input type="text" id="dp-soft" placeholder="🗒 Softsubs" style="margin-bottom:8px;">
-        <input type="text" id="dp-voice" placeholder="🎙 Озвучка">
+        <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;"><i class="fas fa-link"></i> Ссылки на папки Google Drive</p>
+        <input type="text" id="dp-raw" placeholder="<i class="fas fa-video"></i> RAW-ка" style="margin-bottom:8px;">
+        <input type="text" id="dp-hard" placeholder="<i class="fas fa-pen-to-square"></i> Hardsubs" style="margin-bottom:8px;">
+        <input type="text" id="dp-soft" placeholder="<i class="fas fa-note-sticky"></i> Softsubs" style="margin-bottom:8px;">
+        <input type="text" id="dp-voice" placeholder="<i class="fas fa-microphone"></i> Озвучка">
     </div>
     <input type="text" id="dp-img" placeholder="Обложка (URL)" oninput="updateDubinImgPreview(this.value)">
     <div id="dp-img-preview" style="display:none;margin:-4px 0 12px;border-radius:10px;overflow:hidden;border:1px solid var(--border);width:72px;height:100px;"><img id="dp-img-preview-img" style="width:100%;height:100%;object-fit:cover;" src="" alt=""></div>
@@ -951,7 +964,7 @@ window.yaContextCb.push(() => {
 </div></div>
 
 <div id="m-nick-color" class="modal"><div class="modal-content" style="max-width:380px;text-align:center;">
-    <h3 style="margin-bottom:6px;">🎨 Выбор цвета ника</h3>
+    <h3 style="margin-bottom:6px;"><i class="fas fa-palette"></i> Выбор цвета ника</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;font-style:italic;">Стоимость: <b id="nc-price" style="color:#fbbf24;"></b> VCoins</p>
     <div id="nc-color-grid" class="nc-color-grid"></div>
     <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Отмена</button>
@@ -967,7 +980,7 @@ window.yaContextCb.push(() => {
             <label class="order-label">Имя *</label>
             <input type="text" id="cc-name" placeholder="Например: Алексей" oninput="updateCardPreview()">
             <label class="order-label">Префикс (над именем)</label>
-            <input type="text" id="cc-prefix" placeholder="Например: ⭐ Основатель" oninput="updateCardPreview()">
+            <input type="text" id="cc-prefix" placeholder="Например: Основатель" oninput="updateCardPreview()">
             <label class="order-label">Роль / описание роли</label>
             <input type="text" id="cc-role" placeholder="Например: Главный режиссёр" oninput="updateCardPreview()">
             <label class="order-label">Фото (URL)</label>
@@ -977,11 +990,24 @@ window.yaContextCb.push(() => {
         </div>
         <div>
             <label class="order-label">Редкость</label>
-            <select id="cc-rarity" onchange="updateCardPreview()">
-                <option value="common">⬜ Обычная</option>
-                <option value="rare" selected>🔵 Редкая</option>
-                <option value="epic">🟣 Эпическая</option>
-                <option value="legendary">🟡 Легендарная</option>
+            <div class="custom-select" id="cc-rarity-dropdown">
+                <button type="button" class="custom-select-trigger" id="cc-rarity-trigger" onclick="toggleRarityDropdown()">
+                    <i class="fas fa-circle" style="color:#3b82f6;font-size:9px;"></i>
+                    <span id="cc-rarity-label">Редкая</span>
+                    <i class="fas fa-chevron-down custom-select-chevron"></i>
+                </button>
+                <div class="custom-select-options" id="cc-rarity-options" style="display:none;">
+                    <button type="button" class="custom-select-option" onclick="selectRarity('common')"><i class="fas fa-circle" style="color:#9ca3af;font-size:9px;"></i> Обычная</button>
+                    <button type="button" class="custom-select-option" onclick="selectRarity('rare')"><i class="fas fa-circle" style="color:#3b82f6;font-size:9px;"></i> Редкая</button>
+                    <button type="button" class="custom-select-option" onclick="selectRarity('epic')"><i class="fas fa-circle" style="color:#a855f7;font-size:9px;"></i> Эпическая</button>
+                    <button type="button" class="custom-select-option" onclick="selectRarity('legendary')"><i class="fas fa-circle" style="color:#eab308;font-size:9px;"></i> Легендарная</button>
+                </div>
+            </div>
+            <select id="cc-rarity" onchange="updateCardPreview()" style="display:none;">
+                <option value="common">Обычная</option>
+                <option value="rare" selected>Редкая</option>
+                <option value="epic">Эпическая</option>
+                <option value="legendary">Легендарная</option>
             </select>
             <label class="order-label">Шанс выпадения (%)</label>
             <input type="number" id="cc-chance" min="0.1" max="100" step="0.1" value="5" placeholder="5">
@@ -1017,11 +1043,11 @@ window.yaContextCb.push(() => {
 
 <!-- Модалка продажи карточки -->
 <div id="m-sell-card" class="modal"><div class="modal-content" style="max-width:360px;text-align:center;">
-    <h3 style="margin-bottom:6px;">💰 Продать карточку?</h3>
+    <h3 style="margin-bottom:6px;"><i class="fas fa-coins"></i> Продать карточку?</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:4px;font-style:italic;">Это действие нельзя отменить</p>
     <div id="sell-card-preview" style="display:flex;justify-content:center;margin:16px 0;"></div>
     <p style="font-size:15px;font-weight:700;margin-bottom:16px;">Вы получите: <b id="sell-card-price" style="color:#fbbf24;"></b> VC</p>
-    <button class="btn" style="width:100%;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;margin-bottom:8px;" onclick="confirmSellCard()">💰 Продать</button>
+    <button class="btn" style="width:100%;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;margin-bottom:8px;" onclick="confirmSellCard()"><i class="fas fa-coins"></i> Продать</button>
     <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Отмена</button>
 </div></div>
 
@@ -1039,7 +1065,7 @@ window.yaContextCb.push(() => {
 
 <div id="m-find-friends" class="modal"><div class="modal-content" style="max-width:520px;">
     <div style="text-align:center;margin-bottom:22px;">
-        <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>
+        <div style="font-size:2.5rem;margin-bottom:10px;"><i class="fas fa-magnifying-glass"></i></div>
         <h3 style="font-family:var(--font-display);">Найти друзей</h3>
         <p style="font-size:12px;color:var(--text-dim);margin-top:6px;font-style:italic;">Поиск по нику или email</p>
     </div>
@@ -1119,7 +1145,7 @@ window.yaContextCb.push(() => {
 </div></div>
 
 <div id="m-public-prof" class="modal"><div class="modal-content">
-    <h3 style="margin-bottom:6px;">🎭 Мой публичный профиль</h3>
+    <h3 style="margin-bottom:6px;"><i class="fas fa-masks-theater"></i> Мой публичный профиль</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Эту информацию смогут видеть другие пользователи.</p>
     <label class="order-label">О себе</label>
     <textarea id="pub-bio" rows="5" placeholder="Расскажите о себе..."></textarea>
@@ -1132,7 +1158,7 @@ window.yaContextCb.push(() => {
 <!-- Куки баннер -->
 <div id="cookie-banner" class="cookie-banner" style="display:none;">
     <div class="cookie-banner-inner" style="display:flex;align-items:center;gap:14px;width:100%;">
-        <div class="cookie-banner-icon">🍪</div>
+        <div class="cookie-banner-icon"><i class="fas fa-cookie-bite"></i></div>
         <div class="cookie-banner-text" style="flex:1;">
             <p class="cookie-banner-title">Мы используем файлы cookie</p>
             <p class="cookie-banner-desc">Для улучшения работы сайта и аналитики.</p>

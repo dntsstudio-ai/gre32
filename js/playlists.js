@@ -80,7 +80,7 @@ export function bindPlaylists(db, auth, getState) {
                 if (pinnedCount >= MAX_PINNED) return showToast(`Можно закрепить максимум ${MAX_PINNED} плейлиста`, 'error');
             }
             await updateDoc(doc(_db, `users/${uid}/playlists`, plId), { pinned: !isPinned });
-            showToast(isPinned ? 'Откреплено из профиля' : 'Закреплено в профиле ✅');
+            showToast(isPinned ? 'Откреплено из профиля' : 'Закреплено в профиле <i class="fas fa-circle-check"></i>');
             loadPlaylistsPage();
             window.loadMyLists?.();
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
@@ -157,7 +157,7 @@ export function bindPlaylists(db, auth, getState) {
                 if (plDoc.exists() && !plDoc.data().img && relImg) {
                     await updateDoc(doc(_db, `users/${uid}/playlists`, plId), { img: relImg });
                 }
-                showToast('Добавлено в плейлист ✅');
+                showToast('Добавлено в плейлист <i class="fas fa-circle-check"></i>');
             }
             const relTitle2 = document.getElementById('atp-rel-title')?.value || relTitle;
             const relImg2   = document.getElementById('atp-rel-img')?.value   || relImg;
@@ -263,7 +263,7 @@ async function loadPlaylistDetail(plId) {
 
         wrap.innerHTML = `
         <div class="pl-detail-header">
-            <button class="btn btn-outline btn-sm" onclick="loadPlaylistsPage()">← Назад</button>
+            <button class="btn btn-outline btn-sm" onclick="loadPlaylistsPage()"><i class="fas fa-arrow-left"></i> Назад</button>
             <div class="pl-detail-info">
                 ${pl.img ? `<img src="${esc(pl.img)}" class="pl-detail-cover" onerror="this.style.display='none'" alt="">` : ''}
                 <div>

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  🌌 PLINKO «ЧЁРНАЯ ДЫРА» — движок + ИИ-алгоритм шансов
+//  <i class="fas fa-meteor"></i> PLINKO «ЧЁРНАЯ ДЫРА» — движок + ИИ-алгоритм шансов
 // ═══════════════════════════════════════════════════════
 
 (function() {
@@ -15,7 +15,7 @@
     const CANVAS_W    = 360;
     const CANVAS_H    = 420;
 
-    // Множители ячеек (центр → края: от малых к большим)
+    // Множители ячеек (центр <i class="fas fa-arrow-right"></i> края: от малых к большим)
     const MULTIPLIERS = [0, 0.5, 1, 1.5, 2, 2, 1.5, 1, 0.5, 0, 0];
     // Индексы «джекпот»-ячеек (крайние)
     const JACKPOT_IDX = [0, MULTIPLIERS.length - 1];
@@ -71,11 +71,11 @@
         const isBigBet = bet >= Math.max(_plinkoAvgBet * 1.6, 80);
 
         if (isBigBet) {
-            // Большая ставка → шарик тянем к центру (малые множители)
+            // Большая ставка <i class="fas fa-arrow-right"></i> шарик тянем к центру (малые множители)
             return 0.55;
         }
         if (_plinkoWinStreak >= 3) {
-            // Серия побед → слегка к центру
+            // Серия побед <i class="fas fa-arrow-right"></i> слегка к центру
             const penalty = Math.min((_plinkoWinStreak - 2) * 0.12, 0.45);
             return 0.2 + penalty;
         }
@@ -85,7 +85,7 @@
 
     // ── Физика шарика ─────────────────────────────────
     function createBall(cx, bias) {
-        // bias > 0 → к центру, bias < 0 → к краям
+        // bias > 0 <i class="fas fa-arrow-right"></i> к центру, bias < 0 <i class="fas fa-arrow-right"></i> к краям
         const jitter = (Math.random() - 0.5) * 4;
         return {
             x:  cx + jitter,
@@ -252,7 +252,7 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(
-                b.mult === 0 ? '✕' : `×${b.mult}`,
+                b.mult === 0 ? '<i class="fas fa-xmark"></i>' : `×${b.mult}`,
                 b.x + b.w / 2,
                 b.y + b.h / 2
             );
@@ -333,16 +333,16 @@
 
                 if (mult === 0) {
                     _plinkoWinStreak = 0;
-                    if (resEl) resEl.innerHTML = `<span class="plinko-res-lose">💥 Чёрная дыра! Потерял ${bet} VC</span>`;
+                    if (resEl) resEl.innerHTML = `<span class="plinko-res-lose"><i class="fas fa-explosion"></i> Чёрная дыра! Потерял ${bet} VC</span>`;
                 } else if (prize > bet) {
                     _plinkoWinStreak++;
                     await awardVCoins(prize, 'Чёрная дыра — выигрыш ×' + mult);
-                    if (resEl) resEl.innerHTML = `<span class="plinko-res-win">✨ ×${mult} Выигрыш! +${prize - bet} VC</span>`;
+                    if (resEl) resEl.innerHTML = `<span class="plinko-res-win"><i class="fas fa-wand-magic-sparkles"></i> ×${mult} Выигрыш! +${prize - bet} VC</span>`;
                     await checkAndAwardAch(_db, _auth, userData, 'game_win');
                 } else {
                     _plinkoWinStreak = 0;
                     if (prize > 0) await awardVCoins(prize, 'Чёрная дыра — возврат ×' + mult);
-                    if (resEl) resEl.innerHTML = `<span class="plinko-res-neutral">↩️ ×${mult} Возврат ${prize} VC</span>`;
+                    if (resEl) resEl.innerHTML = `<span class="plinko-res-neutral"><i class="fas fa-rotate-left"></i>️ ×${mult} Возврат ${prize} VC</span>`;
                 }
 
                 const balEl = document.querySelector('.game-balance b');
@@ -364,7 +364,7 @@
         wrap.innerHTML = `
         <div class="game-wrap-inner">
             <div class="game-header">
-                <div class="game-title">🌌 Чёрная дыра</div>
+                <div class="game-title"><i class="fas fa-meteor"></i> Чёрная дыра</div>
                 <div class="game-balance">Баланс: <b>${balance} VC</b></div>
             </div>
             <div class="game-desc">Шарик падает через штыри. Попади в высокий множитель — выиграй!</div>
@@ -377,7 +377,7 @@
             </div>
             <div style="display:flex;justify-content:center;margin-top:14px;padding:0 18px;">
                 <button class="plinko-drop-btn" id="plinko-drop-btn" onclick="startPlinko()">
-                    🌌 Бросить шарик
+                    <i class="fas fa-meteor"></i> Бросить шарик
                 </button>
             </div>
             <div id="plinko-result" style="min-height:36px;text-align:center;font-size:1rem;font-weight:700;padding:10px 18px 16px;"></div>

@@ -64,7 +64,7 @@ function renderNotifList(notifs) {
     }
     list.innerHTML = notifs.map(n => `
         <div class="notif-item ${n.read ? 'notif-item--read' : ''}" onclick="markNotifRead('${n.id}')">
-            <span class="notif-icon">${n.icon || '🔔'}</span>
+            <span class="notif-icon">${n.icon || '<i class="fas fa-bell"></i>'}</span>
             <div class="notif-body">
                 <p class="notif-text">${esc(n.text)}</p>
                 <span class="notif-date">${new Date(n.date).toLocaleString('ru', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
@@ -116,7 +116,7 @@ export async function notifyNewEpisode(db, releaseId, releaseTitle, epName) {
                   where('releaseId', '==', releaseId))
         );
         const uids = snap.docs.map(d => d.data().uid);
-        const promises = uids.map(uid => notifyUser(uid, '🎬',
+        const promises = uids.map(uid => notifyUser(uid, '<i class="fas fa-clapperboard"></i>',
             'Новая серия в «' + releaseTitle + '»: ' + epName,
             'Новая серия — ' + releaseTitle
         ));
@@ -144,7 +144,7 @@ window.toggleReleaseSubscription = async function(releaseId, releaseTitle) {
             await addDoc(collection(_db, 'releaseSubscribers'), { releaseId, releaseTitle, uid, date: Date.now() });
             const perm = await requestPushPermission();
             if (!perm) showToast('Разрешите уведомления в браузере', 'info');
-            showToast('🔔 Вы подписались на новые серии!');
+            showToast('<i class="fas fa-bell"></i> Вы подписались на новые серии!');
             const btn = document.getElementById('btn-rel-subscribe');
             if (btn) { btn.classList.add('btn-active'); btn.innerHTML = '<i class="fas fa-bell-slash"></i> Отписаться'; }
         }

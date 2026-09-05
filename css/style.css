@@ -943,20 +943,19 @@ select option { background: var(--modal-bg); color: var(--text); }
 .swsp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 
 /* ═══════════════════════════════════════════════
-   Загрузка файлов в модалках (постер / видео / превью)
+   Загрузка файлов в модалках — компактно, в стиле сайта
    ═══════════════════════════════════════════════ */
-.file-upload-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: rgba(20,184,166,0.1); border: 1px dashed rgba(20,184,166,0.4);
-    color: var(--teal); font-size: 13px; font-weight: 600;
-    padding: 10px 14px; border-radius: 10px; cursor: pointer;
-    margin-bottom: 12px; transition: background 0.2s, border-color 0.2s;
+.field-with-action {
+    display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;
 }
-.file-upload-btn:hover { background: rgba(20,184,166,0.18); border-color: var(--teal); }
-.file-upload-btn--sm { font-size: 12px; padding: 8px 12px; margin-top: -4px; }
+.field-with-action input[type="text"] { flex: 1; margin-bottom: 0; }
+.field-action-btn {
+    flex-shrink: 0; white-space: nowrap; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+}
 
 .upload-progress-wrap {
-    width: 100%; height: 22px; background: rgba(255,255,255,0.08);
+    width: 100%; height: 20px; background: rgba(255,255,255,0.08);
     border-radius: 8px; overflow: hidden; margin-bottom: 12px; margin-top: -6px;
 }
 .upload-progress-bar {
@@ -965,6 +964,62 @@ select option { background: var(--modal-bg); color: var(--text); }
     font-size: 10px; font-weight: 700; color: #04120f; white-space: nowrap;
     transition: width 0.2s ease;
 }
+
+.kodik-search-block {
+    background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative;
+}
+.kodik-search-label {
+    font-size: 11px; font-weight: 700; color: var(--violet-light);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+}
+.kodik-search-block input[type="text"] { margin-bottom: 8px; }
+.kodik-search-block input[type="text"]:last-child { margin-bottom: 0; }
+.kodik-results {
+    position: relative; max-height: 220px; overflow-y: auto;
+    background: var(--bg-card, #0d0825); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; margin: -2px 0 8px; z-index: 5;
+}
+.kodik-result-item {
+    width: 100%; display: flex; flex-direction: column; align-items: flex-start;
+    gap: 2px; padding: 9px 12px; background: transparent; border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06); color: white;
+    cursor: pointer; text-align: left; font-family: var(--font-body);
+}
+.kodik-result-item:last-child { border-bottom: none; }
+.kodik-result-item:hover { background: rgba(20,184,166,0.12); }
+.kodik-result-title { font-size: 12px; font-weight: 600; }
+.kodik-result-tr { font-size: 11px; color: var(--text-dim); }
+.kodik-result-msg { padding: 10px 12px; font-size: 12px; color: var(--text-dim); }
+.kodik-result-msg--error { color: #f87171; }
+
+/* ═══════════════════════════════════════════════
+   Кастомный дропдаун (замена <select> там, где нужны иконки)
+   ═══════════════════════════════════════════════ */
+.custom-select { position: relative; margin-bottom: 12px; }
+.custom-select-trigger {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border, rgba(255,255,255,0.12));
+    border-radius: 10px; padding: 10px 12px; color: white; font-size: 13px;
+    font-family: var(--font-body); cursor: pointer; text-align: left;
+    transition: border-color 0.15s;
+}
+.custom-select-trigger:hover { border-color: rgba(124,58,237,0.4); }
+.custom-select-chevron { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+.custom-select-options {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+    background: var(--bg-card, #0d0825); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+.custom-select-option {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px; background: transparent; border: none;
+    color: white; font-size: 13px; font-family: var(--font-body);
+    cursor: pointer; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.custom-select-option:last-child { border-bottom: none; }
+.custom-select-option:hover { background: rgba(124,58,237,0.14); }
 
 /* ═══════════════════════════════════════════════
    SEARCH

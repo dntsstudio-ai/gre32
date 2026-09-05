@@ -13,7 +13,7 @@ const BOXES = [
     {
         id: 'box_common',
         name: 'Обычный ящик',
-        icon: '📦',
+        icon: '<i class="fas fa-box"></i>',
         price: 50,
         desc: 'Содержит карточку обычной или редкой редкости',
         gradient: 'linear-gradient(135deg,#475569,#64748b)',
@@ -23,7 +23,7 @@ const BOXES = [
     {
         id: 'box_rare',
         name: 'Редкий ящик',
-        icon: '💎',
+        icon: '<i class="fas fa-gem"></i>',
         price: 150,
         desc: 'Повышенный шанс редкой и эпической карточки',
         gradient: 'linear-gradient(135deg,#0369a1,#38bdf8)',
@@ -33,7 +33,7 @@ const BOXES = [
     {
         id: 'box_legendary',
         name: 'Легендарный ящик',
-        icon: '👑',
+        icon: '<i class="fas fa-crown"></i>',
         price: 400,
         desc: 'Гарантированно эпическая или легендарная карточка!',
         gradient: 'linear-gradient(135deg,#92400e,#fbbf24)',
@@ -72,7 +72,7 @@ async function renderLootboxPage(wrap, balance) {
     wrap.innerHTML = `
     <div class="lootbox-page">
         <div class="lootbox-header">
-            <div class="lootbox-title">🎁 Открытие ящиков</div>
+            <div class="lootbox-title"><i class="fas fa-gift"></i> Открытие ящиков</div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                 <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
                 ${isAdmin ? `<button class="btn btn-outline btn-sm" onclick="openCreateCardModal()"><i class="fas fa-plus"></i> Создать карточку</button>` : ''}
@@ -86,14 +86,14 @@ async function renderLootboxPage(wrap, balance) {
                 <div class="lootbox-box-icon">${box.icon}</div>
                 <div class="lootbox-box-name">${esc(box.name)}</div>
                 <div class="lootbox-box-desc">${esc(box.desc)}</div>
-                <div class="lootbox-box-price">💰 ${box.price} VC</div>
+                <div class="lootbox-box-price"><i class="fas fa-coins"></i> ${box.price} VC</div>
                 <button class="btn lootbox-open-btn" onclick="openLootbox('${box.id}')">
                     Открыть
                 </button>
             </div>`).join('')}
         </div>
         <div class="lootbox-drop-rates">
-            <div class="lootbox-drop-title">📊 Шансы выпадения</div>
+            <div class="lootbox-drop-title"><i class="fas fa-chart-column"></i> Шансы выпадения</div>
             <div class="lootbox-drop-table">
                 ${BOXES.map(box => `
                 <div class="lootbox-drop-row">
@@ -109,7 +109,7 @@ async function renderLootboxPage(wrap, balance) {
         </div>
         ${customCards.length > 0 ? `
         <div class="lootbox-custom-section">
-            <div class="lootbox-drop-title">✨ Особые карточки</div>
+            <div class="lootbox-drop-title"><i class="fas fa-wand-magic-sparkles"></i> Особые карточки</div>
             <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;font-style:italic;">Эксклюзивные карточки с особыми шансами выпадения</p>
             <div class="inv-cards-grid">
                 ${customCards.map(c => {
@@ -128,15 +128,15 @@ async function renderLootboxPage(wrap, balance) {
                             <div class="inv-card__role">${esc(c.role||'')}</div>
                             ${c.description ? `<div class="inv-card__desc">${esc(c.description)}</div>` : ''}
                             <div class="inv-card__rarity-label" style="color:${r.color};">
-                                <span class="inv-card__stars">${'★'.repeat(r.stars)}${'☆'.repeat(4-r.stars)}</span>
+                                <span class="inv-card__stars">${'<i class="fas fa-star"></i>'.repeat(r.stars)}${'<i class="far fa-star"></i>'.repeat(4-r.stars)}</span>
                                 ${r.label}
                             </div>
-                            <div class="inv-card__chance-badge">🎲 Шанс: ${c.dropChance || 1}%</div>
+                            <div class="inv-card__chance-badge"><i class="fas fa-dice"></i> Шанс: ${c.dropChance || 1}%</div>
                         </div>
                         ${isAdmin ? `
                         <div class="inv-card__actions">
-                            <button class="inv-card__btn" onclick="editCustomCard('${esc(c.id)}')" title="Редактировать">✏️</button>
-                            <button class="inv-card__btn inv-card__btn--sell" onclick="deleteCustomCard('${esc(c.id)}')" title="Удалить">🗑️</button>
+                            <button class="inv-card__btn" onclick="editCustomCard('${esc(c.id)}')" title="Редактировать"><i class="fas fa-pen"></i>️</button>
+                            <button class="inv-card__btn inv-card__btn--sell" onclick="deleteCustomCard('${esc(c.id)}')" title="Удалить"><i class="fas fa-trash"></i>️</button>
                         </div>` : ''}
                     </div>`;
                 }).join('')}
@@ -228,7 +228,7 @@ function showCardReveal(member, rarity, box, isCustom) {
         <div class="lb-reveal-card-inner" id="lb-card-inner">
             <div class="lb-reveal-card-front">
                 ${cardHtml}
-                ${isCustom ? '<div class="lb-custom-badge">✨ Особая карточка!</div>' : ''}
+                ${isCustom ? '<div class="lb-custom-badge"><i class="fas fa-wand-magic-sparkles"></i> Особая карточка!</div>' : ''}
             </div>
         </div>
         <div class="lb-reveal-rarity-text" style="color:${r.color};">
@@ -236,10 +236,10 @@ function showCardReveal(member, rarity, box, isCustom) {
         </div>
         <div class="lb-reveal-actions">
             <button class="btn lb-btn-keep" onclick="keepCard()">
-                🎒 В инвентарь
+                <i class="fas fa-briefcase"></i> В инвентарь
             </button>
             <button class="btn lb-btn-sell" onclick="quickSellCard('${esc(member.id)}', ${r.sellPrice}, ${isCustom})">
-                💰 Продать за ${r.sellPrice} VC
+                <i class="fas fa-coins"></i> Продать за ${r.sellPrice} VC
             </button>
         </div>
     </div>`;
@@ -298,7 +298,7 @@ function revealCard(r, isCustom, member) {
 }
 
 window.keepCard = function() {
-    showToast('🎒 Карточка добавлена в инвентарь!');
+    showToast('<i class="fas fa-briefcase"></i> Карточка добавлена в инвентарь!');
     closeReveal();
 };
 
@@ -330,7 +330,7 @@ window.quickSellCard = async function(cardId, price, isCustom) {
         }
 
         if (window.awardVCoins) await window.awardVCoins(price, 'Быстрая продажа карточки');
-        showToast(`💰 Продано за ${price} VC!`);
+        showToast(`<i class="fas fa-coins"></i> Продано за ${price} VC!`);
         closeReveal();
     } catch(e) {
         showToast('Ошибка: ' + e.message, 'error');
@@ -446,6 +446,7 @@ window.openCreateCardModal = function(existingId) {
     document.getElementById('cc-img').value     = '';
     document.getElementById('cc-desc').value    = '';
     document.getElementById('cc-rarity').value  = 'rare';
+    refreshRarityDisplay();
     document.getElementById('cc-chance').value  = '5';
     document.getElementById('cc-sound').value   = '';
     document.getElementById('cc-preview-wrap').innerHTML = '';
@@ -461,6 +462,7 @@ window.openCreateCardModal = function(existingId) {
             document.getElementById('cc-img').value    = d.img || '';
             document.getElementById('cc-desc').value   = d.description || '';
             document.getElementById('cc-rarity').value = d.rarity || 'rare';
+            refreshRarityDisplay();
             document.getElementById('cc-chance').value = d.dropChance || '5';
             document.getElementById('cc-sound').value  = d.soundUrl || '';
             updateCardPreview();
@@ -473,6 +475,38 @@ window.openCreateCardModal = function(existingId) {
 window.editCustomCard = function(id) {
     window.openCreateCardModal(id);
 };
+
+const RARITY_META = {
+    common:    { label: 'Обычная',     color: '#9ca3af' },
+    rare:      { label: 'Редкая',      color: '#3b82f6' },
+    epic:      { label: 'Эпическая',   color: '#a855f7' },
+    legendary: { label: 'Легендарная', color: '#eab308' },
+};
+function refreshRarityDisplay() {
+    const sel = document.getElementById('cc-rarity');
+    const meta = RARITY_META[sel?.value] || RARITY_META.rare;
+    const label = document.getElementById('cc-rarity-label');
+    const icon = document.querySelector('#cc-rarity-trigger i.fa-circle');
+    if (label) label.textContent = meta.label;
+    if (icon) icon.style.color = meta.color;
+}
+window.toggleRarityDropdown = () => {
+    const opts = document.getElementById('cc-rarity-options');
+    if (opts) opts.style.display = opts.style.display === 'none' ? 'block' : 'none';
+};
+window.selectRarity = (val) => {
+    const sel = document.getElementById('cc-rarity');
+    if (sel) sel.value = val;
+    refreshRarityDisplay();
+    const opts = document.getElementById('cc-rarity-options');
+    if (opts) opts.style.display = 'none';
+    if (typeof window.updateCardPreview === 'function') window.updateCardPreview();
+};
+document.addEventListener('click', (e) => {
+    const dd = document.getElementById('cc-rarity-dropdown');
+    const opts = document.getElementById('cc-rarity-options');
+    if (dd && opts && !dd.contains(e.target)) opts.style.display = 'none';
+});
 
 window.updateCardPreview = function() {
     const name    = document.getElementById('cc-name')?.value || 'Имя';
@@ -510,7 +544,7 @@ window.saveCustomCard = async function() {
             soundUrl: sound || '',
             createdAt: Date.now(),
         });
-        showToast('✅ Карточка сохранена!');
+        showToast('<i class="fas fa-circle-check"></i> Карточка сохранена!');
         document.getElementById('m-create-card').style.display = 'none';
         // Перерендер страницы ящиков
         const wrap = document.getElementById('lootbox-wrap');
@@ -527,7 +561,7 @@ window.deleteCustomCard = async function(id) {
     if (!confirm('Удалить эту карточку?')) return;
     try {
         await deleteDoc(doc(_db, 'custom_cards', id));
-        showToast('🗑️ Карточка удалена');
+        showToast('<i class="fas fa-trash"></i>️ Карточка удалена');
         const wrap = document.getElementById('lootbox-wrap');
         const { userData } = _getState();
         if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);

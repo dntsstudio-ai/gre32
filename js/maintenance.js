@@ -73,7 +73,7 @@ function showMaintenancePage(config) {
 
     <div class="maint-content">
         <div class="maint-logo">
-            <img src="img/logo.jpg" alt="VAT" onerror="this.parentElement.innerHTML='<span style=\'font-size:2.5rem\'>🎙️</span>'">
+            <img src="img/logo.jpg" alt="VAT" onerror="this.parentElement.innerHTML='<span style=\'font-size:2.5rem\'><i class="fas fa-microphone"></i>️</span>'">
         </div>
         <div class="maint-badge">
             <i class="fas fa-tools"></i>
@@ -85,7 +85,7 @@ function showMaintenancePage(config) {
         <div class="maint-timer-wrap">
             <div class="maint-timer-label">${hasTimer ? 'Вернёмся через' : 'Работы ведутся'}</div>
             <div class="maint-timer ${hasTimer ? '' : 'maint-timer--pulse'}" id="maint-timer">
-                ${hasTimer ? formatTime(remainingSec) : '⚙️'}
+                ${hasTimer ? formatTime(remainingSec) : '<i class="fas fa-gear"></i>️'}
             </div>
         </div>
 
@@ -110,7 +110,7 @@ function showMaintenancePage(config) {
                 <i class="fas fa-times"></i>
             </button>
             <div class="maint-modal-logo">
-                <img src="img/logo.jpg" alt="VAT" onerror="this.parentElement.innerHTML='🎙️'">
+                <img src="img/logo.jpg" alt="VAT" onerror="this.parentElement.innerHTML='<i class="fas fa-microphone"></i>️'">
             </div>
             <h2 class="maint-modal-title">Вход для команды</h2>
             <p class="maint-modal-sub">Авторизуйтесь чтобы продолжить</p>

@@ -79,7 +79,7 @@ export function initAuthListeners(auth, db) {
                     achievements: [{
                         id: 'newcomer', name: 'Новичок',
                         desc: 'Зарегистрировался на сайте',
-                        img: '👋', date: Date.now(),
+                        img: '<i class="fas fa-hand"></i>', date: Date.now(),
                         hidden: false, giver: 'Система'
                     }]
                 });

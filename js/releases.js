@@ -12,7 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 import { esc, showToast, closeModals, navigate } from './core.js';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS } from '../config/config.js';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js';
 import { loadComments } from './comments.js';
 import { checkAndAwardAch } from './achievements.js';
 
@@ -44,6 +44,50 @@ function buildSources(ep) {
     if (ep?.kodikUrl) sources.push({ url: ep.kodikUrl, label: 'Kodik', type: 'kodik' });
     return sources;
 }
+
+// ── Поиск по названию через Kodik API ──
+let kodikSearchTimer = null;
+async function searchKodik(title) {
+    const url = `https://kodik-api.com/search?token=${KODIK_TOKEN}&title=${encodeURIComponent(title)}&limit=10`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Kodik API вернул ошибку ' + res.status);
+    const data = await res.json();
+    return data.results || [];
+}
+function fixKodikLink(link) { return link && link.startsWith('//') ? 'https:' + link : link; }
+
+window.onKodikSearchInput = (val) => {
+    clearTimeout(kodikSearchTimer);
+    const box = document.getElementById('kodik-results');
+    if (!box) return;
+    const q = (val || '').trim();
+    if (q.length < 2) { box.innerHTML = ''; box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<div class="kodik-result-msg">Ищу...</div>';
+    kodikSearchTimer = setTimeout(async () => {
+        try {
+            const results = await searchKodik(q);
+            if (!results.length) { box.innerHTML = '<div class="kodik-result-msg">Ничего не нашлось</div>'; return; }
+            box.innerHTML = results.slice(0, 8).map((r, i) => `
+                <button type="button" class="kodik-result-item" data-idx="${i}">
+                    <span class="kodik-result-title">${esc(r.title)}${r.year ? ` (${r.year})` : ''}</span>
+                    <span class="kodik-result-tr">${esc(r.translation?.title || '')}</span>
+                </button>`).join('');
+            box.querySelectorAll('.kodik-result-item').forEach((btn, i) => {
+                btn.addEventListener('click', () => {
+                    const link = fixKodikLink(results[i].link);
+                    const kodikInput = document.getElementById('ad-ep-kodik');
+                    if (kodikInput) kodikInput.value = link;
+                    box.innerHTML = ''; box.style.display = 'none';
+                    document.getElementById('ad-ep-kodik-search').value = '';
+                    showToast('Kodik-ссылка подставлена!');
+                });
+            });
+        } catch (e) {
+            box.innerHTML = '<div class="kodik-result-msg kodik-result-msg--error">Ошибка поиска: ' + esc(e.message) + '</div>';
+        }
+    }, 450);
+};
 
 // ── Загрузка файла в Firebase Storage с прогресс-баром ──
 function uploadToStorage(storage, file, folder, { onProgress, onDone, onError }) {
@@ -512,7 +556,7 @@ export function bindReleases(db, auth, getState, storage) {
                 } else {
                     const b = document.getElementById('btn-favorite');
                     if (b) { b.classList.add('btn-active'); b.innerHTML='<i class="fas fa-star"></i> В избранном'; }
-                    showToast('Добавлено в избранное ⭐');
+                    showToast('Добавлено в избранное <i class="fas fa-star"></i>');
                     await checkAndAwardAch(db, auth, userData, 'favorite_1');
                 }
             }
@@ -527,6 +571,8 @@ export function bindReleases(db, auth, getState, storage) {
             const el = document.getElementById(id); if (el) el.value = '';
         });
         ['ad-ep-file','ad-ep-thumb-file'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const kSearch = document.getElementById('ad-ep-kodik-search'); if (kSearch) kSearch.value = '';
+        const kBox = document.getElementById('kodik-results'); if (kBox) { kBox.innerHTML = ''; kBox.style.display = 'none'; }
         const barWrap = document.getElementById('ep-upload-wrap'); if (barWrap) barWrap.style.display = 'none';
         const h = document.getElementById('m-ep-heading');
         if (h) h.textContent = 'Добавить медиа';
@@ -761,8 +807,8 @@ export function bindReleases(db, auth, getState, storage) {
                 <div class="list-card-title">${esc(r.title)}</div>
             </div>`;
 
-            const favHtml   = favorite.length ? `<div class="lists-grid">${favorite.map(cardHtml).join('')}</div>` : `<p class="list-empty">Пусто — нажмите ⭐ на странице релиза</p>`;
-            const laterHtml = later.length    ? `<div class="lists-grid">${later.map(cardHtml).join('')}</div>`    : `<p class="list-empty">Пусто — нажмите 🕐 на странице релиза</p>`;
+            const favHtml   = favorite.length ? `<div class="lists-grid">${favorite.map(cardHtml).join('')}</div>` : `<p class="list-empty">Пусто — нажмите <i class="fas fa-star"></i> на странице релиза</p>`;
+            const laterHtml = later.length    ? `<div class="lists-grid">${later.map(cardHtml).join('')}</div>`    : `<p class="list-empty">Пусто — нажмите <i class="fas fa-clock"></i> на странице релиза</p>`;
             const viewedHtml= viewed.length
                 ? viewed.map(v => `<div class="viewed-row" onclick="openView('${v.id}')">
                     ${v.img ? `<img src="${esc(v.img)}" class="viewed-thumb" onerror="this.style.display='none'" alt="">` : ''}
@@ -788,9 +834,9 @@ export function bindReleases(db, auth, getState, storage) {
             } catch(pe) { console.warn('Pinned playlists:', pe); }
 
             container.innerHTML =
-                mkSection('fav',    '⭐', 'Избранное',     favorite.length, favHtml)
-              + mkSection('later',  '🕐', 'Буду смотреть', later.length,    laterHtml)
-              + mkSection('viewed', '👁',  'Просмотрено',  viewed.length,   viewedHtml)
+                mkSection('fav',    '<i class="fas fa-star"></i>', 'Избранное',     favorite.length, favHtml)
+              + mkSection('later',  '<i class="fas fa-clock"></i>', 'Буду смотреть', later.length,    laterHtml)
+              + mkSection('viewed', '<i class="fas fa-eye"></i>',  'Просмотрено',  viewed.length,   viewedHtml)
               + pinnedSection;
         } catch(e) {
             container.innerHTML = `<p style="color:#ef4444;font-size:13px;">Ошибка загрузки.</p>`;

@@ -64,23 +64,23 @@ async function giftVCoins(targetUid, targetNick, amount) {
     const { userData } = _getState();
     if (!userData) return;
     if (amount <= 0) return showToast('Введите корректную сумму', 'error');
-    const ok = await spendVCoins(amount, 'Подарок → ' + targetNick);
+    const ok = await spendVCoins(amount, 'Подарок <i class="fas fa-arrow-right"></i> ' + targetNick);
     if (!ok) return;
     try {
         await updateDoc(doc(_db, 'users', targetUid), { vcoins: increment(amount) });
         await addDoc(collection(_db, `users/${targetUid}/vcoinLog`), { amount, reason: 'Подарок от ' + userData.nickname, date: Date.now(), type: 'gift' });
-        await addDoc(collection(_db, `users/${targetUid}/notifications`), { type:'gift', text: userData.nickname + ' подарил вам ' + amount + ' VCoins!', date: Date.now(), read: false, icon: '🎁' });
-        showToast('🎁 Отправлено ' + amount + ' VC → ' + targetNick + '!');
+        await addDoc(collection(_db, `users/${targetUid}/notifications`), { type:'gift', text: userData.nickname + ' подарил вам ' + amount + ' VCoins!', date: Date.now(), read: false, icon: '<i class="fas fa-gift"></i>' });
+        showToast('<i class="fas fa-gift"></i> Отправлено ' + amount + ' VC <i class="fas fa-arrow-right"></i> ' + targetNick + '!');
         closeModals();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 }
 
 const SHOP_ITEMS = [
-    { id:'colorNick',    icon:'🎨', name:'Цветной никнейм',    desc:'Выберите цвет своего никнейма', type:'color',  priceKey:'colorNick' },
-    { id:'prefix_vip',   icon:'⭐', name:'Префикс [VIP]',     desc:'Отображается перед вашим ником', type:'prefix', value:'VIP',    priceKey:'prefix' },
-    { id:'prefix_pro',   icon:'🔥', name:'Префикс [PRO]',     desc:'Отображается перед вашим ником', type:'prefix', value:'PRO',    priceKey:'prefix' },
-    { id:'prefix_fan',   icon:'🎭', name:'Префикс [FAN]',     desc:'Отображается перед вашим ником', type:'prefix', value:'FAN',    priceKey:'prefix' },
-    { id:'prefix_legend',icon:'👑', name:'Префикс [LEGEND]',  desc:'Отображается перед вашим ником', type:'prefix', value:'LEGEND', priceKey:'prefix' },
+    { id:'colorNick',    icon:'<i class="fas fa-palette"></i>', name:'Цветной никнейм',    desc:'Выберите цвет своего никнейма', type:'color',  priceKey:'colorNick' },
+    { id:'prefix_vip',   icon:'<i class="fas fa-star"></i>', name:'Префикс [VIP]',     desc:'Отображается перед вашим ником', type:'prefix', value:'VIP',    priceKey:'prefix' },
+    { id:'prefix_pro',   icon:'<i class="fas fa-fire"></i>', name:'Префикс [PRO]',     desc:'Отображается перед вашим ником', type:'prefix', value:'PRO',    priceKey:'prefix' },
+    { id:'prefix_fan',   icon:'<i class="fas fa-masks-theater"></i>', name:'Префикс [FAN]',     desc:'Отображается перед вашим ником', type:'prefix', value:'FAN',    priceKey:'prefix' },
+    { id:'prefix_legend',icon:'<i class="fas fa-crown"></i>', name:'Префикс [LEGEND]',  desc:'Отображается перед вашим ником', type:'prefix', value:'LEGEND', priceKey:'prefix' },
 ];
 
 const NICK_COLORS = [
@@ -99,7 +99,7 @@ function renderShopPage() {
     wrap.innerHTML = `
     <div class="shop-balance-bar">
         <div class="shop-balance-inner">
-            <span class="shop-balance-icon">🪙</span>
+            <span class="shop-balance-icon"><i class="fas fa-coins"></i></span>
             <span class="shop-balance-val">${balance}</span>
             <span class="shop-balance-label">VCoins</span>
         </div>
@@ -107,7 +107,7 @@ function renderShopPage() {
         <button class="btn btn-outline btn-sm" onclick="openVcoinHistory()"><i class="fas fa-history"></i> История</button>
     </div>
 
-    <div class="shop-section-title">🎨 Кастомизация профиля</div>
+    <div class="shop-section-title"><i class="fas fa-palette"></i> Кастомизация профиля</div>
     <div class="shop-grid">
         ${SHOP_ITEMS.map(item => {
             const price = _prices[item.priceKey] || 999;
@@ -117,7 +117,7 @@ function renderShopPage() {
                 <div class="shop-card-name">${esc(item.name)}</div>
                 <div class="shop-card-desc">${esc(item.desc)}</div>
                 <div class="shop-card-footer">
-                    <span class="shop-price">🪙 ${price}</span>
+                    <span class="shop-price"><i class="fas fa-coins"></i> ${price}</span>
                     ${owned
                         ? `<button class="btn btn-sm" style="background:var(--teal);" onclick="activateShopItem('${item.id}')">Активировать</button>`
                         : `<button class="btn btn-sm btn-blue" onclick="buyShopItem('${item.id}')">Купить</button>`}
@@ -126,34 +126,34 @@ function renderShopPage() {
         }).join('')}
     </div>
 
-    <div class="shop-section-title" style="margin-top:32px;">🎮 Мини-игры</div>
+    <div class="shop-section-title" style="margin-top:32px;"><i class="fas fa-gamepad"></i> Мини-игры</div>
     <div class="shop-grid shop-grid--games">
         <div class="shop-game-card" onclick="openGame('coinflip')">
-            <div class="shop-game-icon">🪙</div>
+            <div class="shop-game-icon"><i class="fas fa-coins"></i></div>
             <div class="shop-game-name">Монетка</div>
             <div class="shop-game-desc">Орёл или решка — удвой ставку</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
         <div class="shop-game-card" onclick="openGame('slots')">
-            <div class="shop-game-icon">🎰</div>
+            <div class="shop-game-icon"><i class="fas fa-dice"></i></div>
             <div class="shop-game-name">Слоты</div>
             <div class="shop-game-desc">Три символа — выиграй до 10× ставки</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
         <div class="shop-game-card" onclick="openGame('rocket')">
-            <div class="shop-game-icon">🚀</div>
+            <div class="shop-game-icon"><i class="fas fa-rocket"></i></div>
             <div class="shop-game-name">Ракета</div>
             <div class="shop-game-desc">Чем дольше летит — тем больше множитель</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
         <div class="shop-game-card" onclick="openGame('plinko')">
-            <div class="shop-game-icon">🌌</div>
+            <div class="shop-game-icon"><i class="fas fa-meteor"></i></div>
             <div class="shop-game-name">Чёрная дыра</div>
             <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
         <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
-            <div class="shop-game-icon">🎁</div>
+            <div class="shop-game-icon"><i class="fas fa-gift"></i></div>
             <div class="shop-game-name">Ящики</div>
             <div class="shop-game-desc">Открывай ящики и собирай карточки участников студии</div>
             <button class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;">Открыть</button>
@@ -180,7 +180,7 @@ async function buyShopItem(itemId) {
     try {
         await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { shopItems: owned });
         userData.shopItems = owned;
-        showToast('✅ Куплено: ' + item.name);
+        showToast('<i class="fas fa-circle-check"></i> Куплено: ' + item.name);
         renderShopPage();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 }
@@ -218,20 +218,20 @@ function renderGame(type) {
         wrap.innerHTML = `
         <div class="game-wrap-inner">
             <div class="game-header">
-                <div class="game-title">🪙 Монетка</div>
+                <div class="game-title"><i class="fas fa-coins"></i> Монетка</div>
                 <div class="game-balance">Баланс: <b>${balance} VC</b></div>
             </div>
             <div class="game-desc">Угадай — орёл или решка. Угадал — удваиваешь. Нет — теряешь.</div>
             <div class="game-coin-arena">
-                <div class="game-coin-display" id="game-coin-img">🪙</div>
+                <div class="game-coin-display" id="game-coin-img"><i class="fas fa-coins"></i></div>
             </div>
             <div class="game-bet-row">
                 <label class="order-label">Ставка (VC)</label>
                 <input type="number" id="game-bet" min="1" max="${balance}" value="10">
             </div>
             <div class="coin-choice-row">
-                <button class="coin-choice-btn coin-btn-heads" onclick="playCoinflip('heads')">👑 Орёл</button>
-                <button class="coin-choice-btn coin-btn-tails" onclick="playCoinflip('tails')">🪙 Решка</button>
+                <button class="coin-choice-btn coin-btn-heads" onclick="playCoinflip('heads')"><i class="fas fa-crown"></i> Орёл</button>
+                <button class="coin-choice-btn coin-btn-tails" onclick="playCoinflip('tails')"><i class="fas fa-coins"></i> Решка</button>
             </div>
             <div id="game-result"></div>
         </div>`;
@@ -239,19 +239,19 @@ function renderGame(type) {
         wrap.innerHTML = `
         <div class="game-wrap-inner">
             <div class="game-header">
-                <div class="game-title">🎰 Слоты</div>
+                <div class="game-title"><i class="fas fa-dice"></i> Слоты</div>
                 <div class="game-balance">Баланс: <b>${balance} VC</b></div>
             </div>
             <div class="game-desc">3 одинаковых символа — выигрыш! Два совпадения — ×3.</div>
             <div class="slots-arena">
                 <div class="slots-display" id="slots-display">
-                    <div class="slot-reel" id="reel-0">❓</div>
+                    <div class="slot-reel" id="reel-0"><i class="fas fa-circle-question"></i></div>
                     <div class="slot-divider"></div>
-                    <div class="slot-reel" id="reel-1">❓</div>
+                    <div class="slot-reel" id="reel-1"><i class="fas fa-circle-question"></i></div>
                     <div class="slot-divider"></div>
-                    <div class="slot-reel" id="reel-2">❓</div>
+                    <div class="slot-reel" id="reel-2"><i class="fas fa-circle-question"></i></div>
                 </div>
-                <button class="slots-spin-btn" id="slots-spin-btn" onclick="playSlots()">🎰 Крутить!</button>
+                <button class="slots-spin-btn" id="slots-spin-btn" onclick="playSlots()"><i class="fas fa-dice"></i> Крутить!</button>
             </div>
             <div class="game-bet-row">
                 <label class="order-label">Ставка (VC)</label>
@@ -263,14 +263,14 @@ function renderGame(type) {
         wrap.innerHTML = `
         <div class="game-wrap-inner">
             <div class="game-header">
-                <div class="game-title">🚀 Ракета</div>
+                <div class="game-title"><i class="fas fa-rocket"></i> Ракета</div>
                 <div class="game-balance">Баланс: <b>${balance} VC</b></div>
             </div>
             <div class="game-desc">Ракета взлетает — множитель растёт. Забери до взрыва!</div>
             <div class="rocket-arena" id="rocket-arena">
                 <div class="rocket-trail" id="rocket-trail"></div>
                 <div class="rocket-multiplier" id="rocket-mult">1.00×</div>
-                <div class="rocket-ship" id="rocket-ship">🚀</div>
+                <div class="rocket-ship" id="rocket-ship"><i class="fas fa-rocket"></i></div>
                 <div class="rocket-exhaust" id="rocket-exhaust"></div>
             </div>
             <div class="rocket-streak-bar">
@@ -288,8 +288,8 @@ function renderGame(type) {
                 <input type="number" id="game-bet" min="1" max="${balance}" value="10">
             </div>
             <div class="rocket-actions">
-                <button class="rocket-launch-btn" id="rocket-start-btn" onclick="startRocket()">🚀 Запустить</button>
-                <button class="rocket-cash-btn" id="rocket-cash-btn" onclick="cashOutRocket()" disabled>💰 Забрать</button>
+                <button class="rocket-launch-btn" id="rocket-start-btn" onclick="startRocket()"><i class="fas fa-rocket"></i> Запустить</button>
+                <button class="rocket-cash-btn" id="rocket-cash-btn" onclick="cashOutRocket()" disabled><i class="fas fa-coins"></i> Забрать</button>
             </div>
             <div id="game-result"></div>
         </div>`;
@@ -300,7 +300,7 @@ function renderGame(type) {
     }
 
     const titleEl = document.getElementById('m-game-title');
-    const gameTitles = { coinflip:'🪙 Монетка', slots:'🎰 Слоты', rocket:'🚀 Ракета', plinko:'🌌 Чёрная дыра' };
+    const gameTitles = { coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты', rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра' };
     if (titleEl) titleEl.textContent = gameTitles[type] || type;
     window._currentGame = type;
 }
@@ -316,21 +316,30 @@ window.playCoinflip = async function(choice) {
     const imgEl  = document.getElementById('game-coin-img');
     if (imgEl) { imgEl.textContent=''; imgEl.classList.add('spinning'); }
     setTimeout(async () => {
-        if (imgEl) { imgEl.classList.remove('spinning'); imgEl.textContent = result==='heads'?'👑':'🪙'; }
+        if (imgEl) { imgEl.classList.remove('spinning'); imgEl.textContent = result==='heads'?'<i class="fas fa-crown"></i>':'<i class="fas fa-coins"></i>'; }
         const resEl = document.getElementById('game-result');
         if (win) {
             await awardVCoins(bet*2, 'Монетка — выигрыш');
-            if (resEl) resEl.innerHTML = `<span style="color:var(--teal)">✅ Выигрыш! +${bet} VC</span>`;
+            if (resEl) resEl.innerHTML = `<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Выигрыш! +${bet} VC</span>`;
             await checkAndAwardAch(_db, _auth, userData, 'game_win');
         } else {
-            if (resEl) resEl.innerHTML = `<span style="color:#ef4444">❌ Проигрыш! -${bet} VC</span>`;
+            if (resEl) resEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Проигрыш! -${bet} VC</span>`;
         }
         const balEl = document.querySelector('.game-balance b');
         if (balEl) balEl.textContent = (userData?.vcoins||0) + ' VC';
     }, 900);
 };
 
-const SLOT_SYMBOLS = ['🍒','🍊','🍋','⭐','💎','7️⃣','🎭'];
+const SLOT_SYMBOLS = [
+    '<i class="fas fa-fire" style="color:#ef4444;"></i>',
+    '<i class="fas fa-sun" style="color:#f97316;"></i>',
+    '<i class="fas fa-bolt" style="color:#eab308;"></i>',
+    '<i class="fas fa-star" style="color:#facc15;"></i>',
+    '<i class="fas fa-gem" style="color:#06b6d4;"></i>',
+    '<i class="fas fa-crown" style="color:#facc15;"></i>',
+    '<i class="fas fa-masks-theater" style="color:#a855f7;"></i>',
+];
+const SLOT_JACKPOT_SYMBOL = SLOT_SYMBOLS[5]; // корона — джекпот x10
 window.playSlots = async function() {
     const { userData } = _getState();
     const bet = parseInt(document.getElementById('game-bet')?.value) || 0;
@@ -343,15 +352,15 @@ window.playSlots = async function() {
     [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('spinning-reel'); });
     let ticks = 0;
     const interval = setInterval(() => {
-        [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.textContent=SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]; });
+        [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.innerHTML=SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]; });
         ticks++;
         if (ticks >= 15) {
             clearInterval(interval);
             [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.remove('spinning-reel'); });
             const reels = [0,1,2].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
-            [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.textContent=reels[i]; });
+            [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.innerHTML=reels[i]; });
             let mult = 0;
-            if (reels[0]===reels[1]&&reels[1]===reels[2]) { mult = reels[0]==='7️⃣'?10:reels[0]==='💸'?7:5; }
+            if (reels[0]===reels[1]&&reels[1]===reels[2]) { mult = reels[0]===SLOT_JACKPOT_SYMBOL?10:7; }
             else if (reels[0]===reels[1]||reels[1]===reels[2]||reels[0]===reels[2]) { mult = 3; }
             (async () => {
                 const resEl = document.getElementById('game-result');
@@ -359,10 +368,10 @@ window.playSlots = async function() {
                     [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('win-reel'); });
                     const prize = bet*mult;
                     await awardVCoins(prize, 'Слоты — выигрыш ×'+mult);
-                    if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">🎉 ×${mult} Выигрыш! +${prize-bet} VC</span>`;
+                    if (resEl) resEl.innerHTML=`<span style="color:var(--teal)"><i class="fas fa-champagne-glasses"></i> ×${mult} Выигрыш! +${prize-bet} VC</span>`;
                     await checkAndAwardAch(_db, _auth, userData, 'game_win');
                 } else {
-                    if (resEl) resEl.innerHTML=`<span style="color:#ef4444">❌ Нет совпадений. -${bet} VC</span>`;
+                    if (resEl) resEl.innerHTML=`<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Нет совпадений. -${bet} VC</span>`;
                 }
                 const balEl = document.querySelector('.game-balance b');
                 if (balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
@@ -429,7 +438,7 @@ window.startRocket = async function() {
         } else if (rand < 0.85) {
             _rocketCrashAt = 3.0 + Math.random() * 2.0;    // 30% — хороший полёт (3–5×)
         } else {
-            _rocketCrashAt = 5.0 + Math.random() * 3.0;    // 15% — большой полёт (5–8×) 🔥
+            _rocketCrashAt = 5.0 + Math.random() * 3.0;    // 15% — большой полёт (5–8×) <i class="fas fa-fire"></i>
         }
     } else {
         // ── СЕРИЯ 3+ ПОБЕД: постепенно ужесточаем ──
@@ -471,13 +480,13 @@ window.startRocket = async function() {
         if (exhaust) exhaust.style.height = (12 + Math.random() * 10) + 'px';
         if (_rocketMult >= _rocketCrashAt) {
             clearInterval(_rocketInterval); _rocketRunning=false;
-            if (ship) { ship.textContent='💥'; ship.classList.remove('flying'); ship.classList.add('exploded'); }
+            if (ship) { ship.textContent='<i class="fas fa-explosion"></i>'; ship.classList.remove('flying'); ship.classList.add('exploded'); }
             if (exhaust) { exhaust.classList.remove('active'); exhaust.style.height='0'; }
             if (multEl) multEl.classList.remove('danger');
             const resEl = document.getElementById('game-result');
             _rocketWinStreak = 0;
             _updateStreakDots();
-            if (resEl) resEl.innerHTML=`<span style="color:#ef4444">💥 Взрыв на ${_rocketMult.toFixed(2)}×! Проигрыш -${_rocketBet} VC</span>`;
+            if (resEl) resEl.innerHTML=`<span style="color:#ef4444"><i class="fas fa-explosion"></i> Взрыв на ${_rocketMult.toFixed(2)}×! Проигрыш -${_rocketBet} VC</span>`;
             if (startBtn) { startBtn.disabled=false; }
             if (cashBtn)  { cashBtn.disabled=true; }
             const balEl = document.querySelector('.game-balance b');
@@ -515,7 +524,7 @@ window.cashOutRocket = async function() {
     _updateStreakDots();
     await awardVCoins(prize, 'Ракета — выигрыш ×'+_rocketMult.toFixed(2));
     const resEl = document.getElementById('game-result');
-    if (resEl) resEl.innerHTML=`<span style="color:var(--teal)">💰 Забрал на ${_rocketMult.toFixed(2)}×! +${prize-_rocketBet} VC</span>`;
+    if (resEl) resEl.innerHTML=`<span style="color:var(--teal)"><i class="fas fa-coins"></i> Забрал на ${_rocketMult.toFixed(2)}×! +${prize-_rocketBet} VC</span>`;
     const startBtn = document.getElementById('rocket-start-btn');
     const cashBtn  = document.getElementById('rocket-cash-btn');
     if (startBtn) { startBtn.disabled=false; }
@@ -526,7 +535,7 @@ window.cashOutRocket = async function() {
 };
 
 // ═══════════════════════════════════════════════════════
-//  🌌 PLINKO «ЧЁРНАЯ ДЫРА»
+//  <i class="fas fa-meteor"></i> PLINKO «ЧЁРНАЯ ДЫРА»
 // ═══════════════════════════════════════════════════════
 (function(){
     'use strict';
@@ -626,7 +635,7 @@ window.cashOutRocket = async function() {
             ctx.fillStyle=isHL?'#fff':(isZ?'#ef4444':isH?'#c4b5fd':'#5eead4');
             ctx.font=`bold ${isHL?13:11}px 'Exo 2',sans-serif`;
             ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillText(b.mult===0?'✕':`×${b.mult}`,b.x+b.w/2,b.y+b.h/2);
+            ctx.fillText(b.mult===0?'<i class="fas fa-xmark"></i>':`×${b.mult}`,b.x+b.w/2,b.y+b.h/2);
         }
         if(!ball.landed||hlIdx>=0){
             const bg=ctx.createRadialGradient(ball.x-ball.r*0.3,ball.y-ball.r*0.3,1,ball.x,ball.y,ball.r*1.6);
@@ -642,7 +651,7 @@ window.cashOutRocket = async function() {
         wrap.innerHTML=`
         <div class="game-wrap-inner">
             <div class="game-header">
-                <div class="game-title">🌌 Чёрная дыра</div>
+                <div class="game-title"><i class="fas fa-meteor"></i> Чёрная дыра</div>
                 <div class="game-balance">Баланс: <b>${balance} VC</b></div>
             </div>
             <div class="game-desc">Шарик падает через штыри. Попади в высокий множитель — выиграй!</div>
@@ -661,7 +670,7 @@ window.cashOutRocket = async function() {
                 <input type="number" id="plinko-bet" min="1" max="${Math.min(balance,500)}" value="25">
             </div>
             <div style="display:flex;justify-content:center;margin-top:14px;padding:0 18px;">
-                <button class="plinko-drop-btn" id="plinko-drop-btn" onclick="startPlinko()">🌌 Бросить шарик</button>
+                <button class="plinko-drop-btn" id="plinko-drop-btn" onclick="startPlinko()"><i class="fas fa-meteor"></i> Бросить шарик</button>
             </div>
             <div id="plinko-result" style="min-height:36px;text-align:center;font-size:1rem;font-weight:700;padding:10px 18px 16px;"></div>
         </div>`;
@@ -703,16 +712,16 @@ window.cashOutRocket = async function() {
                 const resEl=document.getElementById('plinko-result');
                 if(mult===0){
                     _plinkoWinStreak=0;
-                    if(resEl) resEl.innerHTML=`<span style="color:#ef4444">💥 Чёрная дыра! Потерял ${bet} VC</span>`;
+                    if(resEl) resEl.innerHTML=`<span style="color:#ef4444"><i class="fas fa-explosion"></i> Чёрная дыра! Потерял ${bet} VC</span>`;
                 } else if(prize>bet){
                     _plinkoWinStreak++;
                     await awardVCoins(prize,'Чёрная дыра — выигрыш ×'+mult);
-                    if(resEl) resEl.innerHTML=`<span style="color:var(--teal)">✨ ×${mult} Выигрыш! +${prize-bet} VC</span>`;
+                    if(resEl) resEl.innerHTML=`<span style="color:var(--teal)"><i class="fas fa-wand-magic-sparkles"></i> ×${mult} Выигрыш! +${prize-bet} VC</span>`;
                     await checkAndAwardAch(_db,_auth,userData,'game_win');
                 } else {
                     _plinkoWinStreak=0;
                     if(prize>0) await awardVCoins(prize,'Чёрная дыра — возврат ×'+mult);
-                    if(resEl) resEl.innerHTML=`<span style="color:#a78bfa">↩️ ×${mult} Возврат ${prize} VC</span>`;
+                    if(resEl) resEl.innerHTML=`<span style="color:#a78bfa"><i class="fas fa-rotate-left"></i>️ ×${mult} Возврат ${prize} VC</span>`;
                 }
                 const balEl=document.querySelector('.game-balance b');
                 if(balEl) balEl.textContent=(userData?.vcoins||0)+' VC';

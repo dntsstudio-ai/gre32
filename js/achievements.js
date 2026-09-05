@@ -142,7 +142,7 @@ export function bindAchievements(db, auth, getState) {
                 id:    'manual_' + Date.now(),
                 name:  document.getElementById('ga-name')?.value || '',
                 desc:  document.getElementById('ga-desc')?.value || '',
-                img:   document.getElementById('ga-img')?.value  || '🏅',
+                img:   document.getElementById('ga-img')?.value  || '<i class="fas fa-medal"></i>',
                 date:  Date.now(), hidden: false, giver: userData.nickname
             });
             await updateDoc(uRef, { achievements: achs });

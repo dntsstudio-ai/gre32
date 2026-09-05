@@ -187,7 +187,7 @@ export function bindRatings(db, auth, getState) {
         const note   = noteEl ? noteEl.value : '';
         try {
             await updateDoc(doc(db,'ratings',id), { scores, equipNote:note, updatedAt:Date.now() });
-            showToast('Оценки сохранены! ✅');
+            showToast('Оценки сохранены! <i class="fas fa-circle-check"></i>');
             closeModals();
             window.loadRatingsPage();
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
