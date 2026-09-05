@@ -301,7 +301,7 @@ function renderGame(type) {
 
     const titleEl = document.getElementById('m-game-title');
     const gameTitles = { coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты', rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра' };
-    if (titleEl) titleEl.textContent = gameTitles[type] || type;
+    if (titleEl) titleEl.innerHTML = gameTitles[type] || type;
     window._currentGame = type;
 }
 
@@ -644,7 +644,7 @@ window.cashOutRocket = async function() {
             ctx.fillStyle=isHL?'#fff':(isZ?'#ef4444':isH?'#c4b5fd':'#5eead4');
             ctx.font=`bold ${isHL?13:11}px 'Exo 2',sans-serif`;
             ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillText(b.mult===0?'<i class="fas fa-xmark"></i>':`×${b.mult}`,b.x+b.w/2,b.y+b.h/2);
+            ctx.fillText(b.mult===0?'✕':`×${b.mult}`,b.x+b.w/2,b.y+b.h/2);
         }
         if(!ball.landed||hlIdx>=0){
             const bg=ctx.createRadialGradient(ball.x-ball.r*0.3,ball.y-ball.r*0.3,1,ball.x,ball.y,ball.r*1.6);
