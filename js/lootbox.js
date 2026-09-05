@@ -5,6 +5,7 @@ import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { esc, showToast } from './core.js?v=20260905a';
 import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260905a';
+import { getOddsMultiplier } from './vcoins.js?v=20260905a';
 
 let _db, _auth, _getState;
 
@@ -43,11 +44,13 @@ const BOXES = [
 ];
 
 // ── Взвешенный случайный выбор редкости ───────────────────────
-function pickRarity(weights) {
-    const total = Object.values(weights).reduce((a, b) => a + b, 0);
+function pickRarity(weights, oddsM = 1) {
+    const w = { ...weights };
+    for (const k in w) { if (k !== 'common') w[k] = w[k] * oddsM; }
+    const total = Object.values(w).reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
-    for (const [rarity, w] of Object.entries(weights)) {
-        r -= w;
+    for (const [rarity, weight] of Object.entries(w)) {
+        r -= weight;
         if (r <= 0) return rarity;
     }
     return 'common';
@@ -172,6 +175,8 @@ window.openLootbox = async function(boxId) {
         const allMembers = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
 
+        const oddsM = await getOddsMultiplier();
+
         // Проверяем кастомные карточки с учётом их шанса выпадения
         let winner = null;
         let winnerRarity = null;
@@ -179,7 +184,7 @@ window.openLootbox = async function(boxId) {
 
         for (const cc of customCards) {
             const chance = parseFloat(cc.dropChance) || 1;
-            if (Math.random() * 100 < chance) {
+            if (Math.random() * 100 < Math.min(100, chance * oddsM)) {
                 winner = cc;
                 winnerRarity = cc.rarity || 'rare';
                 isCustomWinner = true;
@@ -189,7 +194,7 @@ window.openLootbox = async function(boxId) {
 
         // Если кастомная не выпала — обычная логика
         if (!winner) {
-            const rarity = pickRarity(box.weights);
+            const rarity = pickRarity(box.weights, oddsM);
             winnerRarity = rarity;
             let pool = allMembers.filter(m => getRarityByCat(m.cat) === rarity);
             if (!pool.length) pool = allMembers;

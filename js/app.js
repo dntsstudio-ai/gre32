@@ -104,6 +104,7 @@ function updateSidebarVisibility() {
     show('adm-btn-team',     a, 'inline-flex');
     show('adm-btn-role',     a, 'inline-flex');
     show('btn-admin-roles',  a, 'inline-flex');
+    show('btn-admin-levers', a, 'inline-flex');
     show('btn-admin-vcoins', a, 'inline-flex');
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = a ? 'block' : 'none';

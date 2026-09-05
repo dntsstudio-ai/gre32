@@ -329,6 +329,18 @@ function renderGame(type) {
     window._currentGame = type;
 }
 
+// ── Глобальный множитель шансов (админ-рычаг) ──────────────────
+let _oddsCache = { value: 1, ts: 0 };
+export async function getOddsMultiplier() {
+    if (Date.now() - _oddsCache.ts < 15000) return _oddsCache.value;
+    try {
+        const snap = await getDoc(doc(_db, 'settings', 'gameOdds'));
+        const v = snap.exists() ? (Number(snap.data().multiplier) || 1) : 1;
+        _oddsCache = { value: v, ts: Date.now() };
+        return v;
+    } catch(e) { return _oddsCache.value || 1; }
+}
+
 window.playCoinflip = async function(choice) {
     const btnH = document.getElementById('coin-btn-heads');
     const btnT = document.getElementById('coin-btn-tails');
@@ -340,8 +352,10 @@ window.playCoinflip = async function(choice) {
     if (bet <= 0) { if(btnH)btnH.disabled=false; if(btnT)btnT.disabled=false; return showToast('Введите ставку', 'error'); }
     const ok = await spendVCoins(bet, 'Монетка — ставка');
     if (!ok) { if(btnH)btnH.disabled=false; if(btnT)btnT.disabled=false; return; }
-    const result = Math.random() < 0.5 ? 'heads' : 'tails';
-    const win    = result === choice;
+    const oddsM  = await getOddsMultiplier();
+    const winP   = Math.min(0.97, Math.max(0.02, 0.5 * oddsM));
+    const win    = Math.random() < winP;
+    const result = win ? choice : (choice === 'heads' ? 'tails' : 'heads');
     const imgEl  = document.getElementById('game-coin-img');
     if (imgEl) { imgEl.textContent=''; imgEl.classList.add('spinning'); }
     setTimeout(async () => {
@@ -380,6 +394,7 @@ window.playSlots = async function() {
     if (bet <= 0) { if (spinBtn) spinBtn.disabled = false; return showToast('Введите ставку', 'error'); }
     const ok = await spendVCoins(bet, 'Слоты — ставка');
     if (!ok) { if (spinBtn) spinBtn.disabled = false; return; }
+    const oddsM = await getOddsMultiplier();
     // Анимация вращения барабанов
     [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.add('spinning-reel'); });
     let ticks = 0;
@@ -389,7 +404,20 @@ window.playSlots = async function() {
         if (ticks >= 15) {
             clearInterval(interval);
             [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.classList.remove('spinning-reel'); });
-            const reels = [0,1,2].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+            // Шанс форс-выигрыша/форс-проигрыша, смещённый глобальным рычагом шансов
+            const forceWinChance  = Math.min(0.9, 0.12 * oddsM);
+            const forceLossChance = oddsM < 1 ? Math.min(0.95, (1 - oddsM)) : 0;
+            const roll = Math.random();
+            let reels;
+            if (roll < forceWinChance) {
+                const sym = SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)];
+                reels = [sym, sym, sym];
+            } else if (roll < forceWinChance + forceLossChance) {
+                const idxs = [...Array(SLOT_SYMBOLS.length).keys()].sort(() => Math.random()-0.5).slice(0,3);
+                reels = idxs.map(i => SLOT_SYMBOLS[i]);
+            } else {
+                reels = [0,1,2].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+            }
             [0,1,2].forEach(i => { const el=document.getElementById('reel-'+i); if(el) el.innerHTML=reels[i]; });
             let mult = 0;
             if (reels[0]===reels[1]&&reels[1]===reels[2]) { mult = reels[0]===SLOT_JACKPOT_SYMBOL?10:7; }
@@ -453,7 +481,8 @@ window.startRocket = async function() {
     const isBigBet = (_rocketBetCount > 2) &&
                      (cappedBet >= _rocketAvgBet * 1.5 || cappedBet >= balance * 0.5);
 
-    let rand = Math.random();
+    const oddsM = await getOddsMultiplier();
+    let rand = Math.min(0.999, Math.random() * oddsM);
 
     if (isBigBet) {
         // ── БОЛЬШАЯ СТАВКА: взрыв почти гарантирован ──
@@ -589,12 +618,14 @@ window.cashOutRocket = async function() {
         const n=_P_MULTS.length,bw=cw/n,y=ch-62;
         return _P_MULTS.map((m,i)=>({x:i*bw,y,w:bw,h:52,mult:m,idx:i}));
     }
-    function _pBias(bet){
+    function _pBias(bet, oddsM){
         _plinkoBetCount++;
         _plinkoAvgBet=_plinkoAvgBet+(bet-_plinkoAvgBet)/_plinkoBetCount;
-        if(bet>=Math.max(_plinkoAvgBet*1.6,80)) return 0.55;
-        if(_plinkoWinStreak>=3) return 0.2+Math.min((_plinkoWinStreak-2)*0.12,0.45);
-        return -0.15;
+        let raw;
+        if(bet>=Math.max(_plinkoAvgBet*1.6,80)) raw = 0.55;
+        else if(_plinkoWinStreak>=3) raw = 0.2+Math.min((_plinkoWinStreak-2)*0.12,0.45);
+        else raw = -0.15;
+        return raw * (2 - (oddsM ?? 1)); // рычаг шансов усиливает/нейтрализует/переворачивает смещение
     }
     function _pCreateBall(cx,bias){
         return{x:cx+(Math.random()-0.5)*4,y:20,vx:(Math.random()-0.5+bias*0.3)*1.5,vy:1.5,
@@ -726,12 +757,13 @@ window.cashOutRocket = async function() {
         if(btn) btn.disabled=true;
         const ok=await spendVCoins(bet,'Чёрная дыра — ставка');
         if(!ok) { _plinkoRunning=false; if(btn) btn.disabled=false; return; }
+        const oddsM=await getOddsMultiplier();
         const canvas=document.getElementById('plinko-canvas');
         if(!canvas){_plinkoRunning=false;return;}
         const ctx=canvas.getContext('2d');
         const cw=canvas.width,ch=canvas.height;
         const pegs=_buildPegs(cw,ch),buckets=_buildBuckets(cw,ch);
-        const bias=_pBias(bet),ball=_pCreateBall(cw/2,bias);
+        const bias=_pBias(bet,oddsM),ball=_pCreateBall(cw/2,bias);
         let tick=0,hlIdx=-1,done=false;
         const loop=async()=>{
             tick++;

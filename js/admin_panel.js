@@ -217,5 +217,24 @@ export function bindAdminPanel(db, auth, getState) {
         loadRolesPanel();
     };
 
+    window.openAdminLeversPanel = async function() {
+        document.getElementById('m-admin-levers').style.display = 'flex';
+        try {
+            const snap = await getDoc(doc(_db, 'settings', 'gameOdds'));
+            const v = snap.exists() ? (snap.data().multiplier ?? 1) : 1;
+            const el = document.getElementById('odds-current-value');
+            if (el) el.textContent = v === 1 ? 'Обычные шансы (×1)' : `×${v}`;
+        } catch(e) {}
+    };
+
+    window.setOddsLever = async function(value) {
+        try {
+            await setDoc(doc(_db, 'settings', 'gameOdds'), { multiplier: value, updatedAt: Date.now() }, { merge: true });
+            const el = document.getElementById('odds-current-value');
+            if (el) el.textContent = value === 1 ? 'Обычные шансы (×1)' : `×${value}`;
+            showToast('Рычаг применён. Изменение вступит в силу для всех в течение ~15 сек.');
+        } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    };
+
     window.loadStatsPage = function() { loadSiteStats(); };
 }

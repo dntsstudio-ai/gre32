@@ -164,6 +164,7 @@ export function applyUserUI(userData, isAdmin, hasDubAccess) {
     setDsp('adm-btn-team',     isAdmin);
     setDsp('adm-btn-role',     isAdmin);
     setDsp('btn-admin-roles',  isAdmin);
+    setDsp('btn-admin-levers', isAdmin);
     setDsp('btn-admin-vcoins', isAdmin);
 
     const admAch = document.getElementById('adm-ach-panel');
@@ -197,7 +198,7 @@ export function resetUserUI() {
     if (commAuthMsg) commAuthMsg.style.display = 'block';
 
     ['adm-btn-rel','adm-btn-team','adm-btn-role','adm-ach-panel',
-     'btn-admin-roles','btn-admin-vcoins',
+     'btn-admin-roles','btn-admin-vcoins','btn-admin-levers',
      'sn-playlists','sn-shop','notif-btn'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
