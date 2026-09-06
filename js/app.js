@@ -160,8 +160,8 @@ onAuthStateChanged(auth, async function(user) {
 
     initAuthListeners(auth, db);
 
-    const rawHash    = window.location.hash.replace('#', '');
-    const hashPage   = rawHash || 'home';
+    const rawPath    = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+    const hashPage   = rawPath || 'home';
     const targetPage = _pendingNav.length > 0 ? _pendingNav[_pendingNav.length - 1][0] : hashPage;
 
     if (targetPage === 'dubin'   && !canAccessDubin(state.userData))   { window.navigate('home', false); return; }
@@ -178,7 +178,7 @@ onAuthStateChanged(auth, async function(user) {
 });
 
 window.addEventListener('popstate', function() {
-    const raw = window.location.hash.replace('#', '') || 'home';
+    const raw = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '') || 'home';
     const viewMatch = raw.match(/^view\/(.+)$/);
     if (viewMatch && window.openView) {
         window.openView(viewMatch[1]);

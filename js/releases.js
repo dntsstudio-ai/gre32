@@ -11,7 +11,7 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate } from './core.js?v=20260905a';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260905a';
 import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260905a';
 import { loadComments } from './comments.js?v=20260905a';
 import { checkAndAwardAch } from './achievements.js?v=20260905a';
@@ -166,7 +166,22 @@ export async function openViewRelease(db, auth, id, userData, isAdmin) {
         const idx = allRel.findIndex(x => x.id === id);
         if (idx >= 0) allRel[idx] = curProj;
         navigate('view');
-        history.replaceState(null, '', '#view/' + id);
+        history.replaceState(null, '', '/view/' + id);
+
+        updatePageMeta({
+            title: curProj.title,
+            description: curProj.desc ? curProj.desc.slice(0, 200) : undefined,
+            image: curProj.img,
+            jsonLd: {
+                '@context': 'https://schema.org',
+                '@type': curProj.type === 'film' ? 'Movie' : 'TVSeries',
+                name: curProj.title,
+                description: curProj.desc || undefined,
+                image: curProj.img || undefined,
+                datePublished: curProj.year ? String(curProj.year) : undefined,
+                genre: curProj.genre || undefined,
+            },
+        });
 
         let watchedEpIdx = 0;
         if (userData && auth.currentUser) {

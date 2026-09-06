@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Voice Acting Team</title>
+<script>
+  // GitHub Pages не умеет отдавать index.html на произвольные пути (/view/123 и т.п.) —
+  // он возвращает эту 404-страницу. Мы запоминаем, куда пользователь (или бот) хотел
+  // попасть, и мгновенно перенаправляем на главную; index.html затем восстанавливает
+  // этот путь через history.replaceState ДО того, как загрузится сам сайт.
+  sessionStorage.redirect = location.pathname + location.search + location.hash;
+  location.replace('/');
+</script>
+</head>
+<body></body>
+</html>

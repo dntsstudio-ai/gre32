@@ -88,6 +88,44 @@ export function closeModals() {
     document.querySelectorAll('.modal').forEach(function(m) { m.style.display = 'none'; });
 }
 
+export function updatePageMeta({ title, description, image, jsonLd } = {}) {
+    const DEFAULT_TITLE = 'Voice Acting Team — Профессиональная озвучка и дубляж';
+    const DEFAULT_DESC  = 'Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.';
+
+    document.title = title ? `${title} — Voice Acting Team` : DEFAULT_TITLE;
+
+    const setMeta = (selector, attr, content) => {
+        let el = document.querySelector(selector);
+        if (!el) {
+            el = document.createElement('meta');
+            const [, attrName, attrVal] = selector.match(/\[(\w+)="([^"]+)"\]/) || [];
+            if (attrName) el.setAttribute(attrName, attrVal);
+            document.head.appendChild(el);
+        }
+        el.setAttribute(attr, content);
+    };
+
+    setMeta('meta[name="description"]', 'content', description || DEFAULT_DESC);
+    setMeta('meta[property="og:title"]', 'content', title || DEFAULT_TITLE);
+    setMeta('meta[property="og:description"]', 'content', description || DEFAULT_DESC);
+    if (image) setMeta('meta[property="og:image"]', 'content', image);
+    setMeta('meta[property="og:url"]', 'content', location.href);
+
+    // JSON-LD структурированные данные (помогает поисковикам понять тип контента)
+    let ldScript = document.getElementById('seo-jsonld');
+    if (jsonLd) {
+        if (!ldScript) {
+            ldScript = document.createElement('script');
+            ldScript.type = 'application/ld+json';
+            ldScript.id = 'seo-jsonld';
+            document.head.appendChild(ldScript);
+        }
+        ldScript.textContent = JSON.stringify(jsonLd);
+    } else if (ldScript) {
+        ldScript.remove();
+    }
+}
+
 export function navigate(page, pushState) {
     if (pushState === undefined) pushState = true;
 
@@ -125,7 +163,14 @@ export function navigate(page, pushState) {
         document.querySelectorAll('.swsp-iframe').forEach(function(f){ try { f.src=''; } catch(e){} });
     }
 
-    if (pushState) history.pushState(null, '', '#' + page);
+    // Сбрасываем SEO-теги на дефолтные при уходе со страницы релиза
+    // (страница релиза сама выставит свои теги через updatePageMeta после загрузки данных)
+    if (page !== 'view') updatePageMeta();
+
+    if (pushState) {
+        const path = page === 'home' ? '/' : '/' + page;
+        history.pushState(null, '', path);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     window.closeSidebar?.();
 }
