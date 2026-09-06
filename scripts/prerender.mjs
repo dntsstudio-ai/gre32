@@ -71,6 +71,45 @@ function escHtml(s) {
     return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+// Вставка между маркерами-комментариями — надёжно работает при повторных запусках,
+// в отличие от regex по "пустому <div></div>" (тот матчится только один раз).
+function injectMarker(html, name, content) {
+    const re = new RegExp(`<!--PRERENDER_${name}_START-->[\\s\\S]*?<!--PRERENDER_${name}_END-->`);
+    return html.replace(re, `<!--PRERENDER_${name}_START-->${content}<!--PRERENDER_${name}_END-->`);
+}
+
+// ── Список релизов (для главной) — настоящие <a href> с текстом ──
+function buildReleaseCardsHtml(releases) {
+    return releases.map(r => `
+        <a class="card" href="/view/${r.id}" onclick="event.preventDefault();typeof openView==='function'&&openView('${r.id}')">
+            ${r.img ? `<img src="${escHtml(r.img)}" alt="${escHtml(r.title || '')}" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">` : ''}
+            <div style="padding:10px;">
+                <div style="font-weight:700;font-size:13px;">${escHtml(r.title || '')}</div>
+                <div style="font-size:11px;color:var(--text-dim);">${escHtml(r.genre || '')} ${r.year ? '· ' + escHtml(r.year) : ''}</div>
+            </div>
+        </a>`).join('');
+}
+
+// ── Список команды (для /team) — сгруппирован по категориям, тоже с настоящими <a href> ──
+function buildTeamCardsHtml(team) {
+    const cats = {};
+    team.forEach(m => { const c = m.cat || 'Без категории'; if (!cats[c]) cats[c] = []; cats[c].push(m); });
+    return Object.keys(cats).map(cat => `
+        <div class="team-container">
+            <div class="team-container-header">${escHtml(cat)}</div>
+            <div class="grid">
+                ${cats[cat].map(m => `
+                    <a class="card" href="/team-page/${m.id}" onclick="event.preventDefault();typeof openTeamPage==='function'&&openTeamPage('${m.id}')">
+                        ${m.img ? `<img src="${escHtml(m.img)}" alt="${escHtml(m.name || '')}" loading="lazy" style="width:100%;aspect-ratio:1/1;object-fit:cover;">` : ''}
+                        <div style="padding:10px;">
+                            <div style="font-weight:700;font-size:13px;">${escHtml(m.name || '')}</div>
+                            <div style="font-size:11px;color:var(--accent);">${escHtml(m.role || '')}</div>
+                        </div>
+                    </a>`).join('')}
+            </div>
+        </div>`).join('');
+}
+
 function buildPage(template, { title, description, image, jsonLd, targetDivId, contentHtml, sectionId }) {
     let html = template;
     const fullTitle = `${title} — Voice Acting Team`;
@@ -116,6 +155,22 @@ async function main() {
     ]);
     console.log(`Найдено: ${releases.length} релизов, ${team.length} участников.`);
 
+    // ── "Гидрируем" шаблон: вставляем настоящие списки карточек в маркеры ──
+    let hydrated = template;
+    hydrated = injectMarker(hydrated, 'GRID', buildReleaseCardsHtml(releases));
+    hydrated = injectMarker(hydrated, 'TEAM', buildTeamCardsHtml(team));
+
+    // ── Главная страница — теперь с реальным списком релизов в HTML ──
+    await fs.writeFile(path.join(ROOT, 'index.html'), hydrated, 'utf-8');
+
+    // ── /team — отдельный статический файл с реальным списком участников ──
+    let teamPage = hydrated
+        .replace('<section id="home" class="section active">', '<section id="home" class="section">')
+        .replace('<section id="team" class="section">', '<section id="team" class="section active">');
+    teamPage = teamPage.replace(/<title>.*?<\/title>/s, '<title>Состав — Voice Acting Team</title>');
+    await fs.mkdir(path.join(ROOT, 'team'), { recursive: true });
+    await fs.writeFile(path.join(ROOT, 'team', 'index.html'), teamPage, 'utf-8');
+
     for (const r of releases) {
         const contentHtml = `
             <article>
@@ -127,7 +182,7 @@ async function main() {
                 ${r.authors ? `<p><b>Автор(ы) перевода/озвучки:</b> ${escHtml(r.authors)}</p>` : ''}
             </article>`;
 
-        const html = buildPage(template, {
+        const html = buildPage(hydrated, {
             title: r.title || 'Релиз',
             description: r.desc,
             image: r.img,
@@ -159,7 +214,7 @@ async function main() {
                 ${m.bio ? `<p style="line-height:1.6;">${escHtml(m.bio)}</p>` : ''}
             </article>`;
 
-        const html = buildPage(template, {
+        const html = buildPage(hydrated, {
             title: `${m.name || 'Участник'} — ${m.role || 'Команда'}`,
             description: `${m.name || ''} — ${m.role || ''} в команде Voice Acting Team.`,
             image: m.img,
