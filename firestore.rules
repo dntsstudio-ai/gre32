@@ -141,6 +141,14 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════
+    //  BANNERS (плашки: онлайн, объявления и т.п.)
+    // ══════════════════════════════════════════
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
     //  RELEASES
     // ══════════════════════════════════════════
     match /releases/{releaseId} {

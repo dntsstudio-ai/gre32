@@ -11,10 +11,10 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260906a';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260906a';
-import { loadComments } from './comments.js?v=20260906a';
-import { checkAndAwardAch } from './achievements.js?v=20260906a';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260906b';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260906b';
+import { loadComments } from './comments.js?v=20260906b';
+import { checkAndAwardAch } from './achievements.js?v=20260906b';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -22,8 +22,8 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260906a';
-import { renderPinnedPlaylists } from './playlists.js?v=20260906a';
+} from './player.js?v=20260906b';
+import { renderPinnedPlaylists } from './playlists.js?v=20260906b';
 
 export let allRel  = [];
 export let curProj = null;
@@ -40,8 +40,8 @@ const TRAILER_ID = 'sws-trailer-player';
 // ── Собираем список источников для плеера: VAT (ep.url) + Kodik (ep.kodikUrl) ──
 function buildSources(ep) {
     const sources = [];
-    if (ep?.url)      sources.push({ url: ep.url, label: 'VAT' });
-    if (ep?.kodikUrl) sources.push({ url: ep.kodikUrl, label: 'Kodik', type: 'kodik' });
+    if (ep?.url && !ep?.noVideo) sources.push({ url: ep.url, label: 'VAT' });
+    if (ep?.kodikUrl)            sources.push({ url: ep.kodikUrl, label: 'Kodik', type: 'kodik' });
     return sources;
 }
 
@@ -579,6 +579,15 @@ export function bindReleases(db, auth, getState, storage) {
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     };
 
+    window.toggleEpNoVideo = (checked) => {
+        const urlEl = document.getElementById('ad-ep-url');
+        const fileBtn = document.querySelector('#ad-ep-file')?.closest('.field-action-btn');
+        if (urlEl) { urlEl.disabled = checked; if (checked) urlEl.value = ''; }
+        if (fileBtn) fileBtn.style.opacity = checked ? '0.4' : '';
+        const fileInput = document.getElementById('ad-ep-file');
+        if (fileInput) fileInput.disabled = checked;
+    };
+
     window.openEpManager = () => {
         const editIdxEl = document.getElementById('ed-ep-idx');
         if (editIdxEl) editIdxEl.value = '';
@@ -587,6 +596,8 @@ export function bindReleases(db, auth, getState, storage) {
             const el = document.getElementById(id); if (el) el.value = '';
         });
         ['ad-ep-file','ad-ep-thumb-file'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const noVideoEl = document.getElementById('ad-ep-novideo');
+        if (noVideoEl) { noVideoEl.checked = false; window.toggleEpNoVideo(false); }
         const kSearch = document.getElementById('ad-ep-kodik-search'); if (kSearch) kSearch.value = '';
         const kBox = document.getElementById('kodik-results'); if (kBox) { kBox.innerHTML = ''; kBox.style.display = 'none'; }
         const barWrap = document.getElementById('ep-upload-wrap'); if (barWrap) barWrap.style.display = 'none';
@@ -615,6 +626,8 @@ export function bindReleases(db, auth, getState, storage) {
         set('ad-ep-intro-start', toMM(ep.introStart));
         set('ad-ep-intro-end',   toMM(ep.introEnd));
         set('ad-ep-outro-start', toMM(ep.outroStart));
+        const noVideoEl = document.getElementById('ad-ep-novideo');
+        if (noVideoEl) { noVideoEl.checked = !!ep.noVideo; window.toggleEpNoVideo(!!ep.noVideo); }
         const h = document.getElementById('m-ep-heading');
         if (h) h.textContent = 'Редактировать медиа';
         document.getElementById('m-ep').style.display = 'flex';
@@ -648,9 +661,12 @@ export function bindReleases(db, auth, getState, storage) {
             url:        document.getElementById('ad-ep-url')?.value.trim()   || '',
             kodikUrl:   document.getElementById('ad-ep-kodik')?.value.trim() || '',
             thumb:      document.getElementById('ad-ep-thumb')?.value.trim() || '',
+            noVideo:    !!document.getElementById('ad-ep-novideo')?.checked,
             introStart, introEnd, outroStart,
         };
-        if (!ep.name || !ep.url) return showToast('Заполните название и URL!', 'error');
+        if (!ep.name) return showToast('Заполните название!', 'error');
+        if (!ep.noVideo && !ep.url) return showToast('Заполните URL или отметьте «Нет серии»!', 'error');
+        if (ep.noVideo) ep.url = ''; // галочка важнее случайно оставшейся ссылки
         if (ep.introEnd > 0 && ep.introEnd <= ep.introStart)
             return showToast('Конец заставки должен быть позже начала!', 'error');
 

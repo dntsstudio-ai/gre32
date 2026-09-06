@@ -7,25 +7,26 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260906a';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260906a';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260906a';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20260906a';
-import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260906a';
-import { bindComments }    from './comments.js?v=20260906a';
-import { bindTeam }        from './team.js?v=20260906a';
-import { bindUsers }       from './users.js?v=20260906a';
-import { initDubinPanel, bindDubin } from './dubin.js?v=20260906a';
-import { bindOrder }       from './order.js?v=20260906a';
-import { bindPlaylists }   from './playlists.js?v=20260906a';
-import { bindRatings }     from './ratings.js?v=20260906a';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260906a';
-import { bindInventory } from './inventory.js?v=20260906a';
-import { bindLootbox } from './lootbox.js?v=20260906a';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20260906a';
-import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260906a';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260906a';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260906a';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260906b';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260906b';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260906b';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260906b';
+import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260906b';
+import { bindComments }    from './comments.js?v=20260906b';
+import { bindTeam }        from './team.js?v=20260906b';
+import { bindUsers }       from './users.js?v=20260906b';
+import { initDubinPanel, bindDubin } from './dubin.js?v=20260906b';
+import { bindOrder }       from './order.js?v=20260906b';
+import { bindPlaylists }   from './playlists.js?v=20260906b';
+import { bindRatings }     from './ratings.js?v=20260906b';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260906b';
+import { bindInventory } from './inventory.js?v=20260906b';
+import { bindLootbox } from './lootbox.js?v=20260906b';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260906b';
+import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260906b';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260906b';
+import { bindBanners } from './banners.js?v=20260906b';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260906b';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -65,6 +66,7 @@ bindNotifications(db, auth, getState);
 bindUserSearch(db, auth, getState);
 bindProfileWall(db, auth, getState);
 bindAdminPanel(db, auth, getState);
+bindBanners(db, auth, getState);
 
 window.closeModals = closeModals;
 window.showToast   = showToast;
@@ -105,6 +107,7 @@ function updateSidebarVisibility() {
     show('adm-btn-role',     a, 'inline-flex');
     show('btn-admin-roles',  a, 'inline-flex');
     show('btn-admin-levers', a, 'inline-flex');
+    show('btn-admin-banners', a, 'inline-flex');
     show('btn-admin-vcoins', a, 'inline-flex');
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = a ? 'block' : 'none';
@@ -192,3 +195,6 @@ window.addEventListener('popstate', function() {
         window.navigate(raw, false);
     }
 });
+
+// Плашки показываются всем посетителям, вне зависимости от входа в аккаунт
+if (window.startBannerWidget) window.startBannerWidget();

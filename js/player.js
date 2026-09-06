@@ -110,6 +110,12 @@ function renderPlayer(containerId, startSec=0) {
     const container = document.getElementById(containerId);
     const st = getPlayerState(containerId);
     if (!container) return;
+
+    if (!st.sources.length) {
+        container.innerHTML = buildNoVideoHTML(st);
+        return;
+    }
+
     const src = activeSource(st);
     st.type = src.type === 'vat' ? 'vat' : (src.type === 'youtube' ? 'youtube' : (src.type === 'drive' ? 'drive' : 'iframe'));
     st.isYoutube = src.type === 'youtube';
@@ -121,6 +127,15 @@ function renderPlayer(containerId, startSec=0) {
     attachTabEvents(containerId);
     if (st.type === 'vat') attachVideoEvents(containerId, startSec);
     else attachIframeEvents(containerId);
+}
+
+// ── Баннер, когда для эпизода вообще нет источников ──────────
+function buildNoVideoHTML(st) {
+    return `<div class="swsp-novideo">
+        <i class="fas fa-clock" style="font-size:32px;color:var(--accent);margin-bottom:12px;"></i>
+        <div class="swsp-novideo-title">Пока что нет данной серии</div>
+        <div class="swsp-novideo-sub">Но скоро она появится!${st.title ? ' — ' + st.title : ''}</div>
+    </div>`;
 }
 
 // ── Вкладки-переключатели источника ──────────────────────────

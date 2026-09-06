@@ -943,6 +943,14 @@ select option { background: var(--modal-bg); color: var(--text); }
 
 .swsp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 
+.swsp-novideo {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 20px;
+    background: linear-gradient(135deg, #0d0825, #07041a);
+}
+.swsp-novideo-title { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 6px; }
+.swsp-novideo-sub { font-size: 13px; color: var(--text-dim); }
+
 /* ═══════════════════════════════════════════════
    Загрузка файлов в модалках — компактно, в стиле сайта
    ═══════════════════════════════════════════════ */
@@ -994,6 +1002,48 @@ select option { background: var(--modal-bg); color: var(--text); }
 .kodik-result-tr { font-size: 11px; color: var(--text-dim); }
 .kodik-result-msg { padding: 10px 12px; font-size: 12px; color: var(--text-dim); }
 .kodik-result-msg--error { color: #f87171; }
+
+.novideo-checkbox-row {
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px;
+    padding: 10px 12px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px; cursor: pointer; font-size: 12px; color: var(--text-dim); line-height: 1.4;
+}
+.novideo-checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; width: auto; }
+
+/* ═══════════════════════════════════════════════
+   Плашки на сайте (онлайн / смотрят / играют / реклама)
+   ═══════════════════════════════════════════════ */
+.site-banner {
+    position: fixed; z-index: 500; max-width: 320px;
+    opacity: 0; transform: translateY(12px); pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.site-banner--visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.site-banner--bottom-right { bottom: 20px; right: 20px; }
+.site-banner--bottom-left  { bottom: 20px; left: 20px; }
+.site-banner--top-right    { top: 90px; right: 20px; }
+.site-banner--top          { top: 90px; left: 50%; transform: translateX(-50%) translateY(-12px); max-width: 480px; width: 90%; }
+.site-banner--top.site-banner--visible { transform: translateX(-50%) translateY(0); }
+
+.site-banner-inner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-left: 3px solid var(--banner-color, #7c3aed);
+    border-radius: 12px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    cursor: pointer; font-size: 13px; color: white;
+}
+.site-banner-inner i:first-child { color: var(--banner-color, #7c3aed); font-size: 16px; flex-shrink: 0; }
+.site-banner-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.site-banner-inner span { flex: 1; }
+.site-banner-close { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+
+.banner-admin-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px;
+    background: rgba(255,255,255,0.04); border-radius: 10px;
+}
+.banner-admin-info { flex: 1; min-width: 0; }
+.banner-admin-title { font-size: 13px; font-weight: 700; }
+.banner-admin-sub { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ═══════════════════════════════════════════════
    Кастомный дропдаун (замена <select> там, где нужны иконки)
