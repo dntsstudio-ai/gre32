@@ -1,7 +1,7 @@
 // ============================================================
 // js/lootbox.js — Мини-игра: Открытие ящиков (Brawl Stars style)
 // ============================================================
-import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc }
+import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { esc, showToast } from './core.js?v=20260905a';
 import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260905a';
@@ -165,6 +165,7 @@ window.openLootbox = async function(boxId) {
     _lootboxOpening = true;
     const ok = await window.spendVCoinsGlobal(box.price, `Открытие: ${box.name}`);
     if (!ok) { _lootboxOpening = false; return; }
+    try { await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { lootboxesOpened: increment(1) }); } catch(e) {}
 
     try {
         // Загружаем обычных участников и кастомные карточки
