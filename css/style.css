@@ -337,6 +337,7 @@ select option { background: var(--modal-bg); color: var(--text); }
                 border-color 0.3s, box-shadow 0.3s;
     cursor: pointer;
     display: flex; flex-direction: column;
+    text-decoration: none; color: inherit;
 }
 .card::before {
     content: ''; position: absolute; inset: 0; z-index: 1;

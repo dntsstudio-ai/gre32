@@ -170,8 +170,11 @@ onAuthStateChanged(auth, async function(user) {
     if (targetPage === 'shop'    && !state.userData)                   { window.navigate('home', false); return; }
 
     const viewMatch = targetPage.match(/^view\/(.+)$/);
+    const teamMatch = targetPage.match(/^team-page\/(.+)$/);
     if (viewMatch && window.openView) {
         window.openView(viewMatch[1]);
+    } else if (teamMatch && window.openTeamPage) {
+        window.openTeamPage(teamMatch[1]);
     } else {
         window.navigate(targetPage, false);
     }
@@ -180,8 +183,11 @@ onAuthStateChanged(auth, async function(user) {
 window.addEventListener('popstate', function() {
     const raw = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '') || 'home';
     const viewMatch = raw.match(/^view\/(.+)$/);
+    const teamMatch = raw.match(/^team-page\/(.+)$/);
     if (viewMatch && window.openView) {
         window.openView(viewMatch[1]);
+    } else if (teamMatch && window.openTeamPage) {
+        window.openTeamPage(teamMatch[1]);
     } else {
         window.navigate(raw, false);
     }

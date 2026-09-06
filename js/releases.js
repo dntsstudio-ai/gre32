@@ -131,7 +131,7 @@ export function renderGrid(isAdmin) {
     const grid = document.getElementById('main-grid');
     if (!grid) return;
     grid.innerHTML = res.map(r => `
-        <div class="card" onclick="openView('${r.id}')">
+        <a class="card" href="/view/${r.id}" onclick="event.preventDefault();openView('${r.id}')">
             ${isAdmin ? `<div class="adm-tools">
                 <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openRelModal('${r.id}')">Ред</button>
                 <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteRel('${r.id}')">Удал</button>
@@ -142,7 +142,7 @@ export function renderGrid(isAdmin) {
                 <div class="card-title">${esc(r.title)}</div>
                 <div style="font-size:10px;color:var(--text-dim);margin-top:5px;"><i class="fas fa-eye"></i> ${r.views||0}</div>
             </div>
-        </div>`).join('');
+        </a>`).join('');
 }
 
 export function enableSearch()  { searchEnabled = true; }

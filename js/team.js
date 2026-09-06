@@ -7,7 +7,7 @@ import {
     updateDoc, deleteDoc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate } from './core.js?v=20260905a';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260905a';
 import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260905a';
 
 export let curTM = null;
@@ -42,7 +42,7 @@ export function bindTeam(db, getState) {
 
                 const grid = cDiv.querySelector('.grid');
                 grid.innerHTML = cats[cat].map(m => `
-                    <div class="card" data-id="${m.id}" onclick="openTeamPage('${m.id}')">
+                    <a class="card" data-id="${m.id}" href="/team-page/${m.id}" onclick="event.preventDefault();openTeamPage('${m.id}')">
                         <div class="drag-handle"><i class="fas fa-grip-lines"></i> Перетащить</div>
                         ${isAdmin ? `<div class="adm-tools">
                             <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openTeamModal('${m.id}')">Ред</button>
@@ -54,7 +54,7 @@ export function bindTeam(db, getState) {
                             <div class="card-title" style="font-size:14px;">${esc(m.name)}</div>
                             <div style="color:var(--accent);font-size:11px;margin-top:5px;font-weight:bold;">${esc(m.role)}</div>
                         </div>
-                    </div>`).join('');
+                    </a>`).join('');
 
                 if (isAdmin && window.Sortable) {
                     new Sortable(grid, {
@@ -136,6 +136,19 @@ export function bindTeam(db, getState) {
             if (!cardSnap.exists()) return showToast('Участник не найден', 'error');
             curTM = { id, ...cardSnap.data() };
             navigate('team-page');
+            history.replaceState(null, '', '/team-page/' + id);
+            updatePageMeta({
+                title: (curTM.name || 'Участник') + ' — ' + (curTM.role || 'Команда'),
+                description: `${curTM.name || ''} — ${curTM.role || ''} в команде Voice Acting Team.`,
+                image: curTM.img,
+                jsonLd: {
+                    '@context': 'https://schema.org',
+                    '@type': 'Person',
+                    name: curTM.name,
+                    jobTitle: curTM.role,
+                    image: curTM.img || undefined,
+                },
+            });
 
             const admControls = document.getElementById('adm-tp-controls');
             const ownControls = document.getElementById('own-tp-controls');
