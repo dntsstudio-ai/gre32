@@ -1025,7 +1025,17 @@ select option { background: var(--modal-bg); color: var(--text); }
 /* ═══════════════════════════════════════════════
    Топы (лидерборды)
    ═══════════════════════════════════════════════ */
-.lb-tab-btn--active { background: linear-gradient(135deg,#fbbf24,#f59e0b); color:#1a0a2e; border-color: transparent; }
+.shop-leaderboards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 28px;
+}
+@media (max-width: 720px) { .shop-leaderboards { grid-template-columns: 1fr; } }
+.lb-panel {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px;
+}
+.lb-panel-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.lb-panel-list { display: flex; flex-direction: column; gap: 5px; }
+.lb-loading { text-align: center; padding: 16px; color: var(--text-dim); font-size: 12px; }
 .lb-row {
     display: flex; align-items: center; gap: 10px; padding: 8px 10px;
     background: rgba(255,255,255,0.04); border-radius: 10px; cursor: pointer;

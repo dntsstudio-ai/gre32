@@ -1,0 +1,40 @@
+name: Prerender static pages for bots
+
+on:
+  push:
+    branches: [ new ]
+    paths-ignore:
+      - 'view/**'
+      - 'team-page/**'
+      - 'sitemap.xml'
+  schedule:
+    # Раз в 6 часов подхватываем новые релизы/участников,
+    # добавленных через админку (без коммита в код)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  prerender:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: new
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Генерируем статические страницы
+        run: node scripts/prerender.mjs
+
+      - name: Коммитим результат (если что-то изменилось)
+        run: |
+          git config user.name "prerender-bot"
+          git config user.email "actions@github.com"
+          git add view team-page sitemap.xml
+          git diff --staged --quiet || git commit -m "chore: обновлены статические страницы для ботов [auto]"
+          git push

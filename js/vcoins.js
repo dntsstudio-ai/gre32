@@ -129,7 +129,17 @@ function renderShopPage() {
         </div>
         <button class="btn btn-outline btn-sm" onclick="openGiftModal()"><i class="fas fa-gift"></i> Подарить</button>
         <button class="btn btn-outline btn-sm" onclick="openVcoinHistory()"><i class="fas fa-history"></i> История</button>
-        <button class="btn btn-outline btn-sm" onclick="openLeaderboards()"><i class="fas fa-trophy"></i> Топы</button>
+    </div>
+
+    <div class="shop-leaderboards" id="shop-leaderboards">
+        <div class="lb-panel">
+            <div class="lb-panel-title"><i class="fas fa-coins" style="color:#fbbf24;"></i> Топ по VCoins</div>
+            <div class="lb-panel-list" id="lb-panel-vcoins"><div class="lb-loading">Загрузка...</div></div>
+        </div>
+        <div class="lb-panel">
+            <div class="lb-panel-title"><i class="fas fa-box-open" style="color:#a78bfa;"></i> Топ по открытиям ящиков</div>
+            <div class="lb-panel-list" id="lb-panel-boxes"><div class="lb-loading">Загрузка...</div></div>
+        </div>
     </div>
 
     <div class="shop-section-title"><i class="fas fa-palette"></i> Кастомизация профиля</div>
@@ -184,6 +194,8 @@ function renderShopPage() {
             <button class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;">Открыть</button>
         </div>
     </div>`;
+
+    window.loadInlineLeaderboards();
 }
 
 async function buyShopItem(itemId) {
@@ -925,54 +937,31 @@ export function bindVCoins(db, auth, getState) {
         ).join('');
     };
 
-    // ── Топы (лидерборды) ──
-    window.openLeaderboards = async function() {
-        let modal = document.getElementById('m-leaderboards');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'm-leaderboards';
-            modal.className = 'modal';
-            modal.innerHTML = `<div class="modal-content" style="max-width:520px;">
-                <h3 style="margin-bottom:14px;"><i class="fas fa-trophy" style="color:#fbbf24;margin-right:8px;"></i>Топы</h3>
-                <div class="lb-tabs" style="display:flex;gap:8px;margin-bottom:14px;">
-                    <button class="btn btn-sm lb-tab-btn lb-tab-btn--active" id="lb-tab-vcoins" onclick="switchLeaderboardTab('vcoins')"><i class="fas fa-coins"></i> VCoins</button>
-                    <button class="btn btn-sm btn-outline lb-tab-btn" id="lb-tab-boxes" onclick="switchLeaderboardTab('boxes')"><i class="fas fa-box-open"></i> Открытия ящиков</button>
-                </div>
-                <div id="lb-list" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;"></div>
-                <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-            </div>`;
-            document.body.appendChild(modal);
-        }
-        modal.style.display = 'flex';
-        window.switchLeaderboardTab('vcoins');
-    };
-
-    window.switchLeaderboardTab = async function(tab) {
-        document.getElementById('lb-tab-vcoins')?.classList.toggle('lb-tab-btn--active', tab === 'vcoins');
-        document.getElementById('lb-tab-vcoins')?.classList.toggle('btn-outline', tab !== 'vcoins');
-        document.getElementById('lb-tab-boxes')?.classList.toggle('lb-tab-btn--active', tab === 'boxes');
-        document.getElementById('lb-tab-boxes')?.classList.toggle('btn-outline', tab !== 'boxes');
-        const listEl = document.getElementById('lb-list');
-        if (!listEl) return;
-        listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Загрузка...</div>';
-        const field = tab === 'boxes' ? 'lootboxesOpened' : 'vcoins';
+    // ── Топы (встроены прямо в магазин, без кнопки/модалки) ──
+    async function loadLeaderboardInto(elId, field) {
+        const el = document.getElementById(elId);
+        if (!el) return;
         try {
-            const q = query(collection(_db, 'users'), orderBy(field, 'desc'), limit(10));
+            const q = query(collection(_db, 'users'), orderBy(field, 'desc'), limit(5));
             const snap = await getDocs(q);
-            if (snap.empty) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Пока пусто</div>'; return; }
+            if (snap.empty) { el.innerHTML = '<div class="lb-loading">Пока пусто</div>'; return; }
             const medals = ['<i class="fas fa-medal" style="color:#fbbf24;"></i>', '<i class="fas fa-medal" style="color:#cbd5e1;"></i>', '<i class="fas fa-medal" style="color:#d97706;"></i>'];
-            listEl.innerHTML = snap.docs.map((d, i) => {
+            el.innerHTML = snap.docs.map((d, i) => {
                 const u = d.data();
-                const val = field === 'boxes' ? (u.lootboxesOpened || 0) : (u.vcoins || 0);
-                return `<div class="lb-row" onclick="closeModals();openUserProfile('${d.id}')">
+                const val = field === 'lootboxesOpened' ? (u.lootboxesOpened || 0) : (u.vcoins || 0);
+                return `<div class="lb-row" onclick="openUserProfile('${d.id}')">
                     <span class="lb-rank">${i < 3 ? medals[i] : (i+1)}</span>
                     <img src="${u.avatar || 'https://api.dicebear.com/7.x/identicon/svg'}" class="lb-ava" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg'">
                     <span class="lb-nick">${esc(u.nickname || 'Без имени')}</span>
-                    <span class="lb-val">${val}${field==='boxes'?' <i class="fas fa-box-open"></i>':' <i class="fas fa-coins"></i>'}</span>
+                    <span class="lb-val">${val}${field==='lootboxesOpened'?' <i class="fas fa-box-open"></i>':' <i class="fas fa-coins"></i>'}</span>
                 </div>`;
             }).join('');
         } catch(e) {
-            listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Ошибка загрузки: ' + esc(e.message) + '</div>';
+            el.innerHTML = '<div class="lb-loading" style="color:#ef4444;">Ошибка: ' + esc(e.message) + '</div>';
         }
+    }
+    window.loadInlineLeaderboards = function() {
+        loadLeaderboardInto('lb-panel-vcoins', 'vcoins');
+        loadLeaderboardInto('lb-panel-boxes', 'lootboxesOpened');
     };
 }
