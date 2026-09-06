@@ -17,7 +17,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com https://yandex.ru https://an.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com https://yandex.ru https://an.yandex.ru https://kodikplayer.com https://kodik.info https://*.kodikplayer.com; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com https://yandex.ru https://an.yandex.ru https://mc.yandex.ru https://kodik-api.com; media-src 'self' blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app; object-src 'none';">
-    <title>Voice Acting Team — Профессиональная озвучка и дубляж</title>
+    <title>Arti/Арти — Даббер — Voice Acting Team</title>
     <meta name="description" content="Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.">
     <link rel="icon" type="image/png" href="/img/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -26,11 +26,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260906b">
+    <link rel="stylesheet" href="/css/style.css?v=20260906a">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
 <script src="https://yandex.ru/ads/system/context.js" async></script>
+
+    <meta name="description" content="Arti/Арти — Даббер в команде Voice Acting Team.">
+    <meta property="og:title" content="Arti/Арти — Даббер — Voice Acting Team">
+    <meta property="og:description" content="Arti/Арти — Даббер в команде Voice Acting Team.">
+    <meta property="og:image" content="https://i.ibb.co/fzHgHWYR/photo-5251366812887229251-x.jpg">
+    <meta property="og:type" content="website">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Arti/Арти","jobTitle":"Даббер","image":"https://i.ibb.co/fzHgHWYR/photo-5251366812887229251-x.jpg"}</script>
+    
 </head>
 <body>
     <!-- Yandex.RTB R-A-19215360-1 -->
@@ -531,9 +539,15 @@ window.yaContextCb.push(() => {
     </section>
 
     <!-- ===== СТРАНИЦА УЧАСТНИКА ===== -->
-    <section id="team-page" class="section">
+    <section id="team-page" class="section active">
         <button class="btn btn-outline" onclick="navigate('team')" style="margin-bottom:22px;"><i class="fas fa-arrow-left"></i> Назад</button>
-        <div id="team-page-view" style="background:var(--card-bg);padding:32px;border-radius:var(--radius-lg);border:1px solid var(--border);"></div>
+        <div id="team-page-view" style="background:var(--card-bg);padding:32px;border-radius:var(--radius-lg);border:1px solid var(--border);">
+            <article>
+                <h1 style="font-family:var(--font-display);font-size:1.8rem;margin-bottom:6px;">Arti/Арти</h1>
+                <p style="color:var(--accent);font-weight:700;margin-bottom:14px;">Даббер</p>
+                <img src="https://i.ibb.co/fzHgHWYR/photo-5251366812887229251-x.jpg" alt="Arti/Арти" style="width:160px;height:160px;object-fit:cover;border-radius:50%;margin-bottom:16px;">
+                
+            </article></div>
         <div id="adm-tp-controls" style="display:none;margin-top:18px;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-blue" onclick="openTPModal()">Редактировать страницу</button>
             <button class="btn btn-purple" onclick="openAccessModal()"><i class="fas fa-key"></i> Выдать доступ</button>
@@ -615,7 +629,6 @@ window.yaContextCb.push(() => {
                     <button class="btn btn-outline" onclick="navigate('inventory')"><i class="fas fa-box-open"></i> Инвентарь</button>
                     <button id="btn-admin-roles" class="btn btn-outline" style="display:none;" onclick="openAdminRolesPanel()"><i class="fas fa-users-cog"></i> Роли пользователей</button>
                     <button id="btn-admin-levers" class="btn btn-outline" style="display:none;color:#f59e0b;border-color:rgba(245,158,11,0.35);" onclick="openAdminLeversPanel()"><i class="fas fa-sliders-h"></i> Рычаги</button>
-                    <button id="btn-admin-banners" class="btn btn-outline" style="display:none;" onclick="openBannersAdmin()"><i class="fas fa-bullhorn"></i> Плашки</button>
                     <button class="btn btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,0.35);" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Выйти</button>
                 </div>
             </div>
@@ -944,10 +957,6 @@ window.yaContextCb.push(() => {
     <div class="upload-progress-wrap" id="ep-upload-wrap" style="display:none;">
         <div class="upload-progress-bar" id="ep-upload-bar">0%</div>
     </div>
-    <label class="novideo-checkbox-row">
-        <input type="checkbox" id="ad-ep-novideo" onchange="toggleEpNoVideo(this.checked)">
-        <span><i class="fas fa-clock"></i> Нет серии (пока нет видео VAT — покажет баннер «скоро появится», Kodik при этом всё равно будет работать)</span>
-    </label>
 
     <div class="kodik-search-block">
         <div class="kodik-search-label"><i class="fas fa-magnifying-glass"></i> Найти на Kodik (второй источник)</div>
@@ -1484,69 +1493,6 @@ window.yaContextCb.push(() => {
     <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
-<div id="m-banners-admin" class="modal"><div class="modal-content" style="max-width:560px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-bullhorn" style="color:var(--teal);margin-right:8px;"></i>Плашки на сайте</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;font-style:italic;">
-        Онлайн считается честно (реальные заходившие за 5 мин). Остальные тексты — то, что вы сами впишете.
-    </p>
-    <button class="btn btn-blue" style="width:100%;margin-bottom:14px;" onclick="openBannerForm()"><i class="fas fa-plus"></i> Новая плашка</button>
-    <div id="banners-admin-list" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-banner-form" class="modal"><div class="modal-content" style="max-width:480px;">
-    <h3 style="margin-bottom:14px;"><i class="fas fa-bullhorn" style="color:var(--teal);margin-right:8px;"></i>Плашка</h3>
-    <input type="hidden" id="ed-banner-id">
-
-    <label class="order-label">Тип</label>
-    <select id="bn-type">
-        <option value="online">Онлайн на сайте</option>
-        <option value="watching">Сейчас смотрят</option>
-        <option value="playing">Сейчас играют</option>
-        <option value="ad">Реклама</option>
-        <option value="custom" selected>Произвольная</option>
-    </select>
-
-    <label class="order-label">Текст (для "Онлайн" можно вставить {count} — подставится реальное число)</label>
-    <textarea id="bn-text" rows="2" placeholder="Например: Сейчас смотрят: Судзумэ, закрывающая двери"></textarea>
-
-    <label class="order-label">Иконка (класс Font Awesome, например fa-fire)</label>
-    <input type="text" id="bn-icon" placeholder="fa-users">
-
-    <label class="order-label">Цвет</label>
-    <input type="color" id="bn-color" value="#7c3aed" style="height:42px;padding:4px;">
-
-    <label class="order-label">Картинка-баннер (необязательно, перекрывает иконку)</label>
-    <input type="text" id="bn-image" placeholder="URL картинки">
-
-    <label class="order-label">Место показа</label>
-    <select id="bn-placement">
-        <option value="bottom-right">Низ справа</option>
-        <option value="bottom-left">Низ слева</option>
-        <option value="top-right">Верх справа</option>
-        <option value="top">Верхняя полоса</option>
-    </select>
-
-    <div style="display:flex;gap:10px;">
-        <div style="flex:1;">
-            <label class="order-label">Как часто (сек)</label>
-            <input type="number" id="bn-frequency" value="20" min="5">
-        </div>
-        <div style="flex:1;">
-            <label class="order-label">Сколько висит (сек)</label>
-            <input type="number" id="bn-duration" value="8" min="2">
-        </div>
-    </div>
-
-    <label class="novideo-checkbox-row" style="margin-top:8px;">
-        <input type="checkbox" id="bn-active" checked>
-        <span>Показывать на сайте (активна)</span>
-    </label>
-
-    <button class="btn btn-blue" style="width:100%;margin-top:8px;" onclick="saveBannerForm()">Сохранить</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
-</div></div>
-
 <div id="m-role" class="modal"><div class="modal-content" style="max-width:500px;">
     <h3 style="margin-bottom:6px;"><i class="fas fa-user-shield"></i> Управление ролями</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">
@@ -1602,7 +1548,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260906b"></script>
+<script type="module" src="/js/app.js?v=20260906a"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
