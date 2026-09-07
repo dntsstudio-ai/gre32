@@ -3,14 +3,15 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260906b';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260906b';
-import { getOddsMultiplier } from './vcoins.js?v=20260906b';
+import { esc, showToast } from './core.js?v=20260906c';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260906c';
+import { getOddsMultiplier } from './vcoins.js?v=20260906c';
 
 let _db, _auth, _getState;
+let _lootboxDefs = [];
 
-// ── Цены ящиков ────────────────────────────────────────────────
-const BOXES = [
+// ── Ящики по умолчанию (один раз переносятся в Firestore при первом заходе) ──
+const SEED_BOXES = [
     {
         id: 'box_common',
         name: 'Обычный ящик',
@@ -20,6 +21,7 @@ const BOXES = [
         gradient: 'linear-gradient(135deg,#475569,#64748b)',
         border: '#64748b',
         weights: { common: 70, rare: 25, epic: 4, legendary: 1 },
+        cat: 'Обычные', order: 0,
     },
     {
         id: 'box_rare',
@@ -30,6 +32,7 @@ const BOXES = [
         gradient: 'linear-gradient(135deg,#0369a1,#38bdf8)',
         border: '#38bdf8',
         weights: { common: 30, rare: 45, epic: 20, legendary: 5 },
+        cat: 'Обычные', order: 1,
     },
     {
         id: 'box_legendary',
@@ -40,8 +43,24 @@ const BOXES = [
         gradient: 'linear-gradient(135deg,#92400e,#fbbf24)',
         border: '#fbbf24',
         weights: { common: 0, rare: 10, epic: 55, legendary: 35 },
+        cat: 'Обычные', order: 2,
     },
 ];
+
+// ── Загружаем ящики из Firestore (сеем дефолтные при первом запуске) ──
+async function loadLootboxDefs() {
+    try {
+        const snap = await getDocs(collection(_db, 'lootboxes'));
+        if (snap.empty) {
+            for (const b of SEED_BOXES) await setDoc(doc(_db, 'lootboxes', b.id), b);
+            return SEED_BOXES.slice();
+        }
+        return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.order||0) - (b.order||0));
+    } catch(e) {
+        console.warn('loadLootboxDefs:', e);
+        return SEED_BOXES.slice();
+    }
+}
 
 // ── Взвешенный случайный выбор редкости ───────────────────────
 function pickRarity(weights, oddsM = 1) {
@@ -71,21 +90,19 @@ async function loadCustomCards() {
 async function renderLootboxPage(wrap, balance) {
     const { userData, isAdmin } = _getState();
     const customCards = await loadCustomCards();
+    _lootboxDefs = await loadLootboxDefs();
 
-    wrap.innerHTML = `
-    <div class="lootbox-page">
-        <div class="lootbox-header">
-            <div class="lootbox-title"><i class="fas fa-gift"></i> Открытие ящиков</div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
-                ${isAdmin ? `<button class="btn btn-outline btn-sm" onclick="openCreateCardModal()"><i class="fas fa-plus"></i> Создать карточку</button>` : ''}
-            </div>
-        </div>
-        <p class="lootbox-desc">Открывай ящики и собирай карточки участников студии. Продавай или добавляй в избранное!</p>
-        <div class="lootbox-boxes">
-            ${BOXES.map(box => `
+    const cats = {};
+    _lootboxDefs.forEach(b => { const c = b.cat || 'Без категории'; if (!cats[c]) cats[c] = []; cats[c].push(b); });
+
+    const boxCardHtml = (box) => `
             <div class="lootbox-box-card" style="--box-gradient:${box.gradient};--box-border:${box.border};">
                 <div class="lootbox-box-shine"></div>
+                ${isAdmin ? `
+                <div class="lootbox-box-admin-controls">
+                    <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openLootboxDefModal('${box.id}')">Ред</button>
+                    <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteLootboxDef('${box.id}')">Удал</button>
+                </div>` : ''}
                 <div class="lootbox-box-icon">${box.icon}</div>
                 <div class="lootbox-box-name">${esc(box.name)}</div>
                 <div class="lootbox-box-desc">${esc(box.desc)}</div>
@@ -93,12 +110,32 @@ async function renderLootboxPage(wrap, balance) {
                 <button class="btn lootbox-open-btn" onclick="openLootbox('${box.id}')">
                     Открыть
                 </button>
-            </div>`).join('')}
+            </div>`;
+
+    wrap.innerHTML = `
+    <div class="lootbox-page">
+        <div class="lootbox-header">
+            <div class="lootbox-title"><i class="fas fa-gift"></i> Открытие ящиков</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
+                ${isAdmin ? `<button class="btn btn-outline btn-sm" onclick="openCreateCardModal()"><i class="fas fa-plus"></i> Создать карточку</button>
+                <button class="btn btn-outline btn-sm" onclick="openLootboxDefModal()"><i class="fas fa-box"></i> Новый ящик</button>` : ''}
+            </div>
         </div>
+        <p class="lootbox-desc">Открывай ящики и собирай карточки участников студии. Продавай или добавляй в избранное!</p>
+
+        ${Object.keys(cats).map(cat => `
+        <div class="lootbox-cat-block">
+            <div class="lootbox-cat-title">${esc(cat)}</div>
+            <div class="lootbox-boxes">
+                ${cats[cat].map(boxCardHtml).join('')}
+            </div>
+        </div>`).join('')}
+
         <div class="lootbox-drop-rates">
             <div class="lootbox-drop-title"><i class="fas fa-chart-column"></i> Шансы выпадения</div>
             <div class="lootbox-drop-table">
-                ${BOXES.map(box => `
+                ${_lootboxDefs.map(box => `
                 <div class="lootbox-drop-row">
                     <span>${box.icon} ${esc(box.name)}</span>
                     <div class="lootbox-drop-bars">
@@ -150,12 +187,76 @@ async function renderLootboxPage(wrap, balance) {
 
 // ── Открытие ящика ─────────────────────────────────────────────
 let _lootboxOpening = false;
+// ── Админка: создание/редактирование/удаление самого ящика ──
+window.openLootboxDefModal = (id) => {
+    const b = id ? _lootboxDefs.find(x => x.id === id) : null;
+    document.getElementById('ed-lbdef-id').value    = id || '';
+    document.getElementById('lbdef-name').value     = b?.name  || '';
+    document.getElementById('lbdef-cat').value      = b?.cat   || '';
+    document.getElementById('lbdef-icon').value     = b?.icon?.match(/fa-[\w-]+/)?.[0] || '';
+    document.getElementById('lbdef-price').value    = b?.price || 100;
+    document.getElementById('lbdef-desc').value     = b?.desc  || '';
+    document.getElementById('lbdef-color').value    = b?.border || '#7c3aed';
+    document.getElementById('lbdef-w-common').value    = b?.weights?.common    ?? 70;
+    document.getElementById('lbdef-w-rare').value      = b?.weights?.rare      ?? 25;
+    document.getElementById('lbdef-w-epic').value      = b?.weights?.epic     ?? 4;
+    document.getElementById('lbdef-w-legendary').value = b?.weights?.legendary ?? 1;
+    document.getElementById('m-lbdef-form').style.display = 'flex';
+};
+
+window.saveLootboxDef = async () => {
+    const id    = document.getElementById('ed-lbdef-id').value;
+    const color = document.getElementById('lbdef-color').value;
+    const iconClass = document.getElementById('lbdef-icon').value.trim() || 'fa-box';
+    const weights = {
+        common:    parseInt(document.getElementById('lbdef-w-common').value)    || 0,
+        rare:      parseInt(document.getElementById('lbdef-w-rare').value)      || 0,
+        epic:      parseInt(document.getElementById('lbdef-w-epic').value)      || 0,
+        legendary: parseInt(document.getElementById('lbdef-w-legendary').value) || 0,
+    };
+    const total = Object.values(weights).reduce((a,b)=>a+b,0);
+    if (total !== 100) return showToast(`Сумма шансов должна быть равна 100% (сейчас ${total}%)`, 'error');
+
+    const data = {
+        name:  document.getElementById('lbdef-name').value.trim(),
+        cat:   document.getElementById('lbdef-cat').value.trim() || 'Без категории',
+        icon:  `<i class="fas ${esc(iconClass)}"></i>`,
+        price: parseInt(document.getElementById('lbdef-price').value) || 0,
+        desc:  document.getElementById('lbdef-desc').value.trim(),
+        gradient: `linear-gradient(135deg, ${color}88, ${color})`,
+        border: color,
+        weights,
+        order: id ? (_lootboxDefs.find(b=>b.id===id)?.order ?? 0) : _lootboxDefs.length,
+    };
+    if (!data.name) return showToast('Введите название ящика', 'error');
+
+    try {
+        if (id) await updateDoc(doc(_db, 'lootboxes', id), data);
+        else    await setDoc(doc(collection(_db, 'lootboxes')), data);
+        showToast('Ящик сохранён!');
+        document.getElementById('m-lbdef-form').style.display = 'none';
+        const wrap = document.getElementById('lootbox-wrap');
+        const { userData } = _getState();
+        if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
+
+window.deleteLootboxDef = async (id) => {
+    if (!confirm('Удалить этот ящик?')) return;
+    try {
+        await deleteDoc(doc(_db, 'lootboxes', id));
+        const wrap = document.getElementById('lootbox-wrap');
+        const { userData } = _getState();
+        if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
+
 window.openLootbox = async function(boxId) {
     if (_lootboxOpening) return; // защита от заклика
     const { userData } = _getState();
     if (!userData) return showToast('Войдите в аккаунт', 'error');
 
-    const box = BOXES.find(b => b.id === boxId);
+    const box = _lootboxDefs.find(b => b.id === boxId);
     if (!box) return;
 
     const balance = userData.vcoins || 0;

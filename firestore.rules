@@ -149,6 +149,14 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════
+    //  LOOTBOXES (сами ящики — категории, цена, шансы)
+    // ══════════════════════════════════════════
+    match /lootboxes/{boxId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════
     //  RELEASES
     // ══════════════════════════════════════════
     match /releases/{releaseId} {
