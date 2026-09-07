@@ -3,7 +3,7 @@
 // ============================================================
 
 import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260906d';
+import { esc, showToast } from './core.js?v=20260906e';
 
 let _db, _auth, _getState;
 
@@ -40,10 +40,11 @@ export function renderCard(card, opts = {}) {
   const isSecretHidden = card.isSecret && opts.hideSecret;
   
   return `
-    <div class="inv-card inv-card--${card.rarity}" data-card-id="${esc(card.id)}" style="--card-glow:${r.glow};--card-color:${r.color};" ${zoomable ? `onclick="zoomCard(event, '${esc(card.id)}', ${card.isCustom ? 'true' : 'false'})"` : ''}>
+    <div class="inv-card inv-card--${card.rarity} ${card.cardType === 'item' ? 'inv-card--item' : ''}" data-card-id="${esc(card.id)}" style="--card-glow:${r.glow};--card-color:${r.color};" ${zoomable ? `onclick="zoomCard(event, '${esc(card.id)}', ${card.isCustom ? 'true' : 'false'})"` : ''}>
       <div class="inv-card__shine"></div>
       <div class="inv-card__rarity-bar"></div>
-      
+      ${card.cardType === 'item' ? '<div class="inv-card__item-tag"><i class="fas fa-flask"></i> Предмет</div>' : ''}
+
       ${isSecretHidden ? `
         <div class="inv-card__img-wrap inv-card__img-wrap--secret">
           <div class="inv-card__secret-overlay">
@@ -62,6 +63,7 @@ export function renderCard(card, opts = {}) {
         <div class="inv-card__name">${isSecretHidden ? 'Неизвестно' : esc(card.name)}</div>
         <div class="inv-card__role">${isSecretHidden ? '?' : esc(card.role || card.cat || '')}</div>
         ${showDesc && card.description && !isSecretHidden ? `<div class="inv-card__desc">${esc(card.description)}</div>` : ''}
+        ${card.cardType === 'item' && card.effect && !isSecretHidden ? `<div class="inv-card__effect"><i class="fas fa-bolt"></i> ${esc(card.effect)}</div>` : ''}
         <div class="inv-card__rarity-label" style="color:${r.color};">
           <span class="inv-card__stars">${stars}</span>
           ${isSecretHidden ? 'ЗАСЕКРЕЧЕННО' : r.label}

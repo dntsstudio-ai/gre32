@@ -581,6 +581,7 @@ select option { background: var(--modal-bg); color: var(--text); }
 }
 .profile-stat b { display: block; font-size: 1.2rem; color: var(--teal); }
 .profile-stat--coin b { color: #fbbf24; }
+.profile-stat--stars b { color: #a78bfa; }
 .profile-stat span { display: block; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
 
 .profile-actions { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
@@ -619,6 +620,16 @@ select option { background: var(--modal-bg); color: var(--text); }
 .role-user  { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
 
 .list-section-wrap { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+
+.frame-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.frame-swatch {
+    width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; padding: 3px; background-clip: padding-box; position: relative;
+}
+.frame-swatch::after {
+    content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--card-bg);
+}
+.frame-swatch--active { border-color: white; transform: scale(1.1); }
 .list-section-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 14px 18px; cursor: pointer; background: var(--card-bg);
@@ -1132,6 +1143,18 @@ select option { background: var(--modal-bg); color: var(--text); }
 .lb-panel-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .lb-panel-list { display: flex; flex-direction: column; gap: 5px; }
 .lb-loading { text-align: center; padding: 16px; color: var(--text-dim); font-size: 12px; }
+
+.promo-code-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 12px; padding: 10px 12px; margin: 12px 0 20px;
+}
+.promo-code-bar input { flex: 1; min-width: 160px; margin-bottom: 0; }
+.promo-code-hint { font-size: 11px; color: var(--text-dim); width: 100%; }
+
+.cc-type-btn--active, .lbdef-cur-btn--active {
+    background: linear-gradient(135deg, var(--violet), var(--teal)); color: white; border-color: transparent;
+}
 .lb-row {
     display: flex; align-items: center; gap: 10px; padding: 8px 10px;
     background: rgba(255,255,255,0.04); border-radius: 10px; cursor: pointer;
@@ -3177,6 +3200,24 @@ select option { background: var(--modal-bg); color: var(--text); }
 .inv-card:hover {
     transform: translateY(-6px) scale(1.02);
     box-shadow: 0 8px 32px var(--card-glow, rgba(0,0,0,0.3));
+}
+
+/* Предметные карточки — визуально отличаются от персонажей (скошенные углы, лейбл) */
+.inv-card--item {
+    border-style: dashed;
+    border-radius: 8px 20px 8px 20px;
+    background: linear-gradient(160deg, var(--card-bg), rgba(20,184,166,0.05));
+}
+.inv-card__item-tag {
+    position: absolute; top: 8px; left: 8px; z-index: 3;
+    background: rgba(7,4,26,0.75); backdrop-filter: blur(4px);
+    color: var(--teal-light); font-size: 9px; font-weight: 800;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(20,184,166,0.4);
+}
+.inv-card__effect {
+    font-size: 11px; color: var(--teal-light); background: rgba(20,184,166,0.08);
+    border-radius: 8px; padding: 6px 8px; margin: 6px 0; line-height: 1.4;
 }
 
 /* Блеск */

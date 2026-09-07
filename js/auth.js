@@ -10,8 +10,8 @@ import {
     doc, setDoc, updateDoc, getDocs, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20260906d';
-import { renderAchProfile } from './achievements.js?v=20260906d';
+import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20260906e';
+import { renderAchProfile } from './achievements.js?v=20260906e';
 
 let loginAttempts = 0;
 
@@ -133,6 +133,10 @@ export function applyUserUI(userData, isAdmin, hasDubAccess) {
     if (uViews) uViews.innerText = userData.views     || 0;
     if (uSubs)  uSubs.innerText  = userData.subscribers || 0;
     if (uVC)    uVC.textContent  = userData.vcoins    || 0;
+    const uVStarsProfile = document.getElementById('u-vstars-profile');
+    if (uVStarsProfile) uVStarsProfile.textContent = userData.vstars || 0;
+
+    applyProfileVisuals(userData);
 
     // Цвет ника
     if (uNick && userData.nickColor) uNick.style.color = userData.nickColor;
@@ -206,6 +210,34 @@ export function resetUserUI() {
     });
 }
 
+// ── Рамки аватара (пресеты) ──
+export const AVATAR_FRAMES = {
+    none:    { name: 'Без рамки', css: 'var(--card-bg)' },
+    violet:  { name: 'Фиолетовая', css: 'conic-gradient(#7c3aed, #a78bfa, #7c3aed)' },
+    teal:    { name: 'Бирюзовая',  css: 'conic-gradient(#14b8a6, #5eead4, #14b8a6)' },
+    gold:    { name: 'Золотая',    css: 'conic-gradient(#f59e0b, #fde68a, #f59e0b)' },
+    fire:    { name: 'Огненная',   css: 'conic-gradient(#ef4444, #f97316, #fbbf24, #ef4444)' },
+    rainbow: { name: 'Радужная',   css: 'conic-gradient(#ef4444, #f59e0b, #22c55e, #38bdf8, #7c3aed, #ef4444)' },
+};
+
+export function applyProfileVisuals(userData) {
+    const banner = document.querySelector('.profile-hero-banner');
+    if (banner) {
+        if (userData?.bannerImage) {
+            banner.style.background = `url('${userData.bannerImage}') center/cover no-repeat`;
+        } else if (userData?.bannerColor) {
+            banner.style.background = `linear-gradient(120deg, ${userData.bannerColor}55, ${userData.bannerColor}22)`;
+        } else {
+            banner.style.background = '';
+        }
+    }
+    const ring = document.querySelector('.profile-ava-ring');
+    if (ring) {
+        const frame = AVATAR_FRAMES[userData?.frameId] || AVATAR_FRAMES.violet;
+        ring.style.background = frame.css;
+    }
+}
+
 export function bindAuthActions(auth, db, getState) {
     window.resetPassword = async function() {
         const e = document.getElementById('email')?.value.trim();
@@ -236,21 +268,51 @@ export function bindAuthActions(auth, db, getState) {
         } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
     };
 
+    window.openProfileSettings = function() {
+        const { userData } = getState();
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+        setVal('ed-nick', userData?.nickname);
+        setVal('ed-ava', userData?.avatar);
+        setVal('ed-banner-color', userData?.bannerColor || '#7c3aed');
+        setVal('ed-banner-image', userData?.bannerImage);
+        const picker = document.getElementById('frame-picker');
+        if (picker) picker.dataset.selected = userData?.frameId || 'violet';
+        window.renderFramePicker?.();
+        document.getElementById('m-prof').style.display = 'flex';
+    };
+
+    window.renderFramePicker = function() {
+        const wrap = document.getElementById('frame-picker');
+        if (!wrap) return;
+        const { userData } = getState();
+        const current = userData?.frameId || 'violet';
+        wrap.innerHTML = Object.entries(AVATAR_FRAMES).map(([id, f]) => `
+            <button type="button" class="frame-swatch ${id === current ? 'frame-swatch--active' : ''}" data-frame="${id}" title="${f.name}" onclick="selectFrame('${id}')" style="background:${f.css};"></button>
+        `).join('');
+    };
+    window.selectFrame = function(id) {
+        document.querySelectorAll('.frame-swatch').forEach(el => el.classList.toggle('frame-swatch--active', el.dataset.frame === id));
+        document.getElementById('frame-picker').dataset.selected = id;
+    };
     window.saveProfile = async function() {
         const { userData } = getState();
         const nick = document.getElementById('ed-nick')?.value.trim();
         const ava  = document.getElementById('ed-ava')?.value.trim();
+        const bannerColor = document.getElementById('ed-banner-color')?.value || '';
+        const bannerImage = document.getElementById('ed-banner-image')?.value.trim() || '';
+        const frameId = document.getElementById('frame-picker')?.dataset.selected || userData?.frameId || 'violet';
         if (!nick) return showToast('Введите никнейм!', 'error');
         if (!auth.currentUser) return showToast('Вы не авторизованы!', 'error');
         try {
             const snap = await getDocs(query(collection(db, 'users'), where('nickname', '==', nick)));
             if (!snap.empty && nick !== userData.nickname) return showToast('Этот никнейм занят!', 'error');
-            await updateDoc(doc(db, 'users', auth.currentUser.uid), { nickname: nick, avatar: ava });
-            if (userData) { userData.nickname = nick; userData.avatar = ava; }
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), { nickname: nick, avatar: ava, bannerColor, bannerImage, frameId });
+            if (userData) { userData.nickname = nick; userData.avatar = ava; userData.bannerColor = bannerColor; userData.bannerImage = bannerImage; userData.frameId = frameId; }
             const uNick = document.getElementById('u-nick');
             const uAva  = document.getElementById('u-ava');
             if (uNick) uNick.innerText = nick;
             if (uAva)  uAva.src        = ava || 'https://api.dicebear.com/7.x/identicon/svg';
+            applyProfileVisuals(userData);
             showToast('Профиль обновлён!');
             closeModals();
         } catch(err) { showToast('Ошибка: ' + err.message, 'error'); }

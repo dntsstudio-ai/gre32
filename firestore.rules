@@ -157,6 +157,20 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════
+    //  PROMO CODES (активация Старс)
+    // ══════════════════════════════════════════
+    match /promoCodes/{code} {
+      allow get: if isAuth();
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      // Пользователь может только добавить СЕБЯ в usedBy — остальные поля менять нельзя
+      allow update: if isAuth()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy.size() == resource.data.usedBy.size() + 1
+        && request.resource.data.usedBy[request.resource.data.usedBy.size()-1] == uid();
+    }
+
+    // ══════════════════════════════════════════
     //  RELEASES
     // ══════════════════════════════════════════
     match /releases/{releaseId} {

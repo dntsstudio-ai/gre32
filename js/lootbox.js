@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260906d';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260906d';
-import { getOddsMultiplier } from './vcoins.js?v=20260906d';
+import { esc, showToast } from './core.js?v=20260906e';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260906e';
+import { getOddsMultiplier } from './vcoins.js?v=20260906e';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -106,7 +106,7 @@ async function renderLootboxPage(wrap, balance) {
                 <div class="lootbox-box-icon">${box.icon}</div>
                 <div class="lootbox-box-name">${esc(box.name)}</div>
                 <div class="lootbox-box-desc">${esc(box.desc)}</div>
-                <div class="lootbox-box-price"><i class="fas fa-coins"></i> ${box.price} VC</div>
+                <div class="lootbox-box-price">${box.currency === 'stars' ? `<i class="fas fa-star" style="color:#a78bfa;"></i> ${box.price} Старс` : `<i class="fas fa-coins"></i> ${box.price} VC`}</div>
                 <button class="btn lootbox-open-btn" onclick="openLootbox('${box.id}')">
                     Открыть
                 </button>
@@ -188,6 +188,14 @@ async function renderLootboxPage(wrap, balance) {
 // ── Открытие ящика ─────────────────────────────────────────────
 let _lootboxOpening = false;
 // ── Админка: создание/редактирование/удаление самого ящика ──
+window.selectLbdefCurrency = (cur) => {
+    document.getElementById('lbdef-currency').value = cur;
+    document.getElementById('lbdef-cur-vcoins').classList.toggle('lbdef-cur-btn--active', cur === 'vcoins');
+    document.getElementById('lbdef-cur-vcoins').classList.toggle('btn-outline', cur !== 'vcoins');
+    document.getElementById('lbdef-cur-stars').classList.toggle('lbdef-cur-btn--active', cur === 'stars');
+    document.getElementById('lbdef-cur-stars').classList.toggle('btn-outline', cur !== 'stars');
+};
+
 window.openLootboxDefModal = (id) => {
     const b = id ? _lootboxDefs.find(x => x.id === id) : null;
     document.getElementById('ed-lbdef-id').value    = id || '';
@@ -201,6 +209,7 @@ window.openLootboxDefModal = (id) => {
     document.getElementById('lbdef-w-rare').value      = b?.weights?.rare      ?? 25;
     document.getElementById('lbdef-w-epic').value      = b?.weights?.epic     ?? 4;
     document.getElementById('lbdef-w-legendary').value = b?.weights?.legendary ?? 1;
+    window.selectLbdefCurrency(b?.currency || 'vcoins');
     document.getElementById('m-lbdef-form').style.display = 'flex';
 };
 
@@ -226,6 +235,7 @@ window.saveLootboxDef = async () => {
         gradient: `linear-gradient(135deg, ${color}88, ${color})`,
         border: color,
         weights,
+        currency: document.getElementById('lbdef-currency')?.value || 'vcoins',
         order: id ? (_lootboxDefs.find(b=>b.id===id)?.order ?? 0) : _lootboxDefs.length,
     };
     if (!data.name) return showToast('Введите название ящика', 'error');
@@ -258,23 +268,36 @@ window.openLootbox = async function(boxId) {
 
     const box = _lootboxDefs.find(b => b.id === boxId);
     if (!box) return;
+    const currency = box.currency === 'stars' ? 'stars' : 'vcoins';
 
-    const balance = userData.vcoins || 0;
-    if (balance < box.price) return showToast(`Недостаточно VCoins! Нужно ${box.price} VC`, 'error');
-
-    if (!window.spendVCoinsGlobal) return showToast('Ошибка системы VCoins', 'error');
-    _lootboxOpening = true;
-    const ok = await window.spendVCoinsGlobal(box.price, `Открытие: ${box.name}`);
-    if (!ok) { _lootboxOpening = false; return; }
+    if (currency === 'stars') {
+        const starsBalance = userData.vstars || 0;
+        if (starsBalance < box.price) return showToast(`Недостаточно Старс! Нужно ${box.price} ⭐`, 'error');
+        if (!window.spendVStarsGlobal) return showToast('Ошибка системы Старс', 'error');
+        _lootboxOpening = true;
+        const ok = await window.spendVStarsGlobal(box.price, `Открытие: ${box.name}`);
+        if (!ok) { _lootboxOpening = false; return; }
+    } else {
+        const balance = userData.vcoins || 0;
+        if (balance < box.price) return showToast(`Недостаточно VCoins! Нужно ${box.price} VC`, 'error');
+        if (!window.spendVCoinsGlobal) return showToast('Ошибка системы VCoins', 'error');
+        _lootboxOpening = true;
+        const ok = await window.spendVCoinsGlobal(box.price, `Открытие: ${box.name}`);
+        if (!ok) { _lootboxOpening = false; return; }
+    }
     try { await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { lootboxesOpened: increment(1) }); } catch(e) {}
 
     try {
         // Загружаем обычных участников и кастомные карточки
-        const [teamSnap, customCards] = await Promise.all([
+        const [teamSnap, allCustomCards] = await Promise.all([
             getDocs(query(collection(_db, 'team'), orderBy('order'))),
             loadCustomCards()
         ]);
         const allMembers = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Ящики за Старс могут выдать предметы; обычные ящики — только карточки персонажей
+        const customCards = currency === 'stars'
+            ? allCustomCards.filter(cc => cc.cardType === 'item')
+            : allCustomCards.filter(cc => cc.cardType !== 'item');
         if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
 
         const oddsM = await getOddsMultiplier();
@@ -557,6 +580,21 @@ function playSound(type, rarityObj) {
 }
 
 // ── Создание / редактирование кастомной карточки (только для админов) ──
+window.selectCardType = (type) => {
+    document.getElementById('cc-cardtype').value = type;
+    document.getElementById('cc-type-character').classList.toggle('cc-type-btn--active', type === 'character');
+    document.getElementById('cc-type-character').classList.toggle('btn-outline', type !== 'character');
+    document.getElementById('cc-type-item').classList.toggle('cc-type-btn--active', type === 'item');
+    document.getElementById('cc-type-item').classList.toggle('btn-outline', type !== 'item');
+
+    const isItem = type === 'item';
+    document.getElementById('cc-prefix-label').textContent = isItem ? 'Категория предмета' : 'Префикс (над именем)';
+    document.getElementById('cc-role-label').textContent   = isItem ? 'Короткое пояснение' : 'Роль / описание роли';
+    document.getElementById('cc-effect-wrap').style.display = isItem ? 'block' : 'none';
+    document.getElementById('cc-effect').style.display      = isItem ? 'block' : 'none';
+    if (typeof window.updateCardPreview === 'function') window.updateCardPreview();
+};
+
 window.openCreateCardModal = function(existingId) {
     const modal = document.getElementById('m-create-card');
     if (!modal) return;
@@ -573,6 +611,8 @@ window.openCreateCardModal = function(existingId) {
     document.getElementById('cc-chance').value  = '5';
     document.getElementById('cc-sound').value   = '';
     document.getElementById('cc-preview-wrap').innerHTML = '';
+    document.getElementById('cc-effect').value = '';
+    window.selectCardType('character');
 
     if (existingId) {
         // Загружаем данные для редактирования
@@ -588,6 +628,8 @@ window.openCreateCardModal = function(existingId) {
             refreshRarityDisplay();
             document.getElementById('cc-chance').value = d.dropChance || '5';
             document.getElementById('cc-sound').value  = d.soundUrl || '';
+            document.getElementById('cc-effect').value = d.effect || '';
+            window.selectCardType(d.cardType || 'character');
             updateCardPreview();
         });
     }
@@ -632,15 +674,17 @@ document.addEventListener('click', (e) => {
 });
 
 window.updateCardPreview = function() {
-    const name    = document.getElementById('cc-name')?.value || 'Имя';
-    const prefix  = document.getElementById('cc-prefix')?.value || '';
-    const role    = document.getElementById('cc-role')?.value || '';
-    const img     = document.getElementById('cc-img')?.value || '';
-    const rarity  = document.getElementById('cc-rarity')?.value || 'rare';
-    const desc    = document.getElementById('cc-desc')?.value || '';
-    const wrap    = document.getElementById('cc-preview-wrap');
+    const name     = document.getElementById('cc-name')?.value || 'Имя';
+    const prefix   = document.getElementById('cc-prefix')?.value || '';
+    const role     = document.getElementById('cc-role')?.value || '';
+    const img      = document.getElementById('cc-img')?.value || '';
+    const rarity   = document.getElementById('cc-rarity')?.value || 'rare';
+    const desc     = document.getElementById('cc-desc')?.value || '';
+    const cardType = document.getElementById('cc-cardtype')?.value || 'character';
+    const effect   = document.getElementById('cc-effect')?.value || '';
+    const wrap     = document.getElementById('cc-preview-wrap');
     if (!wrap) return;
-    wrap.innerHTML = renderCard({ id: '_preview', name, prefix, role, img, rarity, description: desc }, { showActions: false, showDesc: true });
+    wrap.innerHTML = renderCard({ id: '_preview', name, prefix, role, img, rarity, description: desc, cardType, effect }, { showActions: false, showDesc: true });
 };
 
 window.saveCustomCard = async function() {
@@ -656,6 +700,8 @@ window.saveCustomCard = async function() {
     const rarity  = document.getElementById('cc-rarity')?.value || 'rare';
     const chance  = parseFloat(document.getElementById('cc-chance')?.value) || 5;
     const sound   = document.getElementById('cc-sound')?.value?.trim();
+    const cardType = document.getElementById('cc-cardtype')?.value || 'character';
+    const effect   = document.getElementById('cc-effect')?.value?.trim() || '';
 
     if (!name) return showToast('Введите имя карточки', 'error');
 
@@ -665,6 +711,7 @@ window.saveCustomCard = async function() {
             img: img || '', description: desc || '',
             rarity, dropChance: chance,
             soundUrl: sound || '',
+            cardType, effect,
             createdAt: Date.now(),
         });
         showToast('<i class="fas fa-circle-check"></i> Карточка сохранена!');

@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260906d';
-import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260906d';
-import { checkAndAwardAch } from './achievements.js?v=20260906d';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260906e';
+import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260906e';
+import { checkAndAwardAch } from './achievements.js?v=20260906e';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -58,6 +58,51 @@ async function spendVCoins(amount, reason) {
         return true;
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
 }
+
+// ── Старс (донат-валюта) — трата ──
+async function spendVStars(amount, reason) {
+    const { userData } = _getState();
+    if (!userData) return false;
+    const balance = userData.vstars || 0;
+    if (balance < amount) { showToast('Недостаточно Старс!', 'error'); return false; }
+    const uid = _auth.currentUser.uid;
+    try {
+        await updateDoc(doc(_db, 'users', uid), { vstars: increment(-amount) });
+        userData.vstars = balance - amount;
+        const el = document.getElementById('u-vstars');
+        if (el) el.textContent = userData.vstars;
+        await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: -amount, reason, date: Date.now(), type: 'spend_stars' });
+        return true;
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
+}
+
+// ── Промокоды на Старс ──
+window.redeemPromoCode = async function() {
+    const input = document.getElementById('promo-code-input');
+    const code = input?.value.trim().toUpperCase();
+    if (!code) return showToast('Введите промокод', 'error');
+    const { userData } = _getState();
+    if (!userData || !_auth.currentUser) return showToast('Войдите в аккаунт', 'error');
+    const uid = _auth.currentUser.uid;
+    try {
+        const snap = await getDoc(doc(_db, 'promoCodes', code));
+        if (!snap.exists()) return showToast('Такого промокода не существует', 'error');
+        const promo = snap.data();
+        if (!promo.active) return showToast('Этот промокод больше не активен', 'error');
+        const usedBy = promo.usedBy || [];
+        if (usedBy.includes(uid)) return showToast('Вы уже использовали этот промокод', 'error');
+        if (promo.maxUses && usedBy.length >= promo.maxUses) return showToast('У промокода закончились активации', 'error');
+
+        await updateDoc(doc(_db, 'promoCodes', code), { usedBy: [...usedBy, uid] });
+        await updateDoc(doc(_db, 'users', uid), { vstars: increment(promo.amount) });
+        userData.vstars = (userData.vstars || 0) + promo.amount;
+        const el = document.getElementById('u-vstars');
+        if (el) el.textContent = userData.vstars;
+        await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: promo.amount, reason: 'Промокод: ' + code, date: Date.now(), type: 'promo_stars' });
+        showToast(`<i class="fas fa-star"></i> +${promo.amount} Старс за промокод!`);
+        if (input) input.value = '';
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
 
 // ── Подарить VCoins ──
 async function giftVCoins(targetUid, targetNick, amount) {
@@ -119,6 +164,7 @@ function renderShopPage() {
     if (!wrap) return;
     const { userData } = _getState();
     const balance = userData?.vcoins || 0;
+    const stars   = userData?.vstars || 0;
 
     wrap.innerHTML = `
     <div class="shop-balance-bar">
@@ -127,8 +173,20 @@ function renderShopPage() {
             <span class="shop-balance-val">${balance}</span>
             <span class="shop-balance-label">VCoins</span>
         </div>
+        <div class="shop-balance-inner" style="--balance-color:#a78bfa;">
+            <span class="shop-balance-icon" style="color:#a78bfa;"><i class="fas fa-star"></i></span>
+            <span class="shop-balance-val" id="u-vstars" style="color:#a78bfa;">${stars}</span>
+            <span class="shop-balance-label">Старс</span>
+        </div>
         <button class="btn btn-outline btn-sm" onclick="openGiftModal()"><i class="fas fa-gift"></i> Подарить</button>
         <button class="btn btn-outline btn-sm" onclick="openVcoinHistory()"><i class="fas fa-history"></i> История</button>
+        ${_getState().isAdmin ? `<button class="btn btn-outline btn-sm" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="openPromoAdmin()"><i class="fas fa-ticket"></i> Промокоды</button>` : ''}
+    </div>
+
+    <div class="promo-code-bar">
+        <input type="text" id="promo-code-input" placeholder="Есть промокод? Введите здесь" style="text-transform:uppercase;">
+        <button class="btn btn-sm btn-purple" onclick="redeemPromoCode()"><i class="fas fa-ticket"></i> Активировать</button>
+        <span class="promo-code-hint">Старс — донат-валюта: получить можно по промокоду или покупкой через СБП (скоро)</span>
     </div>
 
     <div class="shop-leaderboards" id="shop-leaderboards">
@@ -919,6 +977,7 @@ export function bindVCoins(db, auth, getState) {
 
     // Глобальный хелпер для lootbox.js (не может импортировать spendVCoins напрямую)
     window.spendVCoinsGlobal = spendVCoins;
+    window.spendVStarsGlobal = spendVStars;
 
     window.openGame         = openGame;
     window.buyShopItem      = buyShopItem;
@@ -929,7 +988,75 @@ export function bindVCoins(db, auth, getState) {
         renderShopPage();
     };
 
-    window.renderNickColorPicker = function() {
+    // ── Промокоды (Старс) — админка ──
+window.openPromoAdmin = async function() {
+    let modal = document.getElementById('m-promo-admin');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'm-promo-admin';
+        modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:480px;">
+            <h3 style="margin-bottom:14px;"><i class="fas fa-ticket" style="color:#a78bfa;margin-right:8px;"></i>Промокоды на Старс</h3>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <input type="text" id="promo-new-code" placeholder="КОД" style="text-transform:uppercase;margin-bottom:0;">
+                <input type="number" id="promo-new-amount" placeholder="Старс" style="max-width:100px;margin-bottom:0;" value="10">
+            </div>
+            <input type="number" id="promo-new-maxuses" placeholder="Лимит активаций (0 = без лимита)" value="0">
+            <button class="btn btn-purple" style="width:100%;margin-bottom:14px;" onclick="createPromoCode()"><i class="fas fa-plus"></i> Создать промокод</button>
+            <div id="promo-admin-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+            <button class="btn btn-outline" style="width:100%;margin-top:14px;" onclick="closeModals()">Закрыть</button>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    await renderPromoList();
+};
+
+async function renderPromoList() {
+    const listEl = document.getElementById('promo-admin-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="lb-loading">Загрузка...</div>';
+    try {
+        const snap = await getDocs(collection(_db, 'promoCodes'));
+        if (snap.empty) { listEl.innerHTML = '<div class="lb-loading">Промокодов пока нет</div>'; return; }
+        listEl.innerHTML = snap.docs.map(d => {
+            const p = d.data();
+            const uses = (p.usedBy || []).length;
+            return `<div class="banner-admin-row">
+                <i class="fas fa-star" style="color:#a78bfa;"></i>
+                <div class="banner-admin-info">
+                    <div class="banner-admin-title">${esc(d.id)} — ${p.amount} ⭐</div>
+                    <div class="banner-admin-sub">Активаций: ${uses}${p.maxUses ? ' / ' + p.maxUses : ' (без лимита)'}</div>
+                </div>
+                <button class="btn btn-sm" style="background:#ef4444;" onclick="deletePromoCode('${esc(d.id)}')">Удал.</button>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        listEl.innerHTML = '<div class="lb-loading" style="color:#ef4444;">Ошибка: ' + esc(e.message) + '</div>';
+    }
+}
+
+window.createPromoCode = async function() {
+    const code   = document.getElementById('promo-new-code')?.value.trim().toUpperCase();
+    const amount = parseInt(document.getElementById('promo-new-amount')?.value) || 0;
+    const maxUses = parseInt(document.getElementById('promo-new-maxuses')?.value) || 0;
+    if (!code) return showToast('Введите код', 'error');
+    if (amount <= 0) return showToast('Укажите количество Старс', 'error');
+    try {
+        await setDoc(doc(_db, 'promoCodes', code), { amount, maxUses, usedBy: [], active: true, createdAt: Date.now() });
+        showToast('Промокод создан!');
+        document.getElementById('promo-new-code').value = '';
+        await renderPromoList();
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
+
+window.deletePromoCode = async (code) => {
+    if (!confirm('Удалить промокод "' + code + '"?')) return;
+    try { await deleteDoc(doc(_db, 'promoCodes', code)); await renderPromoList(); }
+    catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
+
+window.renderNickColorPicker = function() {
         const grid = document.getElementById('nc-color-grid');
         if (!grid) return;
         grid.innerHTML = NICK_COLORS.map(c =>
