@@ -7,26 +7,26 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260906c';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260906c';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260906c';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20260906c';
-import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260906c';
-import { bindComments }    from './comments.js?v=20260906c';
-import { bindTeam }        from './team.js?v=20260906c';
-import { bindUsers }       from './users.js?v=20260906c';
-import { initDubinPanel, bindDubin } from './dubin.js?v=20260906c';
-import { bindOrder }       from './order.js?v=20260906c';
-import { bindPlaylists }   from './playlists.js?v=20260906c';
-import { bindRatings }     from './ratings.js?v=20260906c';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260906c';
-import { bindInventory } from './inventory.js?v=20260906c';
-import { bindLootbox } from './lootbox.js?v=20260906c';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20260906c';
-import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260906c';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260906c';
-import { bindBanners } from './banners.js?v=20260906c';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260906c';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260906d';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260906d';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260906d';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260906d';
+import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260906d';
+import { bindComments }    from './comments.js?v=20260906d';
+import { bindTeam }        from './team.js?v=20260906d';
+import { bindUsers }       from './users.js?v=20260906d';
+import { initDubinPanel, bindDubin } from './dubin.js?v=20260906d';
+import { bindOrder }       from './order.js?v=20260906d';
+import { bindPlaylists }   from './playlists.js?v=20260906d';
+import { bindRatings }     from './ratings.js?v=20260906d';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260906d';
+import { bindInventory } from './inventory.js?v=20260906d';
+import { bindLootbox } from './lootbox.js?v=20260906d';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260906d';
+import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260906d';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260906d';
+import { bindBanners } from './banners.js?v=20260906d';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260906d';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -101,6 +101,16 @@ function updateSidebarVisibility() {
     show('sn-inventory',     !!u);
     show('sn-playlists',     !!u);
     show('sn-stats',         a);
+
+    // Секции целиком (включая заголовок "Студия"/"Администрация") — видны,
+    // только если у пользователя есть доступ хотя бы к одному пункту внутри
+    const studioVisible = canAccessDubin(u) || canAccessRatings(u);
+    show('sidebar-sec-studio', studioVisible, 'block');
+    show('sidebar-sec-studio-divider', studioVisible, 'block');
+    show('sidebar-sec-admin', a, 'block');
+    show('sidebar-sec-admin-divider', a, 'block');
+    show('profile-admin-group', a, 'block');
+
     show('notif-btn',        !!u);
     show('adm-btn-rel',      a, 'inline-flex');
     show('adm-btn-team',     a, 'inline-flex');

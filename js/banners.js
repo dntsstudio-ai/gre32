@@ -10,7 +10,7 @@
 import {
     collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast, closeModals } from './core.js?v=20260906c';
+import { esc, showToast, closeModals } from './core.js?v=20260906d';
 
 let _db, _auth, _getState;
 let _rotateTimer = null;

@@ -11,10 +11,10 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260906c';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260906c';
-import { loadComments } from './comments.js?v=20260906c';
-import { checkAndAwardAch } from './achievements.js?v=20260906c';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260906d';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260906d';
+import { loadComments } from './comments.js?v=20260906d';
+import { checkAndAwardAch } from './achievements.js?v=20260906d';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -22,8 +22,8 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260906c';
-import { renderPinnedPlaylists } from './playlists.js?v=20260906c';
+} from './player.js?v=20260906d';
+import { renderPinnedPlaylists } from './playlists.js?v=20260906d';
 
 export let allRel  = [];
 export let curProj = null;

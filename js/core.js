@@ -21,6 +21,28 @@ export const ROLE_LABELS = {
 
 const DUBIN_ACCESS = ['admin','dub','curator','subber','previewer','editor','mixer','proxyadmin','developer'];
 
+// ── Сворачивание групп кнопок на странице профиля (с запоминанием) ──
+window.toggleProfileGroup = function(headerEl) {
+    const group = headerEl.closest('.profile-action-group');
+    if (!group) return;
+    const collapsed = group.classList.toggle('profile-action-group--collapsed');
+    const key = 'profileGroupCollapsed:' + (group.dataset.group || '');
+    try { localStorage.setItem(key, collapsed ? '1' : '0'); } catch(e) {}
+};
+function restoreProfileGroupState() {
+    document.querySelectorAll('.profile-action-group').forEach(group => {
+        try {
+            const key = 'profileGroupCollapsed:' + (group.dataset.group || '');
+            if (localStorage.getItem(key) === '1') group.classList.add('profile-action-group--collapsed');
+        } catch(e) {}
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', restoreProfileGroupState);
+} else {
+    restoreProfileGroupState();
+}
+
 export function getRoleBadgeHTML(role, curatorProject) {
     if (role === 'curator' && curatorProject) {
         return '<span class="role-badge role-curator"><i class="fas fa-crown"></i> Куратор: ' + esc(curatorProject) + '</span>';
