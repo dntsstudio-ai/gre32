@@ -11,10 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915o';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915o';
-import { loadComments } from './comments.js?v=20260915o';
-import { checkAndAwardAch } from './achievements.js?v=20260915o';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915p';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915p';
+import { checkAndAwardAch } from './achievements.js?v=20260915p';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -22,11 +21,15 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915o';
-import { renderPinnedPlaylists } from './playlists.js?v=20260915o';
+} from './player.js?v=20260915p';
+// comments.js и playlists.js — не главные модули, подключаются через
+// import() только когда реально нужны (см. ниже), а не при каждом заходе
+// на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
+// getState из bindReleases — он им тоже нужен).
 
 export let allRel  = [];
 export let curProj = null;
+let _getState = null;
 
 let viewTimer      = null;
 let playerSettings = { autoSkip: false, autoNext: false };
@@ -324,7 +327,14 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    loadComments(db, auth, curProj, userData, isAdmin);
+    import('./comments.js?v=20260915p').then(m => {
+        m.bindComments(db, auth, _getState);
+        m.loadComments(db, auth, curProj, userData, isAdmin);
+    });
+    // users.js — клик по аватарке/нику в комментариях открывает профиль
+    if (typeof window.openUserProfile !== 'function') {
+        import('./users.js?v=20260915p').then(m => m.bindUsers(db, auth, _getState));
+    }
 }
 
 window.toggleEpPanel = () => {
@@ -462,6 +472,7 @@ async function loadWatchListStatus(db, auth, relId) {
 }
 
 export function bindReleases(db, auth, getState, storage) {
+    _getState = getState;
 
     // ── Загрузка постера файлом ──
     window.uploadPosterFile = (inputEl) => {
@@ -852,7 +863,9 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const pinnedHtml = await renderPinnedPlaylists(uid);
+                const plMod = await import('./playlists.js?v=20260915p');
+                plMod.bindPlaylists(db, auth, getState);
+                const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {
                     pinnedSection = `<div class="list-section-wrap">
                         <div class="list-section-header" onclick="toggleListSection('pinned')">

@@ -7,8 +7,8 @@ import {
     updateDoc, deleteDoc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915o';
-import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915o';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915p';
+import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915p';
 
 export let curTM = null;
 

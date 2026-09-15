@@ -7,28 +7,25 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915o';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915o';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915o';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915o';
-import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915o';
-import { bindComments }    from './comments.js?v=20260915o';
-import { bindTeam }        from './team.js?v=20260915o';
-import { bindUsers }       from './users.js?v=20260915o';
-import { initDubinPanel, bindDubin } from './dubin.js?v=20260915o';
-import { bindOrder }       from './order.js?v=20260915o';
-import { bindPlaylists }   from './playlists.js?v=20260915o';
-import { bindRatings }     from './ratings.js?v=20260915o';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915o';
-import { bindInventory } from './inventory.js?v=20260915o';
-import { bindLootbox } from './lootbox.js?v=20260915o';
-import { bindWheel } from './wheel.js?v=20260915o';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20260915o';
-import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260915o';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915o';
-import { bindBanners } from './banners.js?v=20260915o';
-import { bindShopSlides } from './shopSlides.js?v=20260915o';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20260915o';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915p';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915p';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915p';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915p';
+import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915p';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915p';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260915p';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915p';
+import { bindBanners } from './banners.js?v=20260915p';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20260915p';
+
+// ── Ленивая загрузка "неглавных" модулей ────────────────────────
+// Раньше все ~20 файлов сайта подключались сразу при любом заходе —
+// даже обычному посетителю, который просто смотрит список релизов,
+// приходилось скачивать и выполнять код магазина, игр, DUB-in студии,
+// плейлистов и т.п. Теперь эти модули (и их bindX()) подключаются через
+// import() только в момент, когда человек реально открывает нужную
+// страницу — см. вызовы ниже в navigate() и в обработчиках deep-link'ов.
+const V = '20260915p';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -52,23 +49,10 @@ const getState = () => state;
 injectMaintenanceStyles();
 
 bindReleases(db, auth, getState, storage);
-bindComments(db, auth, getState);
-bindTeam(db, getState);
-bindUsers(db, auth, getState);
 bindAchievements(db, auth, getState);
-bindDubin(db, auth, getState);
 bindAuthActions(auth, db, getState);
-bindOrder(db, auth, getState);
-bindPlaylists(db, auth, getState);
-bindRatings(db, auth, getState);
 bindVCoins(db, auth, getState);
-bindInventory(db, auth, getState);
-bindLootbox(db, auth, getState);
-bindWheel(db, auth, getState);
-bindShopSlides(db, auth, getState);
 bindNotifications(db, auth, getState);
-bindUserSearch(db, auth, getState);
-bindProfileWall(db, auth, getState);
 bindAdminPanel(db, auth, getState);
 bindBanners(db, auth, getState);
 
@@ -80,20 +64,81 @@ window.awardVCoins = awardVCoins;
 
 const _pendingNav = window._navQueue || [];
 
-window.navigate = function(page, pushState) {
+// users.js вызывается со множества страниц (профиль, состав, магазин,
+// комментарии) — подключаем его тем же способом отовсюду, без дублей
+function ensureUsersModule() {
+    if (typeof window.openUserProfile === 'function') return Promise.resolve();
+    return import(`./users.js?v=${V}`).then(m => m.bindUsers(db, auth, getState));
+}
+
+window.navigate = async function(page, pushState) {
     if (pushState === undefined) pushState = true;
     navigate(page, pushState);
     incrementPageView();
-    if (page === 'team')      window.loadTeam?.();
-    if (page === 'dubin')     { initDubinPanel(state.isAdmin, canAccessDubin(state.userData)); if (canAccessDubin(state.userData)) window.renderDubinProjects?.(); }
-    if (page === 'ratings')   window.loadRatingsPage?.();
-    if (page === 'shop')      window.loadShopPage?.();
+    if (page === 'team') {
+        const [m] = await Promise.all([import(`./team.js?v=${V}`), ensureUsersModule()]);
+        m.bindTeam(db, getState);
+        window.loadTeam?.();
+    }
+    if (page === 'dubin') {
+        const m = await import(`./dubin.js?v=${V}`);
+        m.bindDubin(db, auth, getState);
+        m.initDubinPanel(state.isAdmin, canAccessDubin(state.userData));
+        if (canAccessDubin(state.userData)) window.renderDubinProjects?.();
+    }
+    if (page === 'ratings') {
+        const m = await import(`./ratings.js?v=${V}`);
+        m.bindRatings(db, auth, getState);
+        window.loadRatingsPage?.();
+    }
+    if (page === 'shop') {
+        const [m] = await Promise.all([import(`./shopSlides.js?v=${V}`), ensureUsersModule()]);
+        m.bindShopSlides(db, auth, getState);
+        window.loadShopPage?.();
+    }
     if (page === 'stats')     window.loadStatsPage?.();
-    if (page === 'inventory') { if (!state.userData) { navigate('profile', pushState); return; } window.loadInventory?.(); }
-    if (page === 'lootbox')   { if (!state.userData) { navigate('profile', pushState); return; } window.renderLootboxGame?.(document.getElementById('lootbox-wrap'), state.userData?.vcoins || 0); }
-    if (page === 'games')     { if (!state.userData) { navigate('profile', pushState); return; } window.renderGamesPage?.(document.getElementById('games-wrap')); }
-    if (page === 'playlists') { if (!state.userData) { navigate('profile', pushState); return; } window.loadPlaylistsPage?.(); }
-    if (page === 'profile' && state.userData) { window.loadMyLists?.(); window.loadProfileWall?.(auth.currentUser?.uid); }
+    if (page === 'inventory') {
+        if (!state.userData) { navigate('profile', pushState); return; }
+        const m = await import(`./inventory.js?v=${V}`);
+        m.bindInventory(db, auth, getState);
+        window.loadInventory?.();
+    }
+    if (page === 'lootbox') {
+        if (!state.userData) { navigate('profile', pushState); return; }
+        // lootbox.js использует addCardToInventory() из inventory.js — тому
+        // нужен собственный bindInventory(), иначе выигранная карточка не
+        // сохранится (inventory.js подтянется сам через lootbox.js, но без
+        // вызова bind у него не будет своих _db/_auth)
+        const [invMod, lbMod] = await Promise.all([
+            import(`./inventory.js?v=${V}`),
+            import(`./lootbox.js?v=${V}`),
+        ]);
+        invMod.bindInventory(db, auth, getState);
+        lbMod.bindLootbox(db, auth, getState);
+        window.renderLootboxGame?.(document.getElementById('lootbox-wrap'), state.userData?.vcoins || 0);
+    }
+    if (page === 'games') {
+        if (!state.userData) { navigate('profile', pushState); return; }
+        window.renderGamesPage?.(document.getElementById('games-wrap'));
+    }
+    if (page === 'playlists') {
+        if (!state.userData) { navigate('profile', pushState); return; }
+        const m = await import(`./playlists.js?v=${V}`);
+        m.bindPlaylists(db, auth, getState);
+        window.loadPlaylistsPage?.();
+    }
+    if (page === 'profile' && state.userData) {
+        const [plMod, usMod] = await Promise.all([
+            import(`./playlists.js?v=${V}`),
+            import(`./users_search.js?v=${V}`),
+            ensureUsersModule(),
+        ]);
+        plMod.bindPlaylists(db, auth, getState);
+        usMod.bindUserSearch(db, auth, getState);
+        usMod.bindProfileWall(db, auth, getState);
+        window.loadMyLists?.();
+        window.loadProfileWall?.(auth.currentUser?.uid);
+    }
 };
 
 function updateSidebarVisibility() {
@@ -196,21 +241,25 @@ onAuthStateChanged(auth, async function(user) {
     const teamMatch = targetPage.match(/^team-page\/(.+)$/);
     if (viewMatch && window.openView) {
         window.openView(viewMatch[1]);
-    } else if (teamMatch && window.openTeamPage) {
-        window.openTeamPage(teamMatch[1]);
+    } else if (teamMatch) {
+        const [m] = await Promise.all([import(`./team.js?v=${V}`), ensureUsersModule()]);
+        m.bindTeam(db, getState);
+        window.openTeamPage?.(teamMatch[1]);
     } else {
         window.navigate(targetPage, false);
     }
 });
 
-window.addEventListener('popstate', function() {
+window.addEventListener('popstate', async function() {
     const raw = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '') || 'home';
     const viewMatch = raw.match(/^view\/(.+)$/);
     const teamMatch = raw.match(/^team-page\/(.+)$/);
     if (viewMatch && window.openView) {
         window.openView(viewMatch[1]);
-    } else if (teamMatch && window.openTeamPage) {
-        window.openTeamPage(teamMatch[1]);
+    } else if (teamMatch) {
+        const [m] = await Promise.all([import(`./team.js?v=${V}`), ensureUsersModule()]);
+        m.bindTeam(db, getState);
+        window.openTeamPage?.(teamMatch[1]);
     } else {
         window.navigate(raw, false);
     }
