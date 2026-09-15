@@ -15,30 +15,52 @@
     <script>
       // Если браузер отдал старую закэшированную страницу (GitHub Pages сам
       // решает время жизни кэша, мы это не контролируем) — сверяем версию с
-      // version.json (запрашивается всегда напрямую с сервера, без кэша) и,
-      // если она новее, один раз принудительно перезагружаем страницу.
-      // Без этого часть посетителей годами видит старую версию сайта, пока
-      // не почистят кэш вручную — то, что выглядит как "зависание"/старый баг.
+      // version.json (запрашивается всегда напрямую с сервера, без кэша).
+      // Специально НЕ перезагружаем страницу автоматически (это может уйти
+      // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
+      // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915d';
-        try {
-          fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-              if (!data || !data.v || data.v === CURRENT) return;
-              if (sessionStorage.getItem('vat_reload_guard') === data.v) return;
-              sessionStorage.setItem('vat_reload_guard', data.v);
-              location.reload();
-            })
-            .catch(function () {});
-        } catch (e) {}
+        var CURRENT = '20260915e';
+        function showUpdateBanner() {
+          if (document.getElementById('vat-update-banner')) return;
+          if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
+          var bar = document.createElement('div');
+          bar.id = 'vat-update-banner';
+          bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:999999;' +
+            'background:#1a1030;color:#f0eeff;padding:12px 16px;display:flex;' +
+            'align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;' +
+            'font-family:sans-serif;font-size:14px;box-shadow:0 -4px 16px rgba(0,0,0,0.3);';
+          bar.innerHTML = '<span>Доступна новая версия сайта</span>' +
+            '<button id="vat-update-btn" style="background:#7c3aed;color:#fff;border:none;' +
+            'border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;">Обновить</button>' +
+            '<button id="vat-update-close" style="background:transparent;color:#a78bfa;border:none;' +
+            'cursor:pointer;font-size:18px;line-height:1;padding:4px;">×</button>';
+          document.body.appendChild(bar);
+          document.getElementById('vat-update-btn').onclick = function () { location.reload(); };
+          document.getElementById('vat-update-close').onclick = function () {
+            sessionStorage.setItem('vat_update_dismissed', CURRENT);
+            bar.remove();
+          };
+        }
+        function check() {
+          try {
+            fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (data && data.v && data.v !== CURRENT) showUpdateBanner();
+              })
+              .catch(function () {});
+          } catch (e) {}
+        }
+        if (document.body) check();
+        else document.addEventListener('DOMContentLoaded', check);
       })();
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com https://yandex.ru https://an.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com https://yandex.ru https://an.yandex.ru https://kodikplayer.com https://kodik.info https://*.kodikplayer.com; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com https://yandex.ru https://an.yandex.ru https://mc.yandex.ru https://kodik-api.com; media-src 'self' blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com https://cdn.emailjs.com https://smtpjs.com https://cdnjs.cloudflare.com https://yandex.ru https://an.yandex.ru https://yastatic.net https://mc.yandex.ru; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://yastatic.net; img-src 'self' data: blob: https: http:; frame-src https://www.youtube.com https://drive.google.com https://youtube.com https://yandex.ru https://an.yandex.ru https://kodikplayer.com https://kodik.info https://*.kodikplayer.com; connect-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com wss://*.firebaseio.com https://raw.githubusercontent.com https://yandex.ru https://an.yandex.ru https://mc.yandex.ru https://kodik-api.com; media-src 'self' blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app; object-src 'none';">
     <title>Бэтмен: Под красным колпаком — Voice Acting Team</title>
     <meta name="description" content="Студия Voice Acting Team: качественный дубляж и озвучка аниме, сериалов и фильмов.">
     <link rel="icon" type="image/png" href="/img/logo.jpg">
@@ -54,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915d">
+    <link rel="stylesheet" href="/css/style.css?v=20260915e">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -1860,7 +1882,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915d"></script>
+<script type="module" src="/js/app.js?v=20260915e"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
