@@ -7,7 +7,7 @@
 import {
     collection, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260906e';
+import { esc, showToast } from './core.js?v=20260915a';
 
 let _db, _auth, _getState;
 let _slides = [];
