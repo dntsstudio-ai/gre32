@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915i';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915i';
-import { getOddsMultiplier } from './vcoins.js?v=20260915i';
+import { esc, showToast } from './core.js?v=20260915j';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915j';
+import { getOddsMultiplier } from './vcoins.js?v=20260915j';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -97,18 +97,34 @@ async function renderLootboxPage(wrap, balance) {
     const cats = {};
     _lootboxDefs.forEach(b => { const c = b.cat || 'Без категории'; if (!cats[c]) cats[c] = []; cats[c].push(b); });
 
-    const boxCardHtml = (box) => `
-            <div class="lootbox-box-card" style="--box-gradient:${box.gradient};--box-border:${box.border};">
-                <div class="lootbox-box-shine"></div>
-                ${isAdmin ? `
+    const priceHtml = (box) => box.currency === 'stars'
+        ? `<i class="fas fa-star" style="color:#a78bfa;"></i> ${box.price} Старс`
+        : `<i class="fas fa-coins"></i> ${box.price} VC`;
+
+    const adminControlsHtml = (box) => isAdmin ? `
                 <div class="lootbox-box-admin-controls">
                     <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openLootboxDefModal('${box.id}')">Ред</button>
                     <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteLootboxDef('${box.id}')">Удал</button>
-                </div>` : ''}
-                <div class="lootbox-box-icon">${box.imgClosed ? `<img src="${esc(box.imgClosed)}" class="lootbox-box-img" alt="">` : box.icon}</div>
+                </div>` : '';
+
+    // Ящики с заданной картинкой — минимальная "арт" карточка (только картинка
+    // + название сверху + цена снизу), клик по ней открывает окно с описанием
+    // и кнопкой "Открыть". Ящики без картинки — как раньше, с иконкой и описанием.
+    const boxCardHtml = (box) => box.imgClosed ? `
+            <div class="lootbox-box-card lootbox-box-card--art" style="--box-gradient:${box.gradient};--box-border:${box.border};" onclick="openLootboxPreview('${box.id}')">
+                <div class="lootbox-box-shine"></div>
+                ${adminControlsHtml(box)}
+                <div class="lootbox-box-name">${esc(box.name)}</div>
+                <img src="${esc(box.imgClosed)}" class="lootbox-box-art-img" alt="">
+                <div class="lootbox-box-price">${priceHtml(box)}</div>
+            </div>` : `
+            <div class="lootbox-box-card" style="--box-gradient:${box.gradient};--box-border:${box.border};">
+                <div class="lootbox-box-shine"></div>
+                ${adminControlsHtml(box)}
+                <div class="lootbox-box-icon">${box.icon}</div>
                 <div class="lootbox-box-name">${esc(box.name)}</div>
                 <div class="lootbox-box-desc">${esc(box.desc)}</div>
-                <div class="lootbox-box-price">${box.currency === 'stars' ? `<i class="fas fa-star" style="color:#a78bfa;"></i> ${box.price} Старс` : `<i class="fas fa-coins"></i> ${box.price} VC`}</div>
+                <div class="lootbox-box-price">${priceHtml(box)}</div>
                 <button class="btn lootbox-open-btn" onclick="openLootbox('${box.id}')">
                     Открыть
                 </button>
@@ -278,6 +294,26 @@ window.deleteLootboxDef = async (id) => {
         const { userData } = _getState();
         if (wrap) await renderLootboxPage(wrap, userData?.vcoins || 0);
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+};
+
+// ── Окно предпросмотра ящика (для "арт"-ящиков с картинкой) ────
+window.openLootboxPreview = (boxId) => {
+    const box = _lootboxDefs.find(b => b.id === boxId);
+    if (!box) return;
+    const body = document.getElementById('lootbox-preview-body');
+    if (!body) return;
+    const priceHtml = box.currency === 'stars'
+        ? `<i class="fas fa-star" style="color:#a78bfa;"></i> ${box.price} Старс`
+        : `<i class="fas fa-coins"></i> ${box.price} VC`;
+    body.innerHTML = `
+        <h3 style="margin-bottom:14px;">${esc(box.name)}</h3>
+        <img src="${esc(box.imgClosed)}" style="width:100%;max-width:280px;border-radius:16px;display:block;margin:0 auto 16px;filter:drop-shadow(0 8px 24px ${box.border}66);">
+        <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:16px;">${esc(box.desc)}</p>
+        <div class="lootbox-box-price" style="margin-bottom:18px;">${priceHtml}</div>
+        <button class="btn lootbox-open-btn" onclick="closeModals();openLootbox('${esc(box.id)}')">
+            Открыть
+        </button>`;
+    document.getElementById('m-lootbox-preview').style.display = 'flex';
 };
 
 window.openLootbox = async function(boxId) {
