@@ -3256,6 +3256,76 @@ select option { background: var(--modal-bg); color: var(--text); }
 }
 
 /* ============================================================
+   КОЛЕСО ФОРТУНЫ
+   ============================================================ */
+.wheel-outer {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 30px auto 20px;
+}
+.wheel-face {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.6);
+    transition: transform 4.2s cubic-bezier(0.12, 0.66, 0.18, 1);
+    z-index: 1;
+}
+.wheel-seg-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 40px; height: 20px;
+    margin: -10px 0 0 -20px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 13px;
+    font-family: var(--font-display);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    pointer-events: none;
+}
+.wheel-ring-img {
+    position: absolute;
+    width: 122%; height: 122%; left: -11%; top: -11%;
+    pointer-events: none;
+    z-index: 2;
+}
+.wheel-hub-img, .wheel-hub-fallback {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px; height: 96px;
+    z-index: 3;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.wheel-hub-img:hover, .wheel-hub-fallback:hover { transform: translate(-50%, -50%) scale(1.06); }
+.wheel-hub-fallback {
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 24px rgba(124,58,237,0.5);
+}
+.wheel-pointer-img, .wheel-pointer-fallback {
+    position: absolute;
+    top: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+}
+.wheel-pointer-fallback {
+    width: 0; height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 26px solid var(--violet-light);
+}
+
+/* ============================================================
    inventory_lootbox.css — Инвентарь и Лутбоксы
    ============================================================ */
 

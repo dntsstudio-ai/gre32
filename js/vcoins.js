@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915l';
-import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260915l';
-import { checkAndAwardAch } from './achievements.js?v=20260915l';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915m';
+import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260915m';
+import { checkAndAwardAch } from './achievements.js?v=20260915m';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -68,7 +68,7 @@ async function spendVCoins(amount, reason) {
 }
 
 // ── Счётчик побед в играх (для топа "по играм") ──
-async function incrementGamesWon() {
+export async function incrementGamesWon() {
     const { userData } = _getState();
     if (!userData || !_auth.currentUser) return;
     try {
@@ -416,6 +416,11 @@ function renderGamesPage(wrap) {
             <div class="shop-game-name">Чёрная дыра</div>
             <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
         </div>
+        <div class="shop-game-card" onclick="openGame('wheel')">
+            <div class="shop-game-icon"><i class="fas fa-dharmachakra"></i></div>
+            <div class="shop-game-name">Колесо Фортуны</div>
+            <div class="shop-game-desc">Крути колесо и лови множитель ставки</div>
+        </div>
     </div>`;
 }
 
@@ -508,10 +513,14 @@ function renderGame(type) {
         if (typeof _renderPlinko === 'function') {
             _renderPlinko(wrap, balance);
         }
+    } else if (type === 'wheel') {
+        if (typeof window.renderWheelGame === 'function') {
+            window.renderWheelGame(wrap, balance);
+        }
     }
 
     const titleEl = document.getElementById('m-game-title');
-    const gameTitles = { coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты', rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра' };
+    const gameTitles = { coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты', rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра', wheel:'<i class="fas fa-dharmachakra"></i> Колесо Фортуны' };
     if (titleEl) titleEl.innerHTML = gameTitles[type] || type;
     window._currentGame = type;
 }
