@@ -153,9 +153,17 @@ window.yaContextCb.push(() => {
         <a id="n-order" class="nav-link"         onclick="navigate('order')">
             <i class="fas fa-wand-magic-sparkles" style="font-size:10px;"></i> Заказать
         </a>
+        <div class="header-balance" id="header-balance" style="display:none;">
+            <span class="header-balance-chip" title="VCoins"><i class="fas fa-coins" style="color:#fbbf24;"></i> <b id="header-vcoins">0</b></span>
+            <span class="header-balance-chip" title="Старс"><i class="fas fa-star" style="color:#a78bfa;"></i> <b id="header-stars">0</b></span>
+        </div>
         <button class="notif-bell-btn" onclick="openNotifPanel()" title="Уведомления" style="display:none;" id="notif-btn">
             <i class="fas fa-bell"></i>
             <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+        </button>
+        <button class="header-profile-btn" id="header-profile-btn" onclick="navigate('profile')" title="Профиль">
+            <i class="fas fa-user" id="header-profile-icon"></i>
+            <img id="header-profile-ava" alt="" style="display:none;">
         </button>
     </nav>
 </header>
