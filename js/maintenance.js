@@ -6,6 +6,7 @@
 
 let _checkInterval = null;
 let _db = null;
+let _configPromise = null;
 
 // ── Загрузить конфиг из Firestore ──
 function _withTimeout(promise, ms, fallback) {
@@ -15,7 +16,7 @@ function _withTimeout(promise, ms, fallback) {
     ]);
 }
 
-async function fetchMaintenanceConfig() {
+async function _fetchMaintenanceConfigNow() {
     if (!_db) return null;
     try {
         const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
@@ -26,6 +27,20 @@ async function fetchMaintenanceConfig() {
         console.warn('[Maintenance] Ошибка чтения конфига:', e);
         return null;
     }
+}
+
+// Переиспользуем уже запущенный запрос — так prefetchMaintenance() (вызванный
+// сразу при старте страницы, ещё до того как известна роль пользователя) не
+// приводит к повторному сетевому запросу, когда позже вызывается checkMaintenance()
+function fetchMaintenanceConfig() {
+    if (!_configPromise) _configPromise = _fetchMaintenanceConfigNow();
+    return _configPromise;
+}
+
+// ── Запустить загрузку конфига заранее, не дожидаясь известной роли ──
+export function prefetchMaintenance(db) {
+    _db = db;
+    fetchMaintenanceConfig();
 }
 
 // ── Проверить доступ ──
@@ -554,6 +569,7 @@ export function injectMaintenanceStyles() {
 export async function checkMaintenance(db, userRole) {
     _db = db;
     const config = await fetchMaintenanceConfig();
+    _configPromise = null; // дальше — только startMaintenancePolling() со свежими данными
     if (!config || !config.enabled) return false;
     if (userHasAccess(config, userRole)) return false;
     showMaintenancePage(config);
@@ -565,6 +581,7 @@ export function startMaintenancePolling(db, getUserRole) {
     _db = db;
     if (_checkInterval) clearInterval(_checkInterval);
     _checkInterval = setInterval(async () => {
+        _configPromise = null; // всегда свежий запрос, а не кэш с прошлого раза
         const config = await fetchMaintenanceConfig();
         const role   = getUserRole();
         const overlay = document.getElementById('maintenance-overlay');

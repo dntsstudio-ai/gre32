@@ -7,27 +7,27 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915c';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915c';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915c';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915c';
-import { loadReleases, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915c';
-import { bindComments }    from './comments.js?v=20260915c';
-import { bindTeam }        from './team.js?v=20260915c';
-import { bindUsers }       from './users.js?v=20260915c';
-import { initDubinPanel, bindDubin } from './dubin.js?v=20260915c';
-import { bindOrder }       from './order.js?v=20260915c';
-import { bindPlaylists }   from './playlists.js?v=20260915c';
-import { bindRatings }     from './ratings.js?v=20260915c';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915c';
-import { bindInventory } from './inventory.js?v=20260915c';
-import { bindLootbox } from './lootbox.js?v=20260915c';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20260915c';
-import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260915c';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915c';
-import { bindBanners } from './banners.js?v=20260915c';
-import { bindShopSlides } from './shopSlides.js?v=20260915c';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260915c';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915d';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915d';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915d';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915d';
+import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915d';
+import { bindComments }    from './comments.js?v=20260915d';
+import { bindTeam }        from './team.js?v=20260915d';
+import { bindUsers }       from './users.js?v=20260915d';
+import { initDubinPanel, bindDubin } from './dubin.js?v=20260915d';
+import { bindOrder }       from './order.js?v=20260915d';
+import { bindPlaylists }   from './playlists.js?v=20260915d';
+import { bindRatings }     from './ratings.js?v=20260915d';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915d';
+import { bindInventory } from './inventory.js?v=20260915d';
+import { bindLootbox } from './lootbox.js?v=20260915d';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260915d';
+import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260915d';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915d';
+import { bindBanners } from './banners.js?v=20260915d';
+import { bindShopSlides } from './shopSlides.js?v=20260915d';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20260915d';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -131,6 +131,12 @@ function updateSidebarVisibility() {
 }
 
 onAuthStateChanged(auth, async function(user) {
+    // Запускаем сетевые запросы, которые не зависят друг от друга, ОДНОВРЕМЕННО,
+    // а не одной длинной цепочкой — иначе на медленной связи они складываются
+    // и сайт "виснет" на сумму всех таймаутов вместо одного самого долгого.
+    prefetchMaintenance(db);
+    const releasesPromise = withTimeout(loadReleases(db, false), 6000, null);
+
     if (user) {
         try {
             const snap = await withTimeout(getDoc(doc(db, 'users', user.uid)), 6000, null);
@@ -167,10 +173,9 @@ onAuthStateChanged(auth, async function(user) {
     updateSidebarVisibility();
 
     const userRole = state.userData?.role || null;
-    const [inMaintenance] = await Promise.all([
-        withTimeout(checkMaintenance(db, userRole), 6000, false),
-        withTimeout(loadReleases(db, state.isAdmin), 6000, null)
-    ]);
+    const inMaintenance = await withTimeout(checkMaintenance(db, userRole), 6000, false);
+    await releasesPromise;
+    renderGrid(state.isAdmin); // перерисовать с учётом реальной роли (карточки уже загружены выше параллельно)
     startMaintenancePolling(db, () => state.userData?.role || null);
     if (inMaintenance) return;
 
