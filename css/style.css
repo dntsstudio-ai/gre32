@@ -1150,7 +1150,7 @@ select option { background: var(--modal-bg); color: var(--text); }
 }
 .promo-code-bar input { flex: 1; min-width: 160px; margin-bottom: 0; }
 
-.cc-type-btn--active, .lbdef-cur-btn--active {
+.cc-type-btn--active, .lbdef-cur-btn--active, .lbdef-pool-btn--active {
     background: linear-gradient(135deg, var(--violet), var(--teal)); color: white; border-color: transparent;
 }
 .lb-row {
@@ -3617,6 +3617,11 @@ select option { background: var(--modal-bg); color: var(--text); }
     filter: drop-shadow(0 0 12px var(--box-border));
     animation: lb-float 3s ease-in-out infinite;
 }
+.lootbox-box-img {
+    width: 76px; height: 76px; object-fit: contain;
+    display: block; margin: 0 auto;
+    filter: drop-shadow(0 0 12px var(--box-border));
+}
 @keyframes lb-float {
     0%,100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
@@ -3771,7 +3776,8 @@ select option { background: var(--modal-bg); color: var(--text); }
     transition: transform 0.2s;
 }
 .lb-reveal-box-wrap:hover .lb-reveal-box { transform: scale(1.05); }
-.lb-reveal-box-icon { font-size: 4rem; filter: drop-shadow(0 0 16px rgba(255,255,255,0.5)); }
+.lb-reveal-box-icon { font-size: 4rem; filter: drop-shadow(0 0 16px rgba(255,255,255,0.5)); display: flex; align-items: center; justify-content: center; }
+.lb-reveal-box-img { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 16px rgba(255,255,255,0.5)); }
 @keyframes lb-box-pulse {
     0%,100% { box-shadow: 0 0 20px rgba(255,255,255,0.1); }
     50% { box-shadow: 0 0 40px rgba(255,255,255,0.25); }
@@ -3813,10 +3819,22 @@ select option { background: var(--modal-bg); color: var(--text); }
     opacity: 0;
     transform: scale(0.5) translateY(40px);
     transition: opacity 0.5s, transform 0.5s;
+    perspective: 1000px;
 }
 .lb-reveal-card-wrap.lb-card--appear {
     opacity: 1;
     transform: scale(1) translateY(0);
+}
+.lb-reveal-card-inner {
+    transform-style: preserve-3d;
+}
+/* Карточка крутится вокруг своей оси и плавно останавливается (как в Brawl Stars) */
+.lb-reveal-card-inner.lb-card--spin {
+    animation: lb-card-spin 1.3s cubic-bezier(0.15, 0.7, 0.25, 1) forwards;
+}
+@keyframes lb-card-spin {
+    from { transform: rotateY(1080deg); }
+    to   { transform: rotateY(0deg); }
 }
 .lb-reveal-card-inner .inv-card {
     width: 200px;

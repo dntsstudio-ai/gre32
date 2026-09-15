@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915g';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915g';
-import { getOddsMultiplier } from './vcoins.js?v=20260915g';
+import { esc, showToast } from './core.js?v=20260915h';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915h';
+import { getOddsMultiplier } from './vcoins.js?v=20260915h';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -105,7 +105,7 @@ async function renderLootboxPage(wrap, balance) {
                     <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openLootboxDefModal('${box.id}')">Ред</button>
                     <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteLootboxDef('${box.id}')">Удал</button>
                 </div>` : ''}
-                <div class="lootbox-box-icon">${box.icon}</div>
+                <div class="lootbox-box-icon">${box.imgClosed ? `<img src="${esc(box.imgClosed)}" class="lootbox-box-img" alt="">` : box.icon}</div>
                 <div class="lootbox-box-name">${esc(box.name)}</div>
                 <div class="lootbox-box-desc">${esc(box.desc)}</div>
                 <div class="lootbox-box-price">${box.currency === 'stars' ? `<i class="fas fa-star" style="color:#a78bfa;"></i> ${box.price} Старс` : `<i class="fas fa-coins"></i> ${box.price} VC`}</div>
@@ -199,6 +199,16 @@ window.selectLbdefCurrency = (cur) => {
     document.getElementById('lbdef-cur-stars').classList.toggle('btn-outline', cur !== 'stars');
 };
 
+window.selectLbdefPoolCat = (cat) => {
+    document.getElementById('lbdef-poolcat').value = cat;
+    ['', 'item', 'character', 'other'].forEach(c => {
+        const btn = document.getElementById('lbdef-pool-' + c);
+        if (!btn) return;
+        btn.classList.toggle('lbdef-pool-btn--active', c === cat);
+        btn.classList.toggle('btn-outline', c !== cat);
+    });
+};
+
 window.openLootboxDefModal = (id) => {
     const b = id ? _lootboxDefs.find(x => x.id === id) : null;
     document.getElementById('ed-lbdef-id').value    = id || '';
@@ -208,11 +218,14 @@ window.openLootboxDefModal = (id) => {
     document.getElementById('lbdef-price').value    = b?.price || 100;
     document.getElementById('lbdef-desc').value     = b?.desc  || '';
     document.getElementById('lbdef-color').value    = b?.border || '#7c3aed';
+    document.getElementById('lbdef-img-closed').value = b?.imgClosed || '';
+    document.getElementById('lbdef-img-open').value   = b?.imgOpen  || '';
     document.getElementById('lbdef-w-common').value    = b?.weights?.common    ?? 70;
     document.getElementById('lbdef-w-rare').value      = b?.weights?.rare      ?? 25;
     document.getElementById('lbdef-w-epic').value      = b?.weights?.epic     ?? 4;
     document.getElementById('lbdef-w-legendary').value = b?.weights?.legendary ?? 1;
     window.selectLbdefCurrency(b?.currency || 'vcoins');
+    window.selectLbdefPoolCat(b?.poolCategory || '');
     document.getElementById('m-lbdef-form').style.display = 'flex';
 };
 
@@ -237,8 +250,11 @@ window.saveLootboxDef = async () => {
         desc:  document.getElementById('lbdef-desc').value.trim(),
         gradient: `linear-gradient(135deg, ${color}88, ${color})`,
         border: color,
+        imgClosed: document.getElementById('lbdef-img-closed').value.trim(),
+        imgOpen:   document.getElementById('lbdef-img-open').value.trim(),
         weights,
         currency: document.getElementById('lbdef-currency')?.value || 'vcoins',
+        poolCategory: document.getElementById('lbdef-poolcat')?.value || '',
         order: id ? (_lootboxDefs.find(b=>b.id===id)?.order ?? 0) : _lootboxDefs.length,
     };
     if (!data.name) return showToast('Введите название ящика', 'error');
@@ -297,10 +313,15 @@ window.openLootbox = async function(boxId) {
             loadCustomCards()
         ]);
         const allMembers = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Ящики за Старс могут выдать предметы; обычные ящики — только карточки персонажей
-        const customCards = currency === 'stars'
-            ? allCustomCards.filter(cc => cc.cardType === 'item')
-            : allCustomCards.filter(cc => cc.cardType !== 'item');
+        // Если у ящика указан "пул карточек" — из особых карточек выпадают
+        // только карточки того же типа. Иначе — старое поведение по валюте
+        // (ящики за Старс могут выдать предметы, обычные — только персонажей).
+        // Участники состава (allMembers) в любом случае участвуют отдельно.
+        const customCards = box.poolCategory
+            ? allCustomCards.filter(cc => (cc.cardType || 'character') === box.poolCategory)
+            : (currency === 'stars'
+                ? allCustomCards.filter(cc => cc.cardType === 'item')
+                : allCustomCards.filter(cc => cc.cardType !== 'item'));
         if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
 
         const oddsM = await getOddsMultiplier();
@@ -344,21 +365,25 @@ window.openLootbox = async function(boxId) {
 };
 
 // ── Анимация раскрытия карточки ────────────────────────────────
+let _lastReveal = null;
+
 function showCardReveal(member, rarity, box, isCustom) {
     const r = RARITIES[rarity] || RARITIES.common;
+    _lastReveal = { member, rarity, isCustom };
 
     const overlay = document.createElement('div');
     overlay.id = 'lootbox-reveal-overlay';
     overlay.className = 'lb-reveal-overlay';
 
     const cardHtml = renderCard({ ...member, rarity }, { showActions: false, showDesc: true });
+    const closedBoxHtml = box.imgClosed ? `<img src="${esc(box.imgClosed)}" class="lb-reveal-box-img" alt="">` : box.icon;
 
     overlay.innerHTML = `
     <div class="lb-reveal-bg" style="--rarity-color:${r.color};--rarity-glow:${r.glow};"></div>
     <div class="lb-reveal-particles" id="lb-particles"></div>
     <div class="lb-reveal-box-wrap" id="lb-box-wrap">
         <div class="lb-reveal-box" style="background:${box.gradient};border-color:${box.border};">
-            <div class="lb-reveal-box-icon">${box.icon}</div>
+            <div class="lb-reveal-box-icon" id="lb-reveal-box-icon">${closedBoxHtml}</div>
         </div>
         <p class="lb-reveal-tap-hint">Нажмите, чтобы открыть</p>
     </div>
@@ -375,6 +400,9 @@ function showCardReveal(member, rarity, box, isCustom) {
         <div class="lb-reveal-actions">
             <button class="btn lb-btn-keep" onclick="keepCard()">
                 <i class="fas fa-briefcase"></i> В инвентарь
+            </button>
+            <button class="btn btn-outline" onclick="showLbCardDetails()">
+                <i class="fas fa-magnifying-glass"></i> Подробнее
             </button>
             <button class="btn lb-btn-sell" onclick="quickSellCard('${esc(member.id)}', ${r.sellPrice}, ${isCustom})">
                 <i class="fas fa-coins"></i> Продать за ${r.sellPrice} VC
@@ -394,7 +422,7 @@ function showCardReveal(member, rarity, box, isCustom) {
     if (boxWrap) {
         boxWrap.addEventListener('click', function onBoxClick() {
             boxWrap.removeEventListener('click', onBoxClick);
-            revealCard(r, isCustom, member);
+            revealCard(r, isCustom, member, box);
         }, { once: true });
     }
 
@@ -403,7 +431,39 @@ function showCardReveal(member, rarity, box, isCustom) {
     });
 }
 
-function revealCard(r, isCustom, member) {
+window.closeLbCardDetails = function() {
+    const overlay = document.getElementById('lb-detail-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('inv-zoom-overlay--visible');
+    setTimeout(() => overlay.remove(), 300);
+};
+
+window.showLbCardDetails = function() {
+    if (!_lastReveal) return;
+    const { member, rarity, isCustom } = _lastReveal;
+    const r = RARITIES[rarity] || RARITIES.common;
+    const overlay = document.createElement('div');
+    overlay.className = 'inv-zoom-overlay';
+    overlay.id = 'lb-detail-overlay';
+    overlay.innerHTML = `
+    <div class="inv-zoom-backdrop"></div>
+    <div class="inv-zoom-content">
+        <div class="inv-zoom-card-wrap">${renderCard({ ...member, rarity }, { showActions: false, showDesc: true, zoomable: false })}</div>
+        <div class="lb-reveal-actions">
+            ${isCustom ? `<div class="inv-card__chance-badge"><i class="fas fa-dice"></i> Шанс: ${member.dropChance || 1}%</div>` : ''}
+            <button class="btn btn-outline" onclick="closeLbCardDetails()">
+                <i class="fas fa-xmark"></i> Закрыть
+            </button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('inv-zoom-overlay--visible'));
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay || e.target.classList.contains('inv-zoom-backdrop')) window.closeLbCardDetails();
+    });
+};
+
+function revealCard(r, isCustom, member, box) {
     const boxWrap  = document.getElementById('lb-box-wrap');
     const cardWrap = document.getElementById('lb-card-wrap');
     if (!boxWrap || !cardWrap) return;
@@ -427,6 +487,11 @@ function revealCard(r, isCustom, member) {
     }
 
     setTimeout(() => {
+        // Если задана картинка "открытого" ящика — показываем её в момент взрыва
+        if (box?.imgOpen) {
+            const iconEl = document.getElementById('lb-reveal-box-icon');
+            if (iconEl) iconEl.innerHTML = `<img src="${esc(box.imgOpen)}" class="lb-reveal-box-img" alt="">`;
+        }
         boxWrap.classList.add('lb-box--explode');
 
         // Звук при выпадении (кастомный, уже разблокированный выше, или стандартный по редкости)
@@ -439,7 +504,10 @@ function revealCard(r, isCustom, member) {
         setTimeout(() => {
             boxWrap.style.display = 'none';
             cardWrap.style.display = 'flex';
-            requestAnimationFrame(() => cardWrap.classList.add('lb-card--appear'));
+            requestAnimationFrame(() => {
+                cardWrap.classList.add('lb-card--appear');
+                document.getElementById('lb-card-inner')?.classList.add('lb-card--spin');
+            });
             const bg = document.querySelector('.lb-reveal-bg');
             if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
         }, 400);
@@ -492,6 +560,8 @@ function closeReveal() {
         overlay.classList.remove('lb-reveal-overlay--visible');
         setTimeout(() => overlay.remove(), 400);
     }
+    window.closeLbCardDetails?.();
+    _lastReveal = null;
     const wrap = document.getElementById('lootbox-wrap');
     const { userData } = _getState();
     if (wrap) renderLootboxPage(wrap, userData?.vcoins || 0);
@@ -587,10 +657,12 @@ function playSound(type, rarityObj) {
 // ── Создание / редактирование кастомной карточки (только для админов) ──
 window.selectCardType = (type) => {
     document.getElementById('cc-cardtype').value = type;
-    document.getElementById('cc-type-character').classList.toggle('cc-type-btn--active', type === 'character');
-    document.getElementById('cc-type-character').classList.toggle('btn-outline', type !== 'character');
-    document.getElementById('cc-type-item').classList.toggle('cc-type-btn--active', type === 'item');
-    document.getElementById('cc-type-item').classList.toggle('btn-outline', type !== 'item');
+    ['character', 'item', 'other'].forEach(t => {
+        const btn = document.getElementById('cc-type-' + t);
+        if (!btn) return;
+        btn.classList.toggle('cc-type-btn--active', t === type);
+        btn.classList.toggle('btn-outline', t !== type);
+    });
 
     const isItem = type === 'item';
     document.getElementById('cc-prefix-label').textContent = isItem ? 'Категория предмета' : 'Префикс (над именем)';
