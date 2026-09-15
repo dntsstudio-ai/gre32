@@ -6,7 +6,7 @@ import {
     doc, getDocs, updateDoc, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showAchievementPopup } from './core.js?v=20260906e';
+import { esc, showToast, closeModals, showAchievementPopup, achIconHTML } from './core.js?v=20260906e';
 import { AUTO_ACHIEVEMENTS } from '../config/config.js?v=20260906e';
 
 let viewAchRealIdx = -1;
@@ -30,7 +30,7 @@ export function renderAchProfile(userData) {
         const div = document.createElement('div');
         div.className = 'ach-chip';
         div.title = a.name;
-        div.textContent = a.img;
+        div.innerHTML = achIconHTML(a.img);
         div.setAttribute('onclick', `viewAch(${a.realIdx})`);
         return div.outerHTML;
     }).join('');
@@ -72,7 +72,7 @@ export function bindAchievements(db, auth, getState) {
                 <div style="font-size:10px;font-weight:bold;">${esc(a.name)}</div>
                 <div style="font-size:9px;color:var(--text-dim);margin-top:4px;text-decoration:underline;"
                      onclick="event.stopPropagation();viewAch(${i})">Подробнее</div>`;
-            div.querySelector('div').textContent = a.img;
+            div.querySelector('div').innerHTML = achIconHTML(a.img);
             return div.outerHTML;
         }).join('');
 
@@ -103,7 +103,7 @@ export function bindAchievements(db, auth, getState) {
         const metaEl = document.getElementById('ach-v-meta');
         const delBtn = document.getElementById('btn-ach-del');
 
-        if (imgEl)  imgEl.textContent  = a.img;
+        if (imgEl)  imgEl.innerHTML    = achIconHTML(a.img);
         if (nameEl) nameEl.textContent = a.name;
         if (descEl) descEl.textContent = a.desc;
         if (metaEl) metaEl.innerHTML =

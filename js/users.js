@@ -7,7 +7,7 @@ import {
     query, where, increment, arrayUnion, arrayRemove, addDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, getRoleBadgeHTML } from './core.js?v=20260906e';
+import { esc, showToast, closeModals, navigate, getRoleBadgeHTML, achIconHTML } from './core.js?v=20260906e';
 import { checkAndAwardAch } from './achievements.js?v=20260906e';
 
 export function bindUsers(db, auth, getState) {
@@ -63,7 +63,7 @@ export function bindUsers(db, auth, getState) {
             if (achList) {
                 const achs = (u.achievements || []).filter(a => !a.hidden);
                 achList.innerHTML = achs.map(a =>
-                    `<div class="ach-chip" title="${esc(a.name)}">${a.img}</div>`
+                    `<div class="ach-chip" title="${esc(a.name)}">${achIconHTML(a.img)}</div>`
                 ).join('');
             }
 

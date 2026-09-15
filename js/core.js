@@ -5,6 +5,15 @@
 export const esc = (s) =>
     s ? s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
 
+// ── Иконка достижения: поддерживает и эмодзи, и вставленный вручную
+//    HTML-код иконки FontAwesome (напр. '<i class="fas fa-hand"></i>').
+//    Всё, что не похоже на такую иконку, экранируется и выводится как текст.
+const ACH_ICON_RE = /^<i\b[^>]*class=(["'])[^"']*\bfa\b[^"']*\1[^>]*><\/i>$/i;
+export function achIconHTML(img) {
+    const s = (img || '').toString().trim();
+    return ACH_ICON_RE.test(s) ? s : esc(s);
+}
+
 export const ROLE_LABELS = {
     admin:      { label:'АДМИНИСТРАТОР',  cls:'role-admin',      icon:'fa-shield-alt'       },
     proxyadmin: { label:'ПРОКСИ-АДМИН',   cls:'role-proxyadmin', icon:'fa-user-shield'       },
@@ -85,7 +94,7 @@ export function showAchievementPopup(ach, isFullscreen) {
     const popup = document.createElement('div');
     popup.id = 'ach-popup';
     popup.className = isFullscreen ? 'ach-popup ach-popup--fs' : 'ach-popup';
-    const imgDiv   = document.createElement('div'); imgDiv.className='ach-popup-img'; imgDiv.textContent=ach.img;
+    const imgDiv   = document.createElement('div'); imgDiv.className='ach-popup-img'; imgDiv.innerHTML=achIconHTML(ach.img);
     const textDiv  = document.createElement('div'); textDiv.className='ach-popup-text';
     const labelDiv = document.createElement('div'); labelDiv.className='ach-popup-label'; labelDiv.textContent='Новое достижение!';
     const nameDiv  = document.createElement('div'); nameDiv.className='ach-popup-name'; nameDiv.textContent=ach.name;
