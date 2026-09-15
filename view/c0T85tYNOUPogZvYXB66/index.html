@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915o';
+        var CURRENT = '20260915p';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -76,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915o">
+    <link rel="stylesheet" href="/css/style.css?v=20260915p">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -1897,7 +1897,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915o"></script>
+<script type="module" src="/js/app.js?v=20260915p"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
