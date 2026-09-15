@@ -3277,17 +3277,15 @@ select option { background: var(--modal-bg); color: var(--text); }
     width: 40px; height: 20px;
     margin: -10px 0 0 -20px;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; font-size: 13px;
+    color: #fff; font-weight: 800; font-size: 14px;
     font-family: var(--font-display);
     text-shadow: 0 1px 3px rgba(0,0,0,0.9);
     pointer-events: none;
 }
+.wheel-seg-label--lose { color: #fca5a5; font-size: 16px; }
 .wheel-ring-img {
-    /* Совпадает по размеру с колесом — рамка своим ободом ложится точно
-       по краю, без риска перекрыть подписи множителей внутри */
     position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
+    width: 116%; height: 116%; left: -8%; top: -8%;
     pointer-events: none;
     z-index: 2;
 }
@@ -3321,9 +3319,7 @@ select option { background: var(--modal-bg); color: var(--text); }
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
 }
 .wheel-pointer-img {
-    /* Картинка — цепочка+держатель+наконечник одним изображением: почти
-       вся картинка висит НАД колесом, только кончик стрелки касается обода */
-    top: -66px;
+    top: -42px;
     width: 60px;
 }
 .wheel-pointer-fallback {

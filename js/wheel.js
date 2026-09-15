@@ -1,9 +1,9 @@
 // ============================================================
 //  js/wheel.js — Мини-игра: Колесо Фортуны
 // ============================================================
-import { esc, showToast } from './core.js?v=20260915n';
-import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915n';
-import { checkAndAwardAch } from './achievements.js?v=20260915n';
+import { esc, showToast } from './core.js?v=20260915o';
+import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915o';
+import { checkAndAwardAch } from './achievements.js?v=20260915o';
 
 let _db, _auth, _getState;
 let _wheelSpinning = false;
@@ -41,9 +41,15 @@ function buildWheelGradient() {
 }
 
 function buildWheelLabels() {
+    // Радиус подписи — заметно ближе к центру, чем край колеса: снаружи
+    // их закрывает металлический обод рамки-кольца (сама рамка — картинка
+    // сверху, и с ней нельзя точно угадать, где у неё "прозрачная" часть).
+    // Проигрышный сектор (0×) подписываем крестиком — понятнее, чем "0×".
     return SEGMENTS.map((s, i) => {
         const angle = i * SEG_ANGLE + SEG_ANGLE / 2;
-        return `<span class="wheel-seg-label" style="transform:rotate(${angle}deg) translateY(-108px) rotate(${-angle}deg);">${s.mult}×</span>`;
+        const label = s.mult === 0 ? '<i class="fas fa-xmark"></i>' : `${s.mult}×`;
+        const cls = s.mult === 0 ? 'wheel-seg-label wheel-seg-label--lose' : 'wheel-seg-label';
+        return `<span class="${cls}" style="transform:rotate(${angle}deg) translateY(-75px) rotate(${-angle}deg);">${label}</span>`;
     }).join('');
 }
 

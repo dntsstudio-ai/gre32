@@ -6,7 +6,7 @@ import {
     collection, getDocs, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
     doc, query, where, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast, closeModals, ROLE_LABELS } from './core.js?v=20260915n';
+import { esc, showToast, closeModals, ROLE_LABELS } from './core.js?v=20260915o';
 
 let _db, _auth, _getState;
 

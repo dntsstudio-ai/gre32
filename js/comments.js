@@ -7,8 +7,8 @@ import {
     doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast } from './core.js?v=20260915n';
-import { checkAndAwardAch } from './achievements.js?v=20260915n';
+import { esc, showToast } from './core.js?v=20260915o';
+import { checkAndAwardAch } from './achievements.js?v=20260915o';
 
 export async function loadComments(db, auth, curProj, userData, isAdmin) {
     if (!curProj) return;
