@@ -1,9 +1,9 @@
 // ============================================================
 //  js/wheel.js — Мини-игра: Колесо Фортуны
 // ============================================================
-import { esc, showToast } from './core.js?v=20260915m';
-import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915m';
-import { checkAndAwardAch } from './achievements.js?v=20260915m';
+import { esc, showToast } from './core.js?v=20260915n';
+import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915n';
+import { checkAndAwardAch } from './achievements.js?v=20260915n';
 
 let _db, _auth, _getState;
 let _wheelSpinning = false;
@@ -11,9 +11,9 @@ let _wheelRotation = 0; // накопленный угол — крутим вс
 
 // ── Картинки оформления (арт от админа) — если не заданы, используется
 //    простой запасной вариант без картинок, игра всё равно работает ──
-const WHEEL_RING_IMG    = '';
-const WHEEL_HUB_IMG     = '';
-const WHEEL_POINTER_IMG = '';
+const WHEEL_RING_IMG    = 'https://i.ibb.co/KcTkpk7q/Chat-GPT-Image-16-2026-00-52-33.png';
+const WHEEL_HUB_IMG     = 'https://i.ibb.co/3y2DpyGk/Chat-GPT-Image-16-2026-00-51-24.png';
+const WHEEL_POINTER_IMG = 'https://i.ibb.co/bRy1LbRV/Chat-GPT-Image-16-2026-00-49-49.png';
 
 // ── Сегменты колеса: множитель + цвет. 8 секторов по 45°.
 //    Сумма/8 — средняя отдача (сейчас 0.9375, т.е. ~6% в пользу студии) ──

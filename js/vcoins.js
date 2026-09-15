@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915m';
-import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260915m';
-import { checkAndAwardAch } from './achievements.js?v=20260915m';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915n';
+import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260915n';
+import { checkAndAwardAch } from './achievements.js?v=20260915n';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
