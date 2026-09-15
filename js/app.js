@@ -26,6 +26,7 @@ import { bindNotifications, listenNotifications } from './notifications.js?v=202
 import { bindUserSearch, bindProfileWall } from './users_search.js?v=20260906e';
 import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260906e';
 import { bindBanners } from './banners.js?v=20260906e';
+import { bindShopSlides } from './shopSlides.js?v=20260906e';
 import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js?v=20260906e';
 
 const app  = initializeApp(FIREBASE_CONFIG);
@@ -62,6 +63,7 @@ bindRatings(db, auth, getState);
 bindVCoins(db, auth, getState);
 bindInventory(db, auth, getState);
 bindLootbox(db, auth, getState);
+bindShopSlides(db, auth, getState);
 bindNotifications(db, auth, getState);
 bindUserSearch(db, auth, getState);
 bindProfileWall(db, auth, getState);
@@ -87,6 +89,7 @@ window.navigate = function(page, pushState) {
     if (page === 'stats')     window.loadStatsPage?.();
     if (page === 'inventory') { if (!state.userData) { navigate('profile', pushState); return; } window.loadInventory?.(); }
     if (page === 'lootbox')   { if (!state.userData) { navigate('profile', pushState); return; } window.renderLootboxGame?.(document.getElementById('lootbox-wrap'), state.userData?.vcoins || 0); }
+    if (page === 'games')     { if (!state.userData) { navigate('profile', pushState); return; } window.renderGamesPage?.(document.getElementById('games-wrap')); }
     if (page === 'playlists') { if (!state.userData) { navigate('profile', pushState); return; } window.loadPlaylistsPage?.(); }
     if (page === 'profile' && state.userData) { window.loadMyLists?.(); window.loadProfileWall?.(auth.currentUser?.uid); }
 };

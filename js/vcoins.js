@@ -21,6 +21,20 @@ async function loadPrices() {
     } catch(e) {}
 }
 
+// ── Синхронизация отображения баланса во всех местах, где он показан ──
+function syncVCoinsUI(val) {
+    ['u-vcoins', 'sn-shop-balance', 'lb-mini-vcoins', 'header-vcoins', 'games-mini-vcoins'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    });
+}
+function syncVStarsUI(val) {
+    ['u-vstars', 'lb-mini-stars', 'header-stars'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    });
+}
+
 // ── Начислить VCoins ──
 export async function awardVCoins(amount, reason) {
     if (!_auth?.currentUser) return;
@@ -30,14 +44,7 @@ export async function awardVCoins(amount, reason) {
     try {
         await updateDoc(doc(_db, 'users', uid), { vcoins: increment(amount) });
         userData.vcoins = (userData.vcoins || 0) + amount;
-        const el = document.getElementById('u-vcoins');
-        if (el) el.textContent = userData.vcoins;
-        const shopBal = document.getElementById('sn-shop-balance');
-        if (shopBal) shopBal.textContent = userData.vcoins;
-        const lbBal = document.getElementById('lb-mini-vcoins');
-        if (lbBal) lbBal.textContent = userData.vcoins;
-        const hdrVC = document.getElementById('header-vcoins');
-        if (hdrVC) hdrVC.textContent = userData.vcoins;
+        syncVCoinsUI(userData.vcoins);
         showVCoinsPopup(amount, reason);
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount, reason, date: Date.now(), type: 'earn' });
         if (userData.vcoins >= 1000) await checkAndAwardAch(_db, _auth, userData, 'vcoins_1000');
@@ -54,17 +61,20 @@ async function spendVCoins(amount, reason) {
     try {
         await updateDoc(doc(_db, 'users', uid), { vcoins: increment(-amount) });
         userData.vcoins = balance - amount;
-        const el = document.getElementById('u-vcoins');
-        if (el) el.textContent = userData.vcoins;
-        const shopBal = document.getElementById('sn-shop-balance');
-        if (shopBal) shopBal.textContent = userData.vcoins;
-        const lbBal = document.getElementById('lb-mini-vcoins');
-        if (lbBal) lbBal.textContent = userData.vcoins;
-        const hdrVC = document.getElementById('header-vcoins');
-        if (hdrVC) hdrVC.textContent = userData.vcoins;
+        syncVCoinsUI(userData.vcoins);
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: -amount, reason, date: Date.now(), type: 'spend' });
         return true;
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
+}
+
+// ── Счётчик побед в играх (для топа "по играм") ──
+async function incrementGamesWon() {
+    const { userData } = _getState();
+    if (!userData || !_auth.currentUser) return;
+    try {
+        await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { gamesWon: increment(1) });
+        userData.gamesWon = (userData.gamesWon || 0) + 1;
+    } catch(e) { console.warn('incrementGamesWon:', e); }
 }
 
 // ── Старс (донат-валюта) — трата ──
@@ -77,12 +87,7 @@ async function spendVStars(amount, reason) {
     try {
         await updateDoc(doc(_db, 'users', uid), { vstars: increment(-amount) });
         userData.vstars = balance - amount;
-        const el = document.getElementById('u-vstars');
-        if (el) el.textContent = userData.vstars;
-        const lbBal = document.getElementById('lb-mini-stars');
-        if (lbBal) lbBal.textContent = userData.vstars;
-        const hdrStars = document.getElementById('header-stars');
-        if (hdrStars) hdrStars.textContent = userData.vstars;
+        syncVStarsUI(userData.vstars);
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: -amount, reason, date: Date.now(), type: 'spend_stars' });
         return true;
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
@@ -106,12 +111,9 @@ window.redeemPromoCode = async function() {
         if (promo.maxUses && usedBy.length >= promo.maxUses) return showToast('У промокода закончились активации', 'error');
 
         await updateDoc(doc(_db, 'promoCodes', code), { usedBy: [...usedBy, uid] });
-        await updateDoc(doc(_db, 'users', uid), { vstars: increment(promo.amount) });
+        await updateDoc(doc(_db, 'users', uid), { vstars: increment(promo.amount), totalStarsDonated: increment(promo.amount) });
         userData.vstars = (userData.vstars || 0) + promo.amount;
-        const el = document.getElementById('u-vstars');
-        if (el) el.textContent = userData.vstars;
-        const hdrStars = document.getElementById('header-stars');
-        if (hdrStars) hdrStars.textContent = userData.vstars;
+        syncVStarsUI(userData.vstars);
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: promo.amount, reason: 'Промокод: ' + code, date: Date.now(), type: 'promo_stars' });
         showToast(`<i class="fas fa-star"></i> +${promo.amount} Старс за промокод!`);
         if (input) input.value = '';
@@ -188,14 +190,57 @@ const NICK_COLORS = [
     { name:'Небесный',   hex:'#38bdf8' }, { name:'Белый',     hex:'#f0eeff' },
 ];
 
+function renderShopCustomizeList() {
+    const { userData } = _getState();
+    const listEl = document.getElementById('shop-customize-list');
+    if (!listEl) return;
+    listEl.innerHTML = SHOP_ITEMS.map(item => {
+        const price = _prices[item.priceKey] || 999;
+        const owned = userData?.shopItems?.includes(item.id);
+        return `<div class="shop-card ${owned ? 'shop-card--owned' : ''}">
+            <div class="shop-card-icon">${item.icon}</div>
+            <div class="shop-card-name">${esc(item.name)}</div>
+            <div class="shop-card-desc">${esc(item.desc)}</div>
+            <div class="shop-card-footer">
+                <span class="shop-price"><i class="fas fa-coins"></i> ${price}</span>
+                ${owned
+                    ? `<button class="btn btn-sm" style="background:var(--teal);" onclick="activateShopItem('${item.id}')">Активировать</button>`
+                    : `<button class="btn btn-sm btn-blue" onclick="buyShopItem('${item.id}')">Купить</button>`}
+            </div>
+        </div>`;
+    }).join('');
+    window.syncShopAccHeight?.(listEl.closest('.acc'));
+}
+
+// ── Раскрытие/сворачивание разделов магазина (высота считается по контенту) ──
+window.toggleShopAcc = function(headEl) {
+    const acc  = headEl.closest('.acc');
+    const body = acc.querySelector('.acc-body');
+    if (!acc || !body) return;
+    if (acc.classList.contains('open')) {
+        acc.classList.remove('open');
+        body.style.maxHeight = '0px';
+    } else {
+        acc.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+    }
+};
+window.syncShopAccHeight = function(acc) {
+    if (!acc || !acc.classList.contains('open')) return;
+    const body = acc.querySelector('.acc-body');
+    if (body) body.style.maxHeight = body.scrollHeight + 'px';
+};
+
 function renderShopPage() {
     const wrap = document.getElementById('shop-wrap');
     if (!wrap) return;
-    const { userData } = _getState();
+    const { userData, isAdmin } = _getState();
     const balance = userData?.vcoins || 0;
     const stars   = userData?.vstars || 0;
 
     wrap.innerHTML = `
+    <div class="shop-hero" id="shop-hero"></div>
+
     <div class="shop-balance-bar">
         <div class="shop-balance-inner">
             <span class="shop-balance-icon"><i class="fas fa-coins"></i></span>
@@ -209,83 +254,100 @@ function renderShopPage() {
         </div>
         <button class="btn btn-outline btn-sm" onclick="openGiftModal()"><i class="fas fa-gift"></i> Подарить</button>
         <button class="btn btn-outline btn-sm" onclick="openVcoinHistory()"><i class="fas fa-history"></i> История</button>
-        ${_getState().isAdmin ? `<button class="btn btn-outline btn-sm" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="openPromoAdmin()"><i class="fas fa-ticket"></i> Промокоды</button>` : ''}
+        ${isAdmin ? `<button class="btn btn-outline btn-sm" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="openPromoAdmin()"><i class="fas fa-ticket"></i> Промокоды</button>` : ''}
     </div>
 
-    <div class="shop-section-title" style="margin-top:24px;"><i class="fas fa-star" style="color:#a78bfa;"></i> Купить Старс</div>
-    <div class="stars-pack-grid">
-        ${STARS_PACKS.map(p => `
-        <div class="stars-pack-card">
-            <div class="stars-pack-icon"><i class="fas fa-star"></i></div>
-            <div class="stars-pack-amount">${p.amount}</div>
-            <div class="stars-pack-label">Старс</div>
-            <div class="stars-pack-price">${p.price} ₽</div>
-            <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);" onclick="buyStarsPack(${p.amount}, ${p.price})">Купить</button>
-        </div>`).join('')}
+    <div class="acc open" data-cat="donate">
+        <div class="art-head" onclick="toggleShopAcc(this)">
+            <i class="fas fa-hand-holding-dollar art-motif"></i>
+            <div class="art-eyebrow">Магазин</div>
+            <div class="art-title">Донат</div>
+            <div class="art-sub">Купить Старс · промокод</div>
+            <i class="fas fa-chevron-down art-chevron"></i>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+            <div class="stars-pack-grid">
+                ${STARS_PACKS.map(p => `
+                <div class="stars-pack-card">
+                    <div class="stars-pack-icon"><i class="fas fa-star"></i></div>
+                    <div class="stars-pack-amount">${p.amount}</div>
+                    <div class="stars-pack-label">Старс</div>
+                    <div class="stars-pack-price">${p.price} ₽</div>
+                    <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);" onclick="buyStarsPack(${p.amount}, ${p.price})">Купить</button>
+                </div>`).join('')}
+            </div>
+            <p style="font-size:11px;color:var(--text-dim);margin:14px 0 0;font-style:italic;">Оплата через СБП/карту (Robokassa) — <a href="/oferta" target="_blank" style="color:var(--teal);">условия оказания услуг</a></p>
+            <div class="promo-code-bar" style="margin-top:14px;">
+                <input type="text" id="promo-code-input" placeholder="Есть промокод? Введите здесь" style="text-transform:uppercase;">
+                <button class="btn btn-sm btn-purple" onclick="redeemPromoCode()"><i class="fas fa-ticket"></i> Активировать</button>
+            </div>
+        </div></div>
     </div>
-    <p style="font-size:11px;color:var(--text-dim);margin:-4px 0 28px;font-style:italic;">Оплата через СБП/карту (Robokassa) — <a href="/oferta" target="_blank" style="color:var(--teal);">условия оказания услуг</a> · есть промокод? <a href="javascript:void(0)" onclick="openPromoModal()" style="color:#a78bfa;">введите здесь</a></p>
 
-    <div class="shop-section-title"><i class="fas fa-th-large"></i> Разделы</div>
-    <div class="shop-grid shop-grid--games">
-        <div class="shop-game-card" onclick="openShopCustomize()">
-            <div class="shop-game-icon"><i class="fas fa-palette"></i></div>
-            <div class="shop-game-name">Кастомизация</div>
-            <div class="shop-game-desc">Цвет ника и префиксы</div>
+    <div class="acc" data-cat="games">
+        <div class="art-head" onclick="navigate('games')">
+            <i class="fas fa-gamepad art-motif"></i>
+            <div class="art-eyebrow">Отдельная страница</div>
+            <div class="art-title">Игры</div>
+            <div class="art-sub">Монетка · Слоты · Ракета · Чёрная дыра</div>
+            <div class="art-goarrow">Перейти <i class="fas fa-arrow-right"></i></div>
         </div>
-        <div class="shop-game-card" onclick="openShopGamesHub()">
-            <div class="shop-game-icon"><i class="fas fa-gamepad"></i></div>
-            <div class="shop-game-name">Мини-игры</div>
-            <div class="shop-game-desc">Монетка, слоты, ракета, чёрная дыра</div>
+    </div>
+
+    <div class="acc" data-cat="boxes">
+        <div class="art-head" onclick="navigate('lootbox')">
+            <i class="fas fa-box-open art-motif"></i>
+            <div class="art-eyebrow">Отдельная страница</div>
+            <div class="art-title">Ящики</div>
+            <div class="art-sub">Карточки участников студии</div>
+            <div class="art-goarrow">Перейти <i class="fas fa-arrow-right"></i></div>
         </div>
-        <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
-            <div class="shop-game-icon"><i class="fas fa-box-open"></i></div>
-            <div class="shop-game-name">Ящики</div>
-            <div class="shop-game-desc">Открывай ящики и собирай карточки участников студии</div>
+    </div>
+
+    <div class="acc open" data-cat="custom">
+        <div class="art-head" onclick="toggleShopAcc(this)">
+            <i class="fas fa-palette art-motif"></i>
+            <div class="art-eyebrow">Профиль</div>
+            <div class="art-title">Кастомизация</div>
+            <div class="art-sub">Цвет ника · префиксы</div>
+            <i class="fas fa-chevron-down art-chevron"></i>
         </div>
-        <div class="shop-game-card" onclick="openShopLeaderboards()">
-            <div class="shop-game-icon"><i class="fas fa-trophy"></i></div>
-            <div class="shop-game-name">Топ игроков</div>
-            <div class="shop-game-desc">Рейтинг по VCoins и открытым ящикам</div>
+        <div class="acc-body"><div class="acc-body-inner">
+            <div class="shop-grid" id="shop-customize-list"></div>
+        </div></div>
+    </div>
+
+    <div class="acc open" data-cat="tops">
+        <div class="art-head" onclick="toggleShopAcc(this)">
+            <i class="fas fa-trophy art-motif"></i>
+            <div class="art-eyebrow">Рейтинг</div>
+            <div class="art-title">Топы</div>
+            <div class="art-sub">VCoins · Ящики · Донаты · Игры</div>
+            <i class="fas fa-chevron-down art-chevron"></i>
         </div>
+        <div class="acc-body"><div class="acc-body-inner">
+            <div class="top-tabs">
+                <button class="top-tab active" onclick="shopTopTab(this,'vcoins')"><i class="fas fa-coins"></i> VCoins</button>
+                <button class="top-tab" onclick="shopTopTab(this,'boxes')"><i class="fas fa-box-open"></i> Ящики</button>
+                <button class="top-tab" onclick="shopTopTab(this,'donate')"><i class="fas fa-star"></i> Донаты</button>
+                <button class="top-tab" onclick="shopTopTab(this,'games')"><i class="fas fa-gamepad"></i> Игры</button>
+            </div>
+            <div class="top-list" id="lb-panel-vcoins" data-panel="vcoins"><div class="lb-loading">Загрузка...</div></div>
+            <div class="top-list" id="lb-panel-boxes" data-panel="boxes" style="display:none;"><div class="lb-loading">Загрузка...</div></div>
+            <div class="top-list" id="lb-panel-donate" data-panel="donate" style="display:none;"><div class="lb-loading">Загрузка...</div></div>
+            <div class="top-list" id="lb-panel-games" data-panel="games" style="display:none;"><div class="lb-loading">Загрузка...</div></div>
+        </div></div>
     </div>`;
+
+    renderShopCustomizeList();
+    window.loadInlineLeaderboards?.();
+    window.renderShopSlides?.(document.getElementById('shop-hero'), isAdmin);
+
+    // У открытых по умолчанию разделов замеряем реальную высоту контента после рендера
+    requestAnimationFrame(() => {
+        wrap.querySelectorAll('.acc.open').forEach(acc => window.syncShopAccHeight(acc));
+    });
 }
-
-// ── Разделы магазина: модалки, открываемые по клику на плитку ──
-window.openShopCustomize = function() {
-    const { userData } = _getState();
-    const listEl = document.getElementById('shop-customize-list');
-    if (listEl) {
-        listEl.innerHTML = SHOP_ITEMS.map(item => {
-            const price = _prices[item.priceKey] || 999;
-            const owned = userData?.shopItems?.includes(item.id);
-            return `<div class="shop-card ${owned ? 'shop-card--owned' : ''}">
-                <div class="shop-card-icon">${item.icon}</div>
-                <div class="shop-card-name">${esc(item.name)}</div>
-                <div class="shop-card-desc">${esc(item.desc)}</div>
-                <div class="shop-card-footer">
-                    <span class="shop-price"><i class="fas fa-coins"></i> ${price}</span>
-                    ${owned
-                        ? `<button class="btn btn-sm" style="background:var(--teal);" onclick="activateShopItem('${item.id}')">Активировать</button>`
-                        : `<button class="btn btn-sm btn-blue" onclick="buyShopItem('${item.id}')">Купить</button>`}
-                </div>
-            </div>`;
-        }).join('');
-    }
-    document.getElementById('m-shop-customize').style.display = 'flex';
-};
-
-window.openShopGamesHub = function() {
-    document.getElementById('m-shop-games').style.display = 'flex';
-};
-
-window.openShopLeaderboards = function() {
-    document.getElementById('m-shop-leaderboards').style.display = 'flex';
-    window.loadInlineLeaderboards();
-};
-
-window.openPromoModal = function() {
-    document.getElementById('m-shop-promo').style.display = 'flex';
-};
 
 async function buyShopItem(itemId) {
     const { userData } = _getState();
@@ -308,7 +370,7 @@ async function buyShopItem(itemId) {
         await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { shopItems: owned });
         userData.shopItems = owned;
         showToast('<i class="fas fa-circle-check"></i> Куплено: ' + item.name);
-        window.openShopCustomize();
+        renderShopCustomizeList();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 }
 
@@ -323,7 +385,7 @@ async function activateShopItem(itemId) {
             await updateDoc(doc(_db, 'users', uid), { activePrefix: item.value });
             userData.activePrefix = item.value;
             showToast('Префикс [' + item.value + '] активирован!');
-            window.openShopCustomize();
+            renderShopCustomizeList();
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     }
 }
@@ -334,6 +396,40 @@ function openGame(type) {
     closeModals();
     document.getElementById('m-game').style.display = 'flex';
     renderGame(type);
+}
+
+// ── Страница "Игры" (отдельная страница, как /lootbox) ──
+function renderGamesPage(wrap) {
+    if (!wrap) return;
+    const { userData } = _getState();
+    const balance = userData?.vcoins || 0;
+
+    wrap.innerHTML = `
+    <div class="lootbox-mini-balance" style="margin-bottom:20px;display:inline-flex;">
+        <i class="fas fa-coins" style="color:#fbbf24;"></i> <b id="games-mini-vcoins">${balance}</b> VC
+    </div>
+    <div class="shop-grid shop-grid--games">
+        <div class="shop-game-card" onclick="openGame('coinflip')">
+            <div class="shop-game-icon"><i class="fas fa-coins"></i></div>
+            <div class="shop-game-name">Монетка</div>
+            <div class="shop-game-desc">Орёл или решка — удвой ставку</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('slots')">
+            <div class="shop-game-icon"><i class="fas fa-dice"></i></div>
+            <div class="shop-game-name">Слоты</div>
+            <div class="shop-game-desc">Три символа — выиграй до 10× ставки</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('rocket')">
+            <div class="shop-game-icon"><i class="fas fa-rocket"></i></div>
+            <div class="shop-game-name">Ракета</div>
+            <div class="shop-game-desc">Чем дольше летит — тем больше множитель</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('plinko')">
+            <div class="shop-game-icon"><i class="fas fa-meteor"></i></div>
+            <div class="shop-game-name">Чёрная дыра</div>
+            <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
+        </div>
+    </div>`;
 }
 
 function renderGame(type) {
@@ -469,6 +565,7 @@ window.playCoinflip = async function(choice) {
             await awardVCoins(bet*2, 'Монетка — выигрыш');
             if (resEl) resEl.innerHTML = `<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Выигрыш! +${bet} VC</span>`;
             await checkAndAwardAch(_db, _auth, userData, 'game_win');
+            await incrementGamesWon();
         } else {
             if (resEl) resEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Проигрыш! -${bet} VC</span>`;
         }
@@ -534,6 +631,7 @@ window.playSlots = async function() {
                     await awardVCoins(prize, 'Слоты — выигрыш ×'+mult);
                     if (resEl) resEl.innerHTML=`<span style="color:var(--teal)"><i class="fas fa-champagne-glasses"></i> ×${mult} Выигрыш! +${prize-bet} VC</span>`;
                     await checkAndAwardAch(_db, _auth, userData, 'game_win');
+                    await incrementGamesWon();
                 } else {
                     if (resEl) resEl.innerHTML=`<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Нет совпадений. -${bet} VC</span>`;
                 }
@@ -697,7 +795,7 @@ window.cashOutRocket = async function() {
     if (cashBtn)  { cashBtn.disabled=true; }
     const balEl = document.querySelector('.game-balance b');
     if (balEl) balEl.textContent=(userData?.vcoins||0)+' VC';
-    if (_rocketMult >= 3) await checkAndAwardAch(_db, _auth, userData, 'game_win');
+    if (_rocketMult >= 3) { await checkAndAwardAch(_db, _auth, userData, 'game_win'); await incrementGamesWon(); }
 };
 
 // ═══════════════════════════════════════════════════════
@@ -887,6 +985,7 @@ window.cashOutRocket = async function() {
                     await awardVCoins(prize,'Чёрная дыра — выигрыш ×'+mult);
                     if(resEl) resEl.innerHTML=`<span style="color:var(--teal)"><i class="fas fa-wand-magic-sparkles"></i> ×${mult} Выигрыш! +${prize-bet} VC</span>`;
                     await checkAndAwardAch(_db,_auth,userData,'game_win');
+                    await incrementGamesWon();
                 } else {
                     _plinkoWinStreak=0;
                     if(prize>0) await awardVCoins(prize,'Чёрная дыра — возврат ×'+mult);
@@ -1001,7 +1100,7 @@ window.selectNickColor = async function(hex) {
         userData.shopItems = [...(userData.shopItems||[]), 'colorNick'];
         showToast('Цвет ника изменён!');
         closeModals();
-        window.openShopCustomize();
+        renderShopCustomizeList();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 };
 
@@ -1013,6 +1112,7 @@ export function bindVCoins(db, auth, getState) {
     window.spendVStarsGlobal = spendVStars;
 
     window.openGame         = openGame;
+    window.renderGamesPage  = renderGamesPage;
     window.buyShopItem      = buyShopItem;
     window.activateShopItem = activateShopItem;
 
@@ -1097,7 +1197,13 @@ window.renderNickColorPicker = function() {
         ).join('');
     };
 
-    // ── Топы (встроены прямо в магазин, без кнопки/модалки) ──
+    // ── Топы (встроены прямо в магазин, раздел "Топы") ──
+    const LB_ICON = {
+        vcoins:            '<i class="fas fa-coins"></i>',
+        lootboxesOpened:   '<i class="fas fa-box-open"></i>',
+        totalStarsDonated: '<i class="fas fa-star"></i>',
+        gamesWon:          '<i class="fas fa-gamepad"></i>',
+    };
     async function loadLeaderboardInto(elId, field) {
         const el = document.getElementById(elId);
         if (!el) return;
@@ -1108,20 +1214,32 @@ window.renderNickColorPicker = function() {
             const medals = ['<i class="fas fa-medal" style="color:#fbbf24;"></i>', '<i class="fas fa-medal" style="color:#cbd5e1;"></i>', '<i class="fas fa-medal" style="color:#d97706;"></i>'];
             el.innerHTML = snap.docs.map((d, i) => {
                 const u = d.data();
-                const val = field === 'lootboxesOpened' ? (u.lootboxesOpened || 0) : (u.vcoins || 0);
+                const val = u[field] || 0;
                 return `<div class="lb-row" onclick="openUserProfile('${d.id}')">
                     <span class="lb-rank">${i < 3 ? medals[i] : (i+1)}</span>
                     <img src="${u.avatar || 'https://api.dicebear.com/7.x/identicon/svg'}" class="lb-ava" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg'">
                     <span class="lb-nick">${esc(u.nickname || 'Без имени')}</span>
-                    <span class="lb-val">${val}${field==='lootboxesOpened'?' <i class="fas fa-box-open"></i>':' <i class="fas fa-coins"></i>'}</span>
+                    <span class="lb-val">${val} ${LB_ICON[field] || ''}</span>
                 </div>`;
             }).join('');
         } catch(e) {
             el.innerHTML = '<div class="lb-loading" style="color:#ef4444;">Ошибка: ' + esc(e.message) + '</div>';
         }
+        window.syncShopAccHeight?.(el.closest('.acc'));
     }
     window.loadInlineLeaderboards = function() {
         loadLeaderboardInto('lb-panel-vcoins', 'vcoins');
         loadLeaderboardInto('lb-panel-boxes', 'lootboxesOpened');
+        loadLeaderboardInto('lb-panel-donate', 'totalStarsDonated');
+        loadLeaderboardInto('lb-panel-games', 'gamesWon');
+    };
+
+    // ── Переключение вкладок внутри раздела "Топы" ──
+    window.shopTopTab = function(btn, panel) {
+        const wrap = btn.closest('.acc-body-inner');
+        wrap.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        wrap.querySelectorAll('.top-list').forEach(l => l.style.display = l.dataset.panel === panel ? 'flex' : 'none');
+        window.syncShopAccHeight?.(btn.closest('.acc'));
     };
 }

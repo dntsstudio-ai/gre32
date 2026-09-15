@@ -910,6 +910,20 @@ window.yaContextCb.push(() => {
     <div id="lootbox-wrap"></div>
 </section>
 
+<!-- ===== ИГРЫ ===== -->
+<section id="games" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+        <div>
+            <button class="btn btn-outline btn-sm" onclick="navigate('shop')" style="margin-bottom:12px;"><i class="fas fa-arrow-left"></i> Магазин</button>
+            <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,#5eead4,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                <i class="fas fa-gamepad" style="-webkit-text-fill-color:#5eead4;margin-right:10px;"></i>Мини-игры
+            </h1>
+            <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Испытай удачу и заработай VCoins</p>
+        </div>
+    </div>
+    <div id="games-wrap"></div>
+</section>
+
 <!-- ===== ИНВЕНТАРЬ ===== -->
 <section id="inventory" class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
@@ -1385,64 +1399,53 @@ window.yaContextCb.push(() => {
     <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
 </div></div>
 
-<!-- ===== МОДАЛКА: Кастомизация профиля (магазин) ===== -->
-<div id="m-shop-customize" class="modal"><div class="modal-content" style="max-width:640px;">
-    <h3 style="margin-bottom:16px;"><i class="fas fa-palette" style="color:var(--violet-light);margin-right:8px;"></i>Кастомизация профиля</h3>
-    <div class="shop-grid" id="shop-customize-list"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<!-- ===== МОДАЛКА: Мини-игры (выбор игры) ===== -->
-<div id="m-shop-games" class="modal"><div class="modal-content" style="max-width:560px;">
-    <h3 style="margin-bottom:16px;"><i class="fas fa-gamepad" style="color:var(--violet-light);margin-right:8px;"></i>Мини-игры</h3>
-    <div class="shop-grid shop-grid--games">
-        <div class="shop-game-card" onclick="openGame('coinflip')">
-            <div class="shop-game-icon"><i class="fas fa-coins"></i></div>
-            <div class="shop-game-name">Монетка</div>
-            <div class="shop-game-desc">Орёл или решка — удвой ставку</div>
+<!-- ===== МОДАЛКА: Промо-слайд (карусель магазина, только для админов) ===== -->
+<div id="m-slide-form" class="modal"><div class="modal-content" style="max-width:460px;">
+    <h3 style="margin-bottom:16px;"><i class="fas fa-images" style="color:var(--violet-light);margin-right:8px;"></i>Промо-слайд</h3>
+    <input type="hidden" id="sl-id">
+    <label class="order-label">Тег (эйбrow)</label>
+    <input type="text" id="sl-eyebrow" placeholder="Например: Донат">
+    <label class="order-label">Заголовок</label>
+    <input type="text" id="sl-title" placeholder="Пакеты Старс — от 85 ₽">
+    <label class="order-label">Описание</label>
+    <textarea id="sl-desc" rows="2" placeholder="Короткий текст под заголовком"></textarea>
+    <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+            <label class="order-label">Иконка (FA, без "fa-")</label>
+            <input type="text" id="sl-icon" placeholder="star">
         </div>
-        <div class="shop-game-card" onclick="openGame('slots')">
-            <div class="shop-game-icon"><i class="fas fa-dice"></i></div>
-            <div class="shop-game-name">Слоты</div>
-            <div class="shop-game-desc">Три символа — выиграй до 10× ставки</div>
-        </div>
-        <div class="shop-game-card" onclick="openGame('rocket')">
-            <div class="shop-game-icon"><i class="fas fa-rocket"></i></div>
-            <div class="shop-game-name">Ракета</div>
-            <div class="shop-game-desc">Чем дольше летит — тем больше множитель</div>
-        </div>
-        <div class="shop-game-card" onclick="openGame('plinko')">
-            <div class="shop-game-icon"><i class="fas fa-meteor"></i></div>
-            <div class="shop-game-name">Чёрная дыра</div>
-            <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
+        <div style="flex:1;">
+            <label class="order-label">Куда ведёт</label>
+            <select id="sl-target">
+                <option value="donate">Раздел: Донат</option>
+                <option value="lootbox">Ящики</option>
+                <option value="games">Игры</option>
+                <option value="tops">Раздел: Топы</option>
+            </select>
         </div>
     </div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<!-- ===== МОДАЛКА: Топ игроков (магазин) ===== -->
-<div id="m-shop-leaderboards" class="modal"><div class="modal-content" style="max-width:560px;">
-    <h3 style="margin-bottom:16px;"><i class="fas fa-trophy" style="color:#fbbf24;margin-right:8px;"></i>Топ игроков</h3>
-    <div class="shop-leaderboards" id="shop-leaderboards">
-        <div class="lb-panel">
-            <div class="lb-panel-title"><i class="fas fa-coins" style="color:#fbbf24;"></i> Топ по VCoins</div>
-            <div class="lb-panel-list" id="lb-panel-vcoins"><div class="lb-loading">Загрузка...</div></div>
+    <label class="order-label">Градиент</label>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+        <input type="color" id="sl-color-from" value="#3b0764" style="width:44px;height:36px;padding:2px;">
+        <span style="font-size:11px;color:var(--text-dim);">от</span>
+        <input type="color" id="sl-color-to" value="#a78bfa" style="width:44px;height:36px;padding:2px;">
+        <span style="font-size:11px;color:var(--text-dim);">до</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+            <label class="order-label">Текст кнопки</label>
+            <input type="text" id="sl-cta" placeholder="Открыть Донат">
         </div>
-        <div class="lb-panel">
-            <div class="lb-panel-title"><i class="fas fa-box-open" style="color:#a78bfa;"></i> Топ по открытиям ящиков</div>
-            <div class="lb-panel-list" id="lb-panel-boxes"><div class="lb-loading">Загрузка...</div></div>
+        <div style="flex:1;">
+            <label class="order-label">Порядок</label>
+            <input type="number" id="sl-order" value="0">
         </div>
     </div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<!-- ===== МОДАЛКА: Промокод (магазин) ===== -->
-<div id="m-shop-promo" class="modal"><div class="modal-content" style="max-width:400px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-ticket" style="color:#a78bfa;margin-right:8px;"></i>Промокод</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;font-style:italic;">Старс — донат-валюта проекта: тратится только на сайте, не выводится и не обменивается на деньги</p>
-    <input type="text" id="promo-code-input" placeholder="Введите код" style="text-transform:uppercase;">
-    <button class="btn btn-purple" style="width:100%;" onclick="redeemPromoCode()"><i class="fas fa-ticket"></i> Активировать</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
+    <label style="display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:13px;">
+        <input type="checkbox" id="sl-active" checked style="width:auto;margin:0;"> Активен
+    </label>
+    <button class="btn btn-purple" style="width:100%;margin-top:16px;" onclick="saveShopSlide()">Сохранить</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
 </div></div>
 
 <div id="m-vcoin-history" class="modal"><div class="modal-content" style="max-width:480px;">
