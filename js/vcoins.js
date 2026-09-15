@@ -36,6 +36,8 @@ export async function awardVCoins(amount, reason) {
         if (shopBal) shopBal.textContent = userData.vcoins;
         const lbBal = document.getElementById('lb-mini-vcoins');
         if (lbBal) lbBal.textContent = userData.vcoins;
+        const hdrVC = document.getElementById('header-vcoins');
+        if (hdrVC) hdrVC.textContent = userData.vcoins;
         showVCoinsPopup(amount, reason);
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount, reason, date: Date.now(), type: 'earn' });
         if (userData.vcoins >= 1000) await checkAndAwardAch(_db, _auth, userData, 'vcoins_1000');
@@ -58,6 +60,8 @@ async function spendVCoins(amount, reason) {
         if (shopBal) shopBal.textContent = userData.vcoins;
         const lbBal = document.getElementById('lb-mini-vcoins');
         if (lbBal) lbBal.textContent = userData.vcoins;
+        const hdrVC = document.getElementById('header-vcoins');
+        if (hdrVC) hdrVC.textContent = userData.vcoins;
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: -amount, reason, date: Date.now(), type: 'spend' });
         return true;
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
@@ -77,6 +81,8 @@ async function spendVStars(amount, reason) {
         if (el) el.textContent = userData.vstars;
         const lbBal = document.getElementById('lb-mini-stars');
         if (lbBal) lbBal.textContent = userData.vstars;
+        const hdrStars = document.getElementById('header-stars');
+        if (hdrStars) hdrStars.textContent = userData.vstars;
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: -amount, reason, date: Date.now(), type: 'spend_stars' });
         return true;
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); return false; }
@@ -104,6 +110,8 @@ window.redeemPromoCode = async function() {
         userData.vstars = (userData.vstars || 0) + promo.amount;
         const el = document.getElementById('u-vstars');
         if (el) el.textContent = userData.vstars;
+        const hdrStars = document.getElementById('header-stars');
+        if (hdrStars) hdrStars.textContent = userData.vstars;
         await addDoc(collection(_db, `users/${uid}/vcoinLog`), { amount: promo.amount, reason: 'Промокод: ' + code, date: Date.now(), type: 'promo_stars' });
         showToast(`<i class="fas fa-star"></i> +${promo.amount} Старс за промокод!`);
         if (input) input.value = '';

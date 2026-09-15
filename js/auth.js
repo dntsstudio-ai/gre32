@@ -123,6 +123,19 @@ export function applyUserUI(userData, isAdmin, hasDubAccess) {
     const uViews = document.getElementById('u-views');
     const uSubs  = document.getElementById('u-subs');
     const uVC    = document.getElementById('u-vcoins');
+    const hdrAva = document.getElementById('header-profile-ava');
+    const hdrIco = document.getElementById('header-profile-icon');
+    if (hdrAva && hdrIco) {
+        hdrAva.src = userData.avatar || 'https://api.dicebear.com/7.x/identicon/svg';
+        hdrAva.style.display = 'block';
+        hdrIco.style.display = 'none';
+    }
+    const hdrBalance = document.getElementById('header-balance');
+    if (hdrBalance) hdrBalance.style.display = 'flex';
+    const hdrVC = document.getElementById('header-vcoins');
+    if (hdrVC) hdrVC.textContent = userData.vcoins || 0;
+    const hdrStars = document.getElementById('header-stars');
+    if (hdrStars) hdrStars.textContent = userData.vstars || 0;
     const prefEl = document.getElementById('u-nick-prefix');
 
     if (uNick)  uNick.innerText  = userData.nickname || '';
@@ -204,10 +217,16 @@ export function resetUserUI() {
 
     ['adm-btn-rel','adm-btn-team','adm-btn-role','adm-ach-panel',
      'btn-admin-roles','btn-admin-vcoins','btn-admin-levers','btn-admin-banners',
-     'sn-playlists','sn-shop','notif-btn'].forEach(function(id) {
+     'sn-playlists','sn-shop','notif-btn','header-balance'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
+
+    // Кнопка профиля в шапке остаётся видимой (ведёт на форму входа) —
+    // просто возвращаем дефолтную иконку вместо аватара
+    const hdrAva = document.getElementById('header-profile-ava');
+    const hdrIco = document.getElementById('header-profile-icon');
+    if (hdrAva && hdrIco) { hdrAva.style.display = 'none'; hdrIco.style.display = 'block'; }
 }
 
 // ── Рамки аватара (пресеты) ──
