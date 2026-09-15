@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915d';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915d';
-import { getOddsMultiplier } from './vcoins.js?v=20260915d';
+import { esc, showToast } from './core.js?v=20260915e';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915e';
+import { getOddsMultiplier } from './vcoins.js?v=20260915e';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
