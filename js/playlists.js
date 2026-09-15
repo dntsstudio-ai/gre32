@@ -8,8 +8,8 @@ import {
     query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals } from './core.js?v=20260915b';
-import { PLACEHOLDER_IMG } from '../config/config.js?v=20260915b';
+import { esc, showToast, closeModals } from './core.js?v=20260915c';
+import { PLACEHOLDER_IMG } from '../config/config.js?v=20260915c';
 
 const MAX_PLAYLISTS = 50;
 const MAX_PINNED    = 3;

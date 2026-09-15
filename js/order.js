@@ -3,8 +3,8 @@
 // ============================================================
 
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { showToast } from './core.js?v=20260915b';
-import { checkAndAwardAch } from './achievements.js?v=20260915b';
+import { showToast } from './core.js?v=20260915c';
+import { checkAndAwardAch } from './achievements.js?v=20260915c';
 
 const TG_USER = 'Miki_angel22';
 

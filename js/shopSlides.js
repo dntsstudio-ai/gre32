@@ -7,15 +7,16 @@
 import {
     collection, getDocs, doc, addDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915b';
+import { esc, showToast } from './core.js?v=20260915c';
 
 let _db, _auth, _getState;
 let _slides = [];
 let _curIdx = 0;
 let _rotateTimer = null;
-let _saving = false; // защита от повторной отправки формы (двойной клик / медленная сеть)
+let _saving = false;   // защита от повторной отправки формы (двойной клик / медленная сеть)
+let _lastIsAdmin = false;
 
-// ── Слайды по умолчанию (переносятся в Firestore один раз, при первом заходе) ──
+// ── Слайды по умолчанию (создаются только по явной кнопке админа) ──
 const SEED_SLIDES = [
     {
         eyebrow: 'Донат', title: 'Пакеты Старс — от 85 ₽',
@@ -37,36 +38,26 @@ const SEED_SLIDES = [
     },
 ];
 
-// Только чтение — никаких записей. Раньше тут был автопосев дефолтных
-// слайдов при "пустой" коллекции; это и оказалось источником дублей:
-// при каждой загрузке страницы, где по любой причине (гонка запросов,
-// не долетевший ещё локальный кэш и т.п.) чтение снова выглядело как
-// "пустое", код молча дописывал ещё 3 слайда сверху — без каких-либо
-// действий администратора. Посев теперь только явной кнопкой.
+function sortSlides() {
+    _slides.sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+
+// Только чтение — используется один раз, при заходе на страницу магазина.
+// Все последующие изменения (создание/редактирование/удаление) правят
+// локальный массив _slides и перерисовывают из него напрямую, БЕЗ повторного
+// похода в Firestore — на нестабильной сети свежесозданный документ мог ещё
+// не долететь до немедленного повторного чтения, из-за чего после "Слайд
+// создан" карусель визуально не менялась.
 async function loadShopSlides() {
     try {
         const snap = await getDocs(collection(_db, 'shopSlides'));
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }))
-            .filter(s => s.active !== false)
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.active !== false);
     } catch(e) {
         console.warn('loadShopSlides:', e);
+        showToast('Не удалось загрузить промо-слайды: ' + e.message, 'error');
         return [];
     }
 }
-
-// ── Явный разовый посев стандартных слайдов (только по кнопке админа) ──
-window.seedDefaultShopSlides = async function() {
-    const { isAdmin } = _getState();
-    if (!isAdmin || _saving) return;
-    _saving = true;
-    try {
-        for (const s of SEED_SLIDES) await addDoc(collection(_db, 'shopSlides'), s);
-        await renderShopSlides(document.getElementById('shop-hero'), true);
-        showToast('<i class="fas fa-circle-check"></i> 3 стандартных слайда созданы');
-    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
-    finally { _saving = false; }
-};
 
 function goToSlideTarget(target) {
     if (target === 'lootbox' || target === 'games') { window.navigate?.(target); return; }
@@ -79,20 +70,33 @@ function goToSlideTarget(target) {
     acc.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// ── Точка входа со страницы (единственное место, которое ходит в сеть) ──
 async function renderShopSlides(container, isAdmin) {
     if (!container) return;
+    _lastIsAdmin = isAdmin;
     _slides = await loadShopSlides();
+    sortSlides();
     _curIdx = 0;
+    paintShopSlides();
+}
+
+// ── Перерисовка из уже известного на клиенте состояния _slides (без сети) ──
+function paintShopSlides() {
+    const container = document.getElementById('shop-hero');
+    if (!container) return;
+    const isAdmin = _lastIsAdmin;
 
     if (!_slides.length) {
         container.innerHTML = isAdmin
-            ? `<div class="shop-hero shop-hero--empty">
+            ? `<div class="shop-hero-empty">
                  <button onclick="openSlideModal()"><i class="fas fa-plus"></i> Добавить слайд</button>
                  <button onclick="seedDefaultShopSlides()"><i class="fas fa-wand-magic-sparkles"></i> Создать 3 стандартных</button>
                </div>`
             : '';
         return;
     }
+
+    if (_curIdx >= _slides.length) _curIdx = 0;
 
     container.innerHTML = `
         <div class="hero-glow"><span></span><span></span><span></span></div>
@@ -109,20 +113,26 @@ async function renderShopSlides(container, isAdmin) {
         </div>` : ''}`;
 
     const track = document.getElementById('shop-hero-track');
-    track.innerHTML = _slides.map(s => `
-        <div class="hero-slide" style="--slide-from:${esc(s.colorFrom || '#3b0764')};--slide-to:${esc(s.colorTo || '#a78bfa')};" onclick="_shopSlideClick(event,'${esc(s.target || 'donate')}')">
-            <div class="hero-icon"><i class="fas ${esc(s.icon || 'fa-star')}"></i></div>
-            <div class="hero-copy">
-                <div class="hero-eyebrow">${esc(s.eyebrow || '')}</div>
-                <div class="hero-title">${esc(s.title || '')}</div>
-                <div class="hero-desc">${esc(s.desc || '')}</div>
-                <div class="hero-cta">${esc(s.cta || 'Подробнее')} <i class="fas fa-arrow-right"></i></div>
-            </div>
-        </div>`).join('');
+    if (track) {
+        track.innerHTML = _slides.map(s => `
+            <div class="hero-slide" style="--slide-from:${esc(s.colorFrom || '#3b0764')};--slide-to:${esc(s.colorTo || '#a78bfa')};" onclick="_shopSlideClick(event,'${esc(s.target || 'donate')}')">
+                <div class="hero-icon"><i class="fas ${esc(s.icon || 'fa-star')}"></i></div>
+                <div class="hero-copy">
+                    <div class="hero-eyebrow">${esc(s.eyebrow || '')}</div>
+                    <div class="hero-title">${esc(s.title || '')}</div>
+                    <div class="hero-desc">${esc(s.desc || '')}</div>
+                    <div class="hero-cta">${esc(s.cta || 'Подробнее')} <i class="fas fa-arrow-right"></i></div>
+                </div>
+            </div>`).join('');
+    }
 
-    document.getElementById('shop-hero-dots').innerHTML = _slides.map((_, i) =>
-        `<button class="hero-dot ${i === 0 ? 'active' : ''}" onclick="_shopSlideGoto(${i})"></button>`).join('');
+    const dots = document.getElementById('shop-hero-dots');
+    if (dots) {
+        dots.innerHTML = _slides.map((_, i) =>
+            `<button class="hero-dot ${i === 0 ? 'active' : ''}" onclick="_shopSlideGoto(${i})"></button>`).join('');
+    }
 
+    renderShopSlidePosition();
     startShopSlideAuto();
     container.onmouseenter = () => clearInterval(_rotateTimer);
     container.onmouseleave = startShopSlideAuto;
@@ -198,16 +208,41 @@ window.saveShopSlide = async function() {
     _saving = true;
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     try {
-        if (id) await updateDoc(doc(_db, 'shopSlides', id), data);
-        else    await addDoc(collection(_db, 'shopSlides'), data);
-        showToast(id ? 'Слайд обновлён!' : `<i class="fas fa-circle-check"></i> Новый слайд создан — он ${data.order + 1}-й по порядку в карусели`);
+        if (id) {
+            await updateDoc(doc(_db, 'shopSlides', id), data);
+            const idx = _slides.findIndex(s => s.id === id);
+            if (idx !== -1) _slides[idx] = { id, ...data };
+            showToast('Слайд обновлён!');
+        } else {
+            const ref = await addDoc(collection(_db, 'shopSlides'), data);
+            _slides.push({ id: ref.id, ...data });
+            showToast('<i class="fas fa-circle-check"></i> Новый слайд создан!');
+        }
+        sortSlides();
         document.getElementById('m-slide-form').style.display = 'none';
-        await renderShopSlides(document.getElementById('shop-hero'), true);
+        paintShopSlides();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     finally {
         _saving = false;
         if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     }
+};
+
+// ── Явный разовый посев стандартных слайдов (только по кнопке админа) ──
+window.seedDefaultShopSlides = async function() {
+    const { isAdmin } = _getState();
+    if (!isAdmin || _saving) return;
+    _saving = true;
+    try {
+        for (const s of SEED_SLIDES) {
+            const ref = await addDoc(collection(_db, 'shopSlides'), s);
+            _slides.push({ id: ref.id, ...s });
+        }
+        sortSlides();
+        paintShopSlides();
+        showToast('<i class="fas fa-circle-check"></i> 3 стандартных слайда созданы');
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally { _saving = false; }
 };
 
 // ── Полная очистка: удалить ВСЕ документы коллекции (включая дубли).
@@ -222,7 +257,8 @@ window.resetShopSlides = async function() {
     try {
         const snap = await getDocs(collection(_db, 'shopSlides'));
         for (const d of snap.docs) await deleteDoc(doc(_db, 'shopSlides', d.id));
-        await renderShopSlides(document.getElementById('shop-hero'), true);
+        _slides = [];
+        paintShopSlides();
         showToast('<i class="fas fa-circle-check"></i> Все слайды удалены');
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     finally { _saving = false; }
@@ -235,7 +271,8 @@ window.deleteShopSlide = async function(id) {
     _saving = true;
     try {
         await deleteDoc(doc(_db, 'shopSlides', id));
-        await renderShopSlides(document.getElementById('shop-hero'), true);
+        _slides = _slides.filter(s => s.id !== id);
+        paintShopSlides();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     finally { _saving = false; }
 };

@@ -10,8 +10,8 @@ import {
     doc, setDoc, updateDoc, getDocs, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20260915b';
-import { renderAchProfile } from './achievements.js?v=20260915b';
+import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20260915c';
+import { renderAchProfile } from './achievements.js?v=20260915c';
 
 let loginAttempts = 0;
 

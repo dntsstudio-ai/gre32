@@ -2131,16 +2131,16 @@ select option { background: var(--modal-bg); color: var(--text); }
     position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border);
     height: 220px; background: #0a0620; isolation: isolate; margin-bottom: 24px;
 }
-.shop-hero--empty {
+.shop-hero-empty {
     display: flex; align-items: center; justify-content: center; gap: 12px;
     flex-wrap: wrap; height: 100%; padding: 0 20px;
 }
-.shop-hero--empty button {
+.shop-hero-empty button {
     display: flex; align-items: center; gap: 8px;
     background: var(--card-bg); border: 1px solid var(--border); color: var(--text-dim);
     font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 10px; cursor: pointer;
 }
-.shop-hero--empty button:hover { color: var(--violet-light); border-color: var(--violet); }
+.shop-hero-empty button:hover { color: var(--violet-light); border-color: var(--violet); }
 .hero-glow { position: absolute; inset: -20%; z-index: 0; filter: blur(40px); opacity: 0.55; pointer-events: none; }
 .hero-glow span { position: absolute; width: 180px; height: 180px; border-radius: 50%; animation: shHeroDrift 14s ease-in-out infinite; }
 .hero-glow span:nth-child(1) { background: var(--violet); top: 10%; left: 5%; }
