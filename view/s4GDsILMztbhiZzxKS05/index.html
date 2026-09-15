@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915g';
+        var CURRENT = '20260915h';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -76,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915g">
+    <link rel="stylesheet" href="/css/style.css?v=20260915h">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -1551,11 +1551,13 @@ window.yaContextCb.push(() => {
     <input type="hidden" id="cc-id">
 
     <label class="order-label">Тип карточки</label>
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button type="button" class="btn btn-sm cc-type-btn cc-type-btn--active" id="cc-type-character" onclick="selectCardType('character')"><i class="fas fa-user"></i> Персонаж</button>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <button type="button" class="btn btn-sm btn-outline cc-type-btn" id="cc-type-item" onclick="selectCardType('item')"><i class="fas fa-flask"></i> Предмет</button>
+        <button type="button" class="btn btn-sm cc-type-btn cc-type-btn--active" id="cc-type-character" onclick="selectCardType('character')"><i class="fas fa-user"></i> Карточка</button>
+        <button type="button" class="btn btn-sm btn-outline cc-type-btn" id="cc-type-other" onclick="selectCardType('other')"><i class="fas fa-shapes"></i> Другое</button>
     </div>
     <input type="hidden" id="cc-cardtype" value="character">
+    <p style="font-size:11px;color:var(--text-dim);margin:-6px 0 12px;">Определяет, в какие ящики может выпасть эта карточка (см. поле "Пул карточек" при создании ящика)</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
@@ -1629,7 +1631,16 @@ window.yaContextCb.push(() => {
         <button type="button" class="btn btn-sm btn-outline lbdef-cur-btn" id="lbdef-cur-stars" onclick="selectLbdefCurrency('stars')"><i class="fas fa-star"></i> Старс</button>
     </div>
     <input type="hidden" id="lbdef-currency" value="vcoins">
-    <p style="font-size:11px;color:var(--text-dim);margin:-6px 0 12px;">Ящики за Старс могут выдавать предметные карточки. Обычные ящики (VCoins) — только карточки персонажей.</p>
+
+    <label class="order-label">Пул карточек</label>
+    <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm lbdef-pool-btn lbdef-pool-btn--active" id="lbdef-pool-" onclick="selectLbdefPoolCat('')">Любые</button>
+        <button type="button" class="btn btn-sm btn-outline lbdef-pool-btn" id="lbdef-pool-item" onclick="selectLbdefPoolCat('item')"><i class="fas fa-flask"></i> Предмет</button>
+        <button type="button" class="btn btn-sm btn-outline lbdef-pool-btn" id="lbdef-pool-character" onclick="selectLbdefPoolCat('character')"><i class="fas fa-user"></i> Карточка</button>
+        <button type="button" class="btn btn-sm btn-outline lbdef-pool-btn" id="lbdef-pool-other" onclick="selectLbdefPoolCat('other')"><i class="fas fa-shapes"></i> Другое</button>
+    </div>
+    <input type="hidden" id="lbdef-poolcat" value="">
+    <p style="font-size:11px;color:var(--text-dim);margin:-2px 0 12px;">"Любые" — старое поведение (по валюте). Иначе из особых карточек выпадут только карточки выбранного типа. Участники состава выпадают всегда, независимо от этого поля.</p>
 
     <label class="order-label">Цена</label>
     <input type="number" id="lbdef-price" value="100" min="0">
@@ -1639,6 +1650,12 @@ window.yaContextCb.push(() => {
 
     <label class="order-label">Цвет</label>
     <input type="color" id="lbdef-color" value="#7c3aed" style="height:42px;padding:4px;">
+
+    <label class="order-label">Картинка ящика — закрыт (URL, необязательно)</label>
+    <input type="text" id="lbdef-img-closed" placeholder="https://...">
+    <label class="order-label">Картинка ящика — открыт (URL, необязательно)</label>
+    <input type="text" id="lbdef-img-open" placeholder="https://...">
+    <p style="font-size:11px;color:var(--text-dim);margin:-6px 0 12px;">Если не указаны — используется иконка</p>
 
     <label class="order-label">Шансы редкости (в сумме должны давать 100%)</label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1879,7 +1896,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915g"></script>
+<script type="module" src="/js/app.js?v=20260915h"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
