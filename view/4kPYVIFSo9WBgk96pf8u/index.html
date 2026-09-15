@@ -12,6 +12,28 @@
         }
       })();
     </script>
+    <script>
+      // Если браузер отдал старую закэшированную страницу (GitHub Pages сам
+      // решает время жизни кэша, мы это не контролируем) — сверяем версию с
+      // version.json (запрашивается всегда напрямую с сервера, без кэша) и,
+      // если она новее, один раз принудительно перезагружаем страницу.
+      // Без этого часть посетителей годами видит старую версию сайта, пока
+      // не почистят кэш вручную — то, что выглядит как "зависание"/старый баг.
+      (function () {
+        var CURRENT = '20260915d';
+        try {
+          fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (!data || !data.v || data.v === CURRENT) return;
+              if (sessionStorage.getItem('vat_reload_guard') === data.v) return;
+              sessionStorage.setItem('vat_reload_guard', data.v);
+              location.reload();
+            })
+            .catch(function () {});
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
