@@ -235,23 +235,10 @@ function renderShopPage() {
     const wrap = document.getElementById('shop-wrap');
     if (!wrap) return;
     const { userData, isAdmin } = _getState();
-    const balance = userData?.vcoins || 0;
-    const stars   = userData?.vstars || 0;
-
     wrap.innerHTML = `
     <div class="shop-hero" id="shop-hero"></div>
 
-    <div class="shop-balance-bar">
-        <div class="shop-balance-inner">
-            <span class="shop-balance-icon"><i class="fas fa-coins"></i></span>
-            <span class="shop-balance-val">${balance}</span>
-            <span class="shop-balance-label">VCoins</span>
-        </div>
-        <div class="shop-balance-inner" style="--balance-color:#a78bfa;">
-            <span class="shop-balance-icon" style="color:#a78bfa;"><i class="fas fa-star"></i></span>
-            <span class="shop-balance-val" id="u-vstars" style="color:#a78bfa;">${stars}</span>
-            <span class="shop-balance-label">Старс</span>
-        </div>
+    <div class="shop-actions-bar">
         <button class="btn btn-outline btn-sm" onclick="openGiftModal()"><i class="fas fa-gift"></i> Подарить</button>
         <button class="btn btn-outline btn-sm" onclick="openVcoinHistory()"><i class="fas fa-history"></i> История</button>
         ${isAdmin ? `<button class="btn btn-outline btn-sm" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="openPromoAdmin()"><i class="fas fa-ticket"></i> Промокоды</button>` : ''}

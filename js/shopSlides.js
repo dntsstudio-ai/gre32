@@ -40,8 +40,17 @@ async function loadShopSlides() {
     try {
         const snap = await getDocs(collection(_db, 'shopSlides'));
         if (snap.empty) {
-            for (const s of SEED_SLIDES) await addDoc(collection(_db, 'shopSlides'), s);
-            return SEED_SLIDES.map((s, i) => ({ id: 'seed_' + i, ...s }));
+            // Сохраняем сид-слайды и используем НАСТОЯЩИЕ id документов —
+            // раньше тут возвращались фейковые локальные id ('seed_0' и т.п.),
+            // которые не совпадали ни с чем в базе: редактирование такого
+            // слайда создавало дубликат вместо обновления, а удаление было
+            // заблокировано вовсе.
+            const seeded = [];
+            for (const s of SEED_SLIDES) {
+                const ref = await addDoc(collection(_db, 'shopSlides'), s);
+                seeded.push({ id: ref.id, ...s });
+            }
+            return seeded.sort((a, b) => (a.order || 0) - (b.order || 0));
         }
         return snap.docs.map(d => ({ id: d.id, ...d.data() }))
             .filter(s => s.active !== false)
@@ -140,7 +149,7 @@ window._shopSlideCurrentId = function() {
 // ── Админка: создание / редактирование / удаление слайда ──
 window.openSlideModal = function(id) {
     const s = id ? _slides.find(x => x.id === id) : null;
-    document.getElementById('sl-id').value       = (id && !String(id).startsWith('seed_')) ? id : '';
+    document.getElementById('sl-id').value       = id || '';
     document.getElementById('sl-eyebrow').value  = s?.eyebrow || '';
     document.getElementById('sl-title').value    = s?.title   || '';
     document.getElementById('sl-desc').value     = s?.desc    || '';
@@ -184,7 +193,6 @@ window.saveShopSlide = async function() {
 window.deleteShopSlide = async function(id) {
     const { isAdmin } = _getState();
     if (!isAdmin || !id) return;
-    if (String(id).startsWith('seed_')) return showToast('Этот слайд ещё не сохранён в базе', 'error');
     if (!confirm('Удалить этот слайд?')) return;
     try {
         await deleteDoc(doc(_db, 'shopSlides', id));
