@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915k';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915k';
-import { getOddsMultiplier } from './vcoins.js?v=20260915k';
+import { esc, showToast } from './core.js?v=20260915l';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915l';
+import { getOddsMultiplier } from './vcoins.js?v=20260915l';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -415,27 +415,25 @@ let _lastReveal = null;
 function showCardReveal(member, rarity, box, isCustom) {
     const r = RARITIES[rarity] || RARITIES.common;
     _lastReveal = { member, rarity, isCustom };
-
-    // Ящики с картинкой уже были показаны крупно в окне предпросмотра —
-    // здесь просто продолжаем сразу трястись/открываться, без повторного
-    // "нажмите, чтобы открыть" (это и так уже нажатая кнопка "Открыть").
-    const autoOpen = !!box.imgClosed;
+    const isArt = !!box.imgClosed;
 
     const overlay = document.createElement('div');
     overlay.id = 'lootbox-reveal-overlay';
     overlay.className = 'lb-reveal-overlay';
 
     const cardHtml = renderCard({ ...member, rarity }, { showActions: false, showDesc: true });
-    const closedBoxHtml = box.imgClosed ? `<img src="${esc(box.imgClosed)}" class="lb-reveal-box-img" alt="">` : box.icon;
+    const closedBoxHtml = isArt ? `<img src="${esc(box.imgClosed)}" class="lb-reveal-box-img" alt="">` : box.icon;
+    // У "арт"-ящиков — без цветного фона/рамки-плашки, просто сама картинка
+    const boxInlineStyle = isArt ? '' : `style="background:${box.gradient};border-color:${box.border};"`;
 
     overlay.innerHTML = `
     <div class="lb-reveal-bg" style="--rarity-color:${r.color};--rarity-glow:${r.glow};"></div>
     <div class="lb-reveal-particles" id="lb-particles"></div>
     <div class="lb-reveal-box-wrap" id="lb-box-wrap">
-        <div class="lb-reveal-box ${autoOpen ? 'lb-reveal-box--art' : ''}" style="background:${box.gradient};border-color:${box.border};">
+        <div class="lb-reveal-box ${isArt ? 'lb-reveal-box--art' : ''}" ${boxInlineStyle}>
             <div class="lb-reveal-box-icon" id="lb-reveal-box-icon">${closedBoxHtml}</div>
         </div>
-        ${autoOpen ? '' : '<p class="lb-reveal-tap-hint">Нажмите, чтобы открыть</p>'}
+        <p class="lb-reveal-tap-hint">Нажмите, чтобы открыть</p>
     </div>
     <div class="lb-reveal-card-wrap" id="lb-card-wrap" style="display:none;">
         <div class="lb-reveal-card-inner" id="lb-card-inner">
@@ -465,20 +463,14 @@ function showCardReveal(member, rarity, box, isCustom) {
 
     spawnParticles(r.color);
 
-    if (autoOpen) {
-        // Автостарт — пользователь уже нажал "Открыть" в окне предпросмотра,
-        // повторный клик по ящику тут не нужен.
-        setTimeout(() => revealCard(r, isCustom, member, box), 550);
-    } else {
-        // Звук должен играть ТОЛЬКО в момент клика пользователя (иначе браузер
-        // блокирует автовоспроизведение) — см. revealCard() ниже.
-        const boxWrap = document.getElementById('lb-box-wrap');
-        if (boxWrap) {
-            boxWrap.addEventListener('click', function onBoxClick() {
-                boxWrap.removeEventListener('click', onBoxClick);
-                revealCard(r, isCustom, member, box);
-            }, { once: true });
-        }
+    // Звук должен играть ТОЛЬКО в момент клика пользователя (иначе браузер
+    // блокирует автовоспроизведение) — см. revealCard() ниже.
+    const boxWrap = document.getElementById('lb-box-wrap');
+    if (boxWrap) {
+        boxWrap.addEventListener('click', function onBoxClick() {
+            boxWrap.removeEventListener('click', onBoxClick);
+            revealCard(r, isCustom, member, box);
+        }, { once: true });
     }
 
     overlay.addEventListener('click', function(e) {
@@ -522,6 +514,7 @@ function revealCard(r, isCustom, member, box) {
     const boxWrap  = document.getElementById('lb-box-wrap');
     const cardWrap = document.getElementById('lb-card-wrap');
     if (!boxWrap || !cardWrap) return;
+    const isArt = !!box?.imgClosed;
 
     boxWrap.classList.add('lb-box--shake');
     playSound('shake');
@@ -541,32 +534,41 @@ function revealCard(r, isCustom, member, box) {
         } catch(e) { revealAudio = null; }
     }
 
+    const showCard = () => {
+        boxWrap.style.display = 'none';
+        cardWrap.style.display = 'flex';
+        requestAnimationFrame(() => {
+            cardWrap.classList.add('lb-card--appear');
+            document.getElementById('lb-card-inner')?.classList.add('lb-card--spin');
+        });
+        const bg = document.querySelector('.lb-reveal-bg');
+        if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
+    };
+
+    // Для "арт"-ящиков (с картинками) — держим тряску 2 сек, затем картинку
+    // открытого ящика ещё 2 сек, и только потом карточку (без "взрыва").
+    // Для обычных (иконка) — как раньше, компактная быстрая анимация.
     setTimeout(() => {
-        // Если задана картинка "открытого" ящика — показываем её в момент взрыва
+        boxWrap.classList.remove('lb-box--shake');
+
         if (box?.imgOpen) {
             const iconEl = document.getElementById('lb-reveal-box-icon');
             if (iconEl) iconEl.innerHTML = `<img src="${esc(box.imgOpen)}" class="lb-reveal-box-img" alt="">`;
         }
-        boxWrap.classList.add('lb-box--explode');
 
-        // Звук при выпадении (кастомный, уже разблокированный выше, или стандартный по редкости)
         if (isCustom && revealAudio) {
             revealAudio.play().catch(() => {});
         } else if (!isCustom) {
             playSound('reveal', r);
         }
 
-        setTimeout(() => {
-            boxWrap.style.display = 'none';
-            cardWrap.style.display = 'flex';
-            requestAnimationFrame(() => {
-                cardWrap.classList.add('lb-card--appear');
-                document.getElementById('lb-card-inner')?.classList.add('lb-card--spin');
-            });
-            const bg = document.querySelector('.lb-reveal-bg');
-            if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
-        }, 400);
-    }, 600);
+        if (isArt) {
+            setTimeout(showCard, 2000);
+        } else {
+            boxWrap.classList.add('lb-box--explode');
+            setTimeout(showCard, 400);
+        }
+    }, isArt ? 2000 : 600);
 }
 
 window.keepCard = function() {

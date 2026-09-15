@@ -3801,9 +3801,14 @@ select option { background: var(--modal-bg); color: var(--text); }
 .lb-reveal-box-wrap:hover .lb-reveal-box { transform: scale(1.05); }
 .lb-reveal-box-icon { font-size: 4rem; filter: drop-shadow(0 0 16px rgba(255,255,255,0.5)); display: flex; align-items: center; justify-content: center; }
 .lb-reveal-box-img { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 16px rgba(255,255,255,0.5)); }
-/* Ящики с картинкой — крупнее, чтобы масштаб совпадал с окном предпросмотра */
-.lb-reveal-box--art { width: 240px; height: 240px; border-radius: 28px; }
-.lb-reveal-box--art .lb-reveal-box-img { width: 200px; height: 200px; }
+/* Ящики с картинкой — крупнее (масштаб как в окне предпросмотра) и без
+   цветной плашки/рамки/пульсации позади — только сама картинка ящика */
+.lb-reveal-box--art {
+    width: 240px; height: 240px; border-radius: 0;
+    background: none !important; border: none !important; box-shadow: none !important;
+    animation: none !important;
+}
+.lb-reveal-box--art .lb-reveal-box-img { width: 240px; height: 240px; }
 @keyframes lb-box-pulse {
     0%,100% { box-shadow: 0 0 20px rgba(255,255,255,0.1); }
     50% { box-shadow: 0 0 40px rgba(255,255,255,0.25); }
