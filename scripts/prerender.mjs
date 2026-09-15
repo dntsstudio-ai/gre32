@@ -240,6 +240,7 @@ async function main() {
         { loc: `${BASE_URL}/home`, priority: '0.9' },
         { loc: `${BASE_URL}/team`, priority: '0.7' },
         { loc: `${BASE_URL}/order`, priority: '0.6' },
+        { loc: `${BASE_URL}/oferta`, priority: '0.3' },
         ...releases.map(r => ({ loc: `${BASE_URL}/view/${r.id}`, priority: '0.8' })),
         ...team.map(m => ({ loc: `${BASE_URL}/team-page/${m.id}`, priority: '0.5' })),
     ];
