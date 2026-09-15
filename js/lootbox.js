@@ -89,6 +89,8 @@ async function loadCustomCards() {
 // ── Рендер страницы лутбоксов ──────────────────────────────────
 async function renderLootboxPage(wrap, balance) {
     const { userData, isAdmin } = _getState();
+    const vcoins = userData?.vcoins ?? balance ?? 0;
+    const stars  = userData?.vstars || 0;
     const customCards = await loadCustomCards();
     _lootboxDefs = await loadLootboxDefs();
 
@@ -116,8 +118,9 @@ async function renderLootboxPage(wrap, balance) {
     <div class="lootbox-page">
         <div class="lootbox-header">
             <div class="lootbox-title"><i class="fas fa-gift"></i> Открытие ящиков</div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div class="lootbox-balance">Баланс: <b>${balance} VC</b></div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div class="lootbox-mini-balance"><i class="fas fa-coins" style="color:#fbbf24;"></i> <b id="lb-mini-vcoins">${vcoins}</b> VC</div>
+                <div class="lootbox-mini-balance"><i class="fas fa-star" style="color:#a78bfa;"></i> <b id="lb-mini-stars">${stars}</b> Старс</div>
                 ${isAdmin ? `<button class="btn btn-outline btn-sm" onclick="openCreateCardModal()"><i class="fas fa-plus"></i> Создать карточку</button>
                 <button class="btn btn-outline btn-sm" onclick="openLootboxDefModal()"><i class="fas fa-box"></i> Новый ящик</button>` : ''}
             </div>
@@ -489,7 +492,9 @@ function closeReveal() {
         overlay.classList.remove('lb-reveal-overlay--visible');
         setTimeout(() => overlay.remove(), 400);
     }
-    if (window.loadShopPage) window.loadShopPage();
+    const wrap = document.getElementById('lootbox-wrap');
+    const { userData } = _getState();
+    if (wrap) renderLootboxPage(wrap, userData?.vcoins || 0);
 }
 
 // ── Частицы ────────────────────────────────────────────────────

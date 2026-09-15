@@ -3437,11 +3437,18 @@ select option { background: var(--modal-bg); color: var(--text); }
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
-.lootbox-balance {
-    font-size: 14px;
+.lootbox-mini-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
     color: var(--text-dim);
 }
-.lootbox-balance b { color: #fbbf24; }
+.lootbox-mini-balance b { color: #fff; font-weight: 800; }
 .lootbox-desc {
     font-size: 13px;
     color: var(--text-dim);
