@@ -104,6 +104,14 @@ window.redeemPromoCode = async function() {
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 };
 
+// ── Покупка пакета Старс за деньги (Robokassa/СБП) ──
+// TODO: как только пройдёт активация магазина в Robokassa и будет поднят
+// Cloudflare Worker для подписи/проверки платежа — заменить на настоящий
+// редирект на страницу оплаты (window.location.href = initPaymentUrl(...)).
+window.buyStarsPack = function(amount, price) {
+    showToast(`<i class="fas fa-clock"></i> Оплата картой/СБП скоро будет доступна! Пока Старс можно получить по промокоду.`, 'info');
+};
+
 // ── Подарить VCoins ──
 async function giftVCoins(targetUid, targetNick, amount) {
     const { userData } = _getState();
@@ -152,6 +160,13 @@ const SHOP_ITEMS = [
     { id:'prefix_legend',icon:'<i class="fas fa-crown"></i>', name:'Префикс [LEGEND]',  desc:'Отображается перед вашим ником', type:'prefix', value:'LEGEND', priceKey:'prefix' },
 ];
 
+const STARS_PACKS = [
+    { amount: 100,  price: 85  },
+    { amount: 300,  price: 255 },
+    { amount: 500,  price: 425 },
+    { amount: 1000, price: 850 },
+];
+
 const NICK_COLORS = [
     { name:'Фиолетовый', hex:'#a78bfa' }, { name:'Бирюзовый', hex:'#5eead4' },
     { name:'Золотой',    hex:'#fbbf24' }, { name:'Розовый',   hex:'#f472b6' },
@@ -186,8 +201,21 @@ function renderShopPage() {
     <div class="promo-code-bar">
         <input type="text" id="promo-code-input" placeholder="Есть промокод? Введите здесь" style="text-transform:uppercase;">
         <button class="btn btn-sm btn-purple" onclick="redeemPromoCode()"><i class="fas fa-ticket"></i> Активировать</button>
-        <span class="promo-code-hint">Старс — донат-валюта: получить можно по промокоду или покупкой через СБП (скоро)</span>
+        <span class="promo-code-hint">Старс — донат-валюта проекта: тратится только на сайте, не выводится и не обменивается на деньги</span>
     </div>
+
+    <div class="shop-section-title" style="margin-top:24px;"><i class="fas fa-star" style="color:#a78bfa;"></i> Купить Старс</div>
+    <div class="stars-pack-grid">
+        ${STARS_PACKS.map(p => `
+        <div class="stars-pack-card">
+            <div class="stars-pack-icon"><i class="fas fa-star"></i></div>
+            <div class="stars-pack-amount">${p.amount}</div>
+            <div class="stars-pack-label">Старс</div>
+            <div class="stars-pack-price">${p.price} ₽</div>
+            <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);" onclick="buyStarsPack(${p.amount}, ${p.price})">Купить</button>
+        </div>`).join('')}
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin:-4px 0 28px;font-style:italic;">Оплата через СБП/карту (Robokassa) — <a href="/oferta" target="_blank" style="color:var(--teal);">условия оказания услуг</a></p>
 
     <div class="shop-leaderboards" id="shop-leaderboards">
         <div class="lb-panel">

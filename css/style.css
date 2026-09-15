@@ -2068,6 +2068,50 @@ select option { background: var(--modal-bg); color: var(--text); }
     font-weight: 700;
     color: #fbbf24;
 }
+.stars-pack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 8px;
+}
+.stars-pack-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    border-radius: var(--radius);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    transition: var(--ts);
+}
+.stars-pack-card:hover {
+    border-color: rgba(167, 139, 250, 0.55);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.18);
+}
+.stars-pack-icon { font-size: 1.6rem; color: #a78bfa; }
+.stars-pack-amount {
+    font-size: 1.7rem;
+    font-weight: 900;
+    font-family: var(--font-display);
+    color: #fff;
+    line-height: 1;
+}
+.stars-pack-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.stars-pack-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: #a78bfa;
+    margin-bottom: 6px;
+}
 .shop-game-card {
     background: var(--card-bg);
     border: 1px solid rgba(124, 58, 237, 0.25);
