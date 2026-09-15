@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915j';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915j';
-import { getOddsMultiplier } from './vcoins.js?v=20260915j';
+import { esc, showToast } from './core.js?v=20260915k';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915k';
+import { getOddsMultiplier } from './vcoins.js?v=20260915k';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -416,6 +416,11 @@ function showCardReveal(member, rarity, box, isCustom) {
     const r = RARITIES[rarity] || RARITIES.common;
     _lastReveal = { member, rarity, isCustom };
 
+    // Ящики с картинкой уже были показаны крупно в окне предпросмотра —
+    // здесь просто продолжаем сразу трястись/открываться, без повторного
+    // "нажмите, чтобы открыть" (это и так уже нажатая кнопка "Открыть").
+    const autoOpen = !!box.imgClosed;
+
     const overlay = document.createElement('div');
     overlay.id = 'lootbox-reveal-overlay';
     overlay.className = 'lb-reveal-overlay';
@@ -427,10 +432,10 @@ function showCardReveal(member, rarity, box, isCustom) {
     <div class="lb-reveal-bg" style="--rarity-color:${r.color};--rarity-glow:${r.glow};"></div>
     <div class="lb-reveal-particles" id="lb-particles"></div>
     <div class="lb-reveal-box-wrap" id="lb-box-wrap">
-        <div class="lb-reveal-box" style="background:${box.gradient};border-color:${box.border};">
+        <div class="lb-reveal-box ${autoOpen ? 'lb-reveal-box--art' : ''}" style="background:${box.gradient};border-color:${box.border};">
             <div class="lb-reveal-box-icon" id="lb-reveal-box-icon">${closedBoxHtml}</div>
         </div>
-        <p class="lb-reveal-tap-hint">Нажмите, чтобы открыть</p>
+        ${autoOpen ? '' : '<p class="lb-reveal-tap-hint">Нажмите, чтобы открыть</p>'}
     </div>
     <div class="lb-reveal-card-wrap" id="lb-card-wrap" style="display:none;">
         <div class="lb-reveal-card-inner" id="lb-card-inner">
@@ -460,15 +465,20 @@ function showCardReveal(member, rarity, box, isCustom) {
 
     spawnParticles(r.color);
 
-    // Звук должен играть ТОЛЬКО в момент клика пользователя (иначе браузер
-    // блокирует автовоспроизведение) — см. revealCard() ниже.
-
-    const boxWrap = document.getElementById('lb-box-wrap');
-    if (boxWrap) {
-        boxWrap.addEventListener('click', function onBoxClick() {
-            boxWrap.removeEventListener('click', onBoxClick);
-            revealCard(r, isCustom, member, box);
-        }, { once: true });
+    if (autoOpen) {
+        // Автостарт — пользователь уже нажал "Открыть" в окне предпросмотра,
+        // повторный клик по ящику тут не нужен.
+        setTimeout(() => revealCard(r, isCustom, member, box), 550);
+    } else {
+        // Звук должен играть ТОЛЬКО в момент клика пользователя (иначе браузер
+        // блокирует автовоспроизведение) — см. revealCard() ниже.
+        const boxWrap = document.getElementById('lb-box-wrap');
+        if (boxWrap) {
+            boxWrap.addEventListener('click', function onBoxClick() {
+                boxWrap.removeEventListener('click', onBoxClick);
+                revealCard(r, isCustom, member, box);
+            }, { once: true });
+        }
     }
 
     overlay.addEventListener('click', function(e) {
