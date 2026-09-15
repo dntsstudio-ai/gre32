@@ -198,12 +198,6 @@ function renderShopPage() {
         ${_getState().isAdmin ? `<button class="btn btn-outline btn-sm" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="openPromoAdmin()"><i class="fas fa-ticket"></i> Промокоды</button>` : ''}
     </div>
 
-    <div class="promo-code-bar">
-        <input type="text" id="promo-code-input" placeholder="Есть промокод? Введите здесь" style="text-transform:uppercase;">
-        <button class="btn btn-sm btn-purple" onclick="redeemPromoCode()"><i class="fas fa-ticket"></i> Активировать</button>
-        <span class="promo-code-hint">Старс — донат-валюта проекта: тратится только на сайте, не выводится и не обменивается на деньги</span>
-    </div>
-
     <div class="shop-section-title" style="margin-top:24px;"><i class="fas fa-star" style="color:#a78bfa;"></i> Купить Старс</div>
     <div class="stars-pack-grid">
         ${STARS_PACKS.map(p => `
@@ -215,22 +209,39 @@ function renderShopPage() {
             <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);" onclick="buyStarsPack(${p.amount}, ${p.price})">Купить</button>
         </div>`).join('')}
     </div>
-    <p style="font-size:11px;color:var(--text-dim);margin:-4px 0 28px;font-style:italic;">Оплата через СБП/карту (Robokassa) — <a href="/oferta" target="_blank" style="color:var(--teal);">условия оказания услуг</a></p>
+    <p style="font-size:11px;color:var(--text-dim);margin:-4px 0 28px;font-style:italic;">Оплата через СБП/карту (Robokassa) — <a href="/oferta" target="_blank" style="color:var(--teal);">условия оказания услуг</a> · есть промокод? <a href="javascript:void(0)" onclick="openPromoModal()" style="color:#a78bfa;">введите здесь</a></p>
 
-    <div class="shop-leaderboards" id="shop-leaderboards">
-        <div class="lb-panel">
-            <div class="lb-panel-title"><i class="fas fa-coins" style="color:#fbbf24;"></i> Топ по VCoins</div>
-            <div class="lb-panel-list" id="lb-panel-vcoins"><div class="lb-loading">Загрузка...</div></div>
+    <div class="shop-section-title"><i class="fas fa-th-large"></i> Разделы</div>
+    <div class="shop-grid shop-grid--games">
+        <div class="shop-game-card" onclick="openShopCustomize()">
+            <div class="shop-game-icon"><i class="fas fa-palette"></i></div>
+            <div class="shop-game-name">Кастомизация</div>
+            <div class="shop-game-desc">Цвет ника и префиксы</div>
         </div>
-        <div class="lb-panel">
-            <div class="lb-panel-title"><i class="fas fa-box-open" style="color:#a78bfa;"></i> Топ по открытиям ящиков</div>
-            <div class="lb-panel-list" id="lb-panel-boxes"><div class="lb-loading">Загрузка...</div></div>
+        <div class="shop-game-card" onclick="openShopGamesHub()">
+            <div class="shop-game-icon"><i class="fas fa-gamepad"></i></div>
+            <div class="shop-game-name">Мини-игры</div>
+            <div class="shop-game-desc">Монетка, слоты, ракета, чёрная дыра</div>
         </div>
-    </div>
+        <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
+            <div class="shop-game-icon"><i class="fas fa-box-open"></i></div>
+            <div class="shop-game-name">Ящики</div>
+            <div class="shop-game-desc">Открывай ящики и собирай карточки участников студии</div>
+        </div>
+        <div class="shop-game-card" onclick="openShopLeaderboards()">
+            <div class="shop-game-icon"><i class="fas fa-trophy"></i></div>
+            <div class="shop-game-name">Топ игроков</div>
+            <div class="shop-game-desc">Рейтинг по VCoins и открытым ящикам</div>
+        </div>
+    </div>`;
+}
 
-    <div class="shop-section-title"><i class="fas fa-palette"></i> Кастомизация профиля</div>
-    <div class="shop-grid">
-        ${SHOP_ITEMS.map(item => {
+// ── Разделы магазина: модалки, открываемые по клику на плитку ──
+window.openShopCustomize = function() {
+    const { userData } = _getState();
+    const listEl = document.getElementById('shop-customize-list');
+    if (listEl) {
+        listEl.innerHTML = SHOP_ITEMS.map(item => {
             const price = _prices[item.priceKey] || 999;
             const owned = userData?.shopItems?.includes(item.id);
             return `<div class="shop-card ${owned ? 'shop-card--owned' : ''}">
@@ -244,45 +255,23 @@ function renderShopPage() {
                         : `<button class="btn btn-sm btn-blue" onclick="buyShopItem('${item.id}')">Купить</button>`}
                 </div>
             </div>`;
-        }).join('')}
-    </div>
+        }).join('');
+    }
+    document.getElementById('m-shop-customize').style.display = 'flex';
+};
 
-    <div class="shop-section-title" style="margin-top:32px;"><i class="fas fa-gamepad"></i> Мини-игры</div>
-    <div class="shop-grid shop-grid--games">
-        <div class="shop-game-card" onclick="openGame('coinflip')">
-            <div class="shop-game-icon"><i class="fas fa-coins"></i></div>
-            <div class="shop-game-name">Монетка</div>
-            <div class="shop-game-desc">Орёл или решка — удвой ставку</div>
-            <button class="btn btn-sm btn-purple">Играть</button>
-        </div>
-        <div class="shop-game-card" onclick="openGame('slots')">
-            <div class="shop-game-icon"><i class="fas fa-dice"></i></div>
-            <div class="shop-game-name">Слоты</div>
-            <div class="shop-game-desc">Три символа — выиграй до 10× ставки</div>
-            <button class="btn btn-sm btn-purple">Играть</button>
-        </div>
-        <div class="shop-game-card" onclick="openGame('rocket')">
-            <div class="shop-game-icon"><i class="fas fa-rocket"></i></div>
-            <div class="shop-game-name">Ракета</div>
-            <div class="shop-game-desc">Чем дольше летит — тем больше множитель</div>
-            <button class="btn btn-sm btn-purple">Играть</button>
-        </div>
-        <div class="shop-game-card" onclick="openGame('plinko')">
-            <div class="shop-game-icon"><i class="fas fa-meteor"></i></div>
-            <div class="shop-game-name">Чёрная дыра</div>
-            <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
-            <button class="btn btn-sm btn-purple">Играть</button>
-        </div>
-        <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
-            <div class="shop-game-icon"><i class="fas fa-gift"></i></div>
-            <div class="shop-game-name">Ящики</div>
-            <div class="shop-game-desc">Открывай ящики и собирай карточки участников студии</div>
-            <button class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a1a2e;">Открыть</button>
-        </div>
-    </div>`;
+window.openShopGamesHub = function() {
+    document.getElementById('m-shop-games').style.display = 'flex';
+};
 
+window.openShopLeaderboards = function() {
+    document.getElementById('m-shop-leaderboards').style.display = 'flex';
     window.loadInlineLeaderboards();
-}
+};
+
+window.openPromoModal = function() {
+    document.getElementById('m-shop-promo').style.display = 'flex';
+};
 
 async function buyShopItem(itemId) {
     const { userData } = _getState();
@@ -291,6 +280,7 @@ async function buyShopItem(itemId) {
     if (!item) return;
     const price = _prices[item.priceKey] || 999;
     if (item.type === 'color') {
+        closeModals();
         document.getElementById('m-nick-color').style.display = 'flex';
         const ncPrice = document.getElementById('nc-price');
         if (ncPrice) ncPrice.textContent = price;
@@ -304,7 +294,7 @@ async function buyShopItem(itemId) {
         await updateDoc(doc(_db, 'users', _auth.currentUser.uid), { shopItems: owned });
         userData.shopItems = owned;
         showToast('<i class="fas fa-circle-check"></i> Куплено: ' + item.name);
-        renderShopPage();
+        window.openShopCustomize();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 }
 
@@ -319,7 +309,7 @@ async function activateShopItem(itemId) {
             await updateDoc(doc(_db, 'users', uid), { activePrefix: item.value });
             userData.activePrefix = item.value;
             showToast('Префикс [' + item.value + '] активирован!');
-            renderShopPage();
+            window.openShopCustomize();
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     }
 }
@@ -327,6 +317,7 @@ async function activateShopItem(itemId) {
 function openGame(type) {
     const { userData } = _getState();
     if (!userData) return showToast('Войдите в аккаунт', 'error');
+    closeModals();
     document.getElementById('m-game').style.display = 'flex';
     renderGame(type);
 }
@@ -996,7 +987,7 @@ window.selectNickColor = async function(hex) {
         userData.shopItems = [...(userData.shopItems||[]), 'colorNick'];
         showToast('Цвет ника изменён!');
         closeModals();
-        renderShopPage();
+        window.openShopCustomize();
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 };
 
