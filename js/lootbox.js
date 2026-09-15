@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915h';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915h';
-import { getOddsMultiplier } from './vcoins.js?v=20260915h';
+import { esc, showToast } from './core.js?v=20260915i';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915i';
+import { getOddsMultiplier } from './vcoins.js?v=20260915i';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -313,41 +313,50 @@ window.openLootbox = async function(boxId) {
             loadCustomCards()
         ]);
         const allMembers = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Если у ящика указан "пул карточек" — из особых карточек выпадают
-        // только карточки того же типа. Иначе — старое поведение по валюте
-        // (ящики за Старс могут выдать предметы, обычные — только персонажей).
-        // Участники состава (allMembers) в любом случае участвуют отдельно.
-        const customCards = box.poolCategory
-            ? allCustomCards.filter(cc => (cc.cardType || 'character') === box.poolCategory)
-            : (currency === 'stars'
-                ? allCustomCards.filter(cc => cc.cardType === 'item')
-                : allCustomCards.filter(cc => cc.cardType !== 'item'));
-        if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
-
         const oddsM = await getOddsMultiplier();
 
-        // Проверяем кастомные карточки с учётом их шанса выпадения
         let winner = null;
         let winnerRarity = null;
         let isCustomWinner = false;
 
-        for (const cc of customCards) {
-            const chance = parseFloat(cc.dropChance) || 1;
-            if (Math.random() * 100 < Math.min(100, chance * oddsM)) {
-                winner = cc;
-                winnerRarity = cc.rarity || 'rare';
-                isCustomWinner = true;
-                break;
-            }
-        }
-
-        // Если кастомная не выпала — обычная логика
-        if (!winner) {
+        if (box.poolCategory) {
+            // Ящик жёстко ограничен категорией — выпадают ТОЛЬКО карточки этой
+            // категории, состав в таком ящике не участвует вообще.
+            const pool = allCustomCards.filter(cc => (cc.cardType || 'character') === box.poolCategory);
+            if (!pool.length) return showToast('В этой категории пока нет карточек', 'error');
             const rarity = pickRarity(box.weights, oddsM);
             winnerRarity = rarity;
-            let pool = allMembers.filter(m => getRarityByCat(m.cat) === rarity);
-            if (!pool.length) pool = allMembers;
-            winner = pool[Math.floor(Math.random() * pool.length)];
+            let rarityPool = pool.filter(cc => cc.rarity === rarity);
+            if (!rarityPool.length) rarityPool = pool;
+            winner = rarityPool[Math.floor(Math.random() * rarityPool.length)];
+            isCustomWinner = true;
+        } else {
+            // Старое поведение (для ящиков без явно заданной категории):
+            // сначала маленький шанс на особую карточку по валюте (ящики за
+            // Старс могут выдать предметы, обычные — только персонажей),
+            // иначе — обычный участник состава по редкости.
+            const customCards = currency === 'stars'
+                ? allCustomCards.filter(cc => cc.cardType === 'item')
+                : allCustomCards.filter(cc => cc.cardType !== 'item');
+            if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
+
+            for (const cc of customCards) {
+                const chance = parseFloat(cc.dropChance) || 1;
+                if (Math.random() * 100 < Math.min(100, chance * oddsM)) {
+                    winner = cc;
+                    winnerRarity = cc.rarity || 'rare';
+                    isCustomWinner = true;
+                    break;
+                }
+            }
+
+            if (!winner) {
+                const rarity = pickRarity(box.weights, oddsM);
+                winnerRarity = rarity;
+                let pool = allMembers.filter(m => getRarityByCat(m.cat) === rarity);
+                if (!pool.length) pool = allMembers;
+                winner = pool[Math.floor(Math.random() * pool.length)];
+            }
         }
 
         // Сохраняем карточку в инвентарь
