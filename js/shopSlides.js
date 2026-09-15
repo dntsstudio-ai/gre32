@@ -5,14 +5,15 @@
 // ============================================================
 
 import {
-    collection, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc
+    collection, getDocs, doc, addDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915a';
+import { esc, showToast } from './core.js?v=20260915b';
 
 let _db, _auth, _getState;
 let _slides = [];
 let _curIdx = 0;
 let _rotateTimer = null;
+let _saving = false; // защита от повторной отправки формы (двойной клик / медленная сеть)
 
 // ── Слайды по умолчанию (переносятся в Firestore один раз, при первом заходе) ──
 const SEED_SLIDES = [
@@ -36,22 +37,15 @@ const SEED_SLIDES = [
     },
 ];
 
+// Только чтение — никаких записей. Раньше тут был автопосев дефолтных
+// слайдов при "пустой" коллекции; это и оказалось источником дублей:
+// при каждой загрузке страницы, где по любой причине (гонка запросов,
+// не долетевший ещё локальный кэш и т.п.) чтение снова выглядело как
+// "пустое", код молча дописывал ещё 3 слайда сверху — без каких-либо
+// действий администратора. Посев теперь только явной кнопкой.
 async function loadShopSlides() {
     try {
         const snap = await getDocs(collection(_db, 'shopSlides'));
-        if (snap.empty) {
-            // Сохраняем сид-слайды и используем НАСТОЯЩИЕ id документов —
-            // раньше тут возвращались фейковые локальные id ('seed_0' и т.п.),
-            // которые не совпадали ни с чем в базе: редактирование такого
-            // слайда создавало дубликат вместо обновления, а удаление было
-            // заблокировано вовсе.
-            const seeded = [];
-            for (const s of SEED_SLIDES) {
-                const ref = await addDoc(collection(_db, 'shopSlides'), s);
-                seeded.push({ id: ref.id, ...s });
-            }
-            return seeded.sort((a, b) => (a.order || 0) - (b.order || 0));
-        }
         return snap.docs.map(d => ({ id: d.id, ...d.data() }))
             .filter(s => s.active !== false)
             .sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -60,6 +54,19 @@ async function loadShopSlides() {
         return [];
     }
 }
+
+// ── Явный разовый посев стандартных слайдов (только по кнопке админа) ──
+window.seedDefaultShopSlides = async function() {
+    const { isAdmin } = _getState();
+    if (!isAdmin || _saving) return;
+    _saving = true;
+    try {
+        for (const s of SEED_SLIDES) await addDoc(collection(_db, 'shopSlides'), s);
+        await renderShopSlides(document.getElementById('shop-hero'), true);
+        showToast('<i class="fas fa-circle-check"></i> 3 стандартных слайда созданы');
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally { _saving = false; }
+};
 
 function goToSlideTarget(target) {
     if (target === 'lootbox' || target === 'games') { window.navigate?.(target); return; }
@@ -79,7 +86,10 @@ async function renderShopSlides(container, isAdmin) {
 
     if (!_slides.length) {
         container.innerHTML = isAdmin
-            ? `<div class="shop-hero shop-hero--empty" onclick="openSlideModal()"><i class="fas fa-plus"></i> Добавить промо-слайд</div>`
+            ? `<div class="shop-hero shop-hero--empty">
+                 <button onclick="openSlideModal()"><i class="fas fa-plus"></i> Добавить слайд</button>
+                 <button onclick="seedDefaultShopSlides()"><i class="fas fa-wand-magic-sparkles"></i> Создать 3 стандартных</button>
+               </div>`
             : '';
         return;
     }
@@ -95,6 +105,7 @@ async function renderShopSlides(container, isAdmin) {
             <button class="add" onclick="openSlideModal()" title="Добавить слайд"><i class="fas fa-plus"></i></button>
             <button onclick="openSlideModal(_shopSlideCurrentId())" title="Редактировать текущий"><i class="fas fa-pen"></i></button>
             <button onclick="deleteShopSlide(_shopSlideCurrentId())" title="Удалить текущий"><i class="fas fa-trash"></i></button>
+            <button onclick="resetShopSlides()" title="Удалить ВСЕ слайды (очистка дублей)" style="background:rgba(239,68,68,0.75);"><i class="fas fa-broom"></i></button>
         </div>` : ''}`;
 
     const track = document.getElementById('shop-hero-track');
@@ -166,6 +177,7 @@ window.openSlideModal = function(id) {
 window.saveShopSlide = async function() {
     const { isAdmin } = _getState();
     if (!isAdmin) return showToast('Нет прав', 'error');
+    if (_saving) return; // уже идёт сохранение — игнорируем повторный клик
     const id = document.getElementById('sl-id').value;
     const iconRaw = document.getElementById('sl-icon').value.trim() || 'star';
     const data = {
@@ -181,23 +193,51 @@ window.saveShopSlide = async function() {
         active:    document.getElementById('sl-active').checked,
     };
     if (!data.title) return showToast('Введите заголовок слайда', 'error');
+
+    const btn = document.querySelector('#m-slide-form .btn-purple');
+    _saving = true;
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     try {
         if (id) await updateDoc(doc(_db, 'shopSlides', id), data);
         else    await addDoc(collection(_db, 'shopSlides'), data);
-        showToast('Слайд сохранён!');
+        showToast(id ? 'Слайд обновлён!' : `<i class="fas fa-circle-check"></i> Новый слайд создан — он ${data.order + 1}-й по порядку в карусели`);
         document.getElementById('m-slide-form').style.display = 'none';
         await renderShopSlides(document.getElementById('shop-hero'), true);
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally {
+        _saving = false;
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+};
+
+// ── Полная очистка: удалить ВСЕ документы коллекции (включая дубли).
+//    Ручной "аварийный выход" для накопившегося мусора — без похода в Firebase
+//    Console. После очистки ничего не пересеивается автоматически — на пустой
+//    карусели появятся кнопки "Добавить слайд" / "Создать 3 стандартных".
+window.resetShopSlides = async function() {
+    const { isAdmin } = _getState();
+    if (!isAdmin || _saving) return;
+    if (!confirm('Удалить ВСЕ текущие слайды (включая созданные вручную)? Отменить нельзя.')) return;
+    _saving = true;
+    try {
+        const snap = await getDocs(collection(_db, 'shopSlides'));
+        for (const d of snap.docs) await deleteDoc(doc(_db, 'shopSlides', d.id));
+        await renderShopSlides(document.getElementById('shop-hero'), true);
+        showToast('<i class="fas fa-circle-check"></i> Все слайды удалены');
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally { _saving = false; }
 };
 
 window.deleteShopSlide = async function(id) {
     const { isAdmin } = _getState();
-    if (!isAdmin || !id) return;
+    if (!isAdmin || !id || _saving) return;
     if (!confirm('Удалить этот слайд?')) return;
+    _saving = true;
     try {
         await deleteDoc(doc(_db, 'shopSlides', id));
         await renderShopSlides(document.getElementById('shop-hero'), true);
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally { _saving = false; }
 };
 
 export function bindShopSlides(db, auth, getState) {
