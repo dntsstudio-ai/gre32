@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915q';
-import { VCOINS_DEFAULT_PRICES, PAYMENTS_WORKER_URL } from '../config/config.js?v=20260915q';
-import { checkAndAwardAch } from './achievements.js?v=20260915q';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915r';
+import { VCOINS_DEFAULT_PRICES, PAYMENTS_WORKER_URL } from '../config/config.js?v=20260915r';
+import { checkAndAwardAch } from './achievements.js?v=20260915r';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -135,36 +135,85 @@ window.buyStarsPack = function(amount, price) {
         modal.className = 'modal';
         document.body.appendChild(modal);
     }
+    clearInterval(_buyStarsPollTimer);
     modal.innerHTML = `<div class="modal-content" style="max-width:380px;">
         <h3 style="margin-bottom:14px;"><i class="fas fa-star" style="color:#a78bfa;margin-right:8px;"></i>Покупка ${amount} Старс</h3>
         <input type="email" id="buy-stars-email" placeholder="Почта — на неё придёт промокод" style="margin-bottom:0;">
         <div style="font-size:22px;font-weight:700;margin:14px 0 16px;text-align:center;">${price} ₽</div>
-        <button class="btn btn-purple" id="buy-stars-pay-btn" style="width:100%;margin-bottom:8px;" onclick="submitBuyStars(${amount}, ${price})"><i class="fas fa-credit-card"></i> Оплатить</button>
+        <button class="btn btn-purple" id="buy-stars-pay-btn" style="width:100%;margin-bottom:8px;" onclick="submitBuyStars(${amount})"><i class="fas fa-arrow-right"></i> Далее</button>
         <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Отмена</button>
         <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">После оплаты код придёт на указанную почту — активируйте его ниже в поле "Промокод", чтобы получить Старс.</p>
     </div>`;
     modal.style.display = 'flex';
 };
 
-window.submitBuyStars = async function(amount, price) {
+window.submitBuyStars = async function(amount) {
     const emailInput = document.getElementById('buy-stars-email');
     const email = emailInput?.value.trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('Введите корректную почту', 'error');
     const btn = document.getElementById('buy-stars-pay-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Подождите...'; }
     try {
-        const res = await fetch(`${PAYMENTS_WORKER_URL}/create-payment`, {
+        const res = await fetch(`${PAYMENTS_WORKER_URL}/create-order`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, pack: amount }),
         });
         const data = await res.json();
-        if (!res.ok || !data.url) throw new Error(data.error || 'Не удалось создать платёж');
-        window.location.href = data.url;
+        if (!res.ok || !data.ref) throw new Error(data.error || 'Не удалось создать заказ');
+        renderBuyStarsPaymentStep(data, email);
     } catch(e) {
         showToast('Ошибка: ' + e.message, 'error');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-credit-card"></i> Оплатить'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-arrow-right"></i> Далее'; }
     }
+};
+
+let _buyStarsPollTimer = null;
+
+function renderBuyStarsPaymentStep(order, email) {
+    const modal = document.getElementById('m-buy-stars');
+    if (!modal) return;
+    const r = order.recipient || {};
+    modal.querySelector('.modal-content').innerHTML = `
+        <h3 style="margin-bottom:14px;"><i class="fas fa-mobile-screen-button" style="color:#a78bfa;margin-right:8px;"></i>Перевод по СБП</h3>
+        <p style="font-size:13px;color:#f87171;font-weight:600;margin-bottom:10px;">Переведите ТОЧНО эту сумму, до копейки — иначе платёж не опознается автоматически!</p>
+        <div style="font-size:28px;font-weight:800;text-align:center;margin-bottom:14px;color:#a78bfa;">${esc(order.amountRub)} ₽</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;margin-bottom:14px;">
+            <div>Телефон: <b>${esc(r.phone || '—')}</b></div>
+            <div>Банк: <b>${esc(r.bank || '—')}</b></div>
+            <div>Получатель: <b>${esc(r.name || '—')}</b></div>
+        </div>
+        <div id="buy-stars-status" style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:14px;"><i class="fas fa-spinner fa-spin"></i> Ожидаем оплату...</div>
+        <button class="btn btn-outline" style="width:100%;" onclick="cancelBuyStarsPolling()">Закрыть</button>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">Код придёт на ${esc(email)} автоматически в течение пары минут после перевода.</p>
+    `;
+    startBuyStarsPolling(order.ref, email);
+}
+
+function startBuyStarsPolling(ref, email) {
+    clearInterval(_buyStarsPollTimer);
+    _buyStarsPollTimer = setInterval(async () => {
+        const statusEl = document.getElementById('buy-stars-status');
+        if (!statusEl) return clearInterval(_buyStarsPollTimer);
+        try {
+            const res = await fetch(`${PAYMENTS_WORKER_URL}/order-status?ref=${encodeURIComponent(ref)}`);
+            const data = await res.json();
+            if (data.status === 'paid') {
+                clearInterval(_buyStarsPollTimer);
+                statusEl.style.color = 'var(--teal)';
+                statusEl.innerHTML = `<i class="fas fa-check"></i> Оплата получена! Код отправлен на ${esc(email)}`;
+            } else if (data.status === 'expired' || data.status === 'not_found') {
+                clearInterval(_buyStarsPollTimer);
+                statusEl.style.color = '#f87171';
+                statusEl.textContent = 'Время ожидания истекло — откройте покупку заново.';
+            }
+        } catch(e) {}
+    }, 5000);
+}
+
+window.cancelBuyStarsPolling = function() {
+    clearInterval(_buyStarsPollTimer);
+    closeModals();
 };
 
 // ── Подарить VCoins ──
@@ -422,7 +471,7 @@ async function openGame(type) {
     // wheel.js — отдельный, не главный модуль: подключаем через import()
     // только в момент открытия именно этой игры, а не всегда вместе с vcoins.js
     if (type === 'wheel' && typeof window.renderWheelGame !== 'function') {
-        const m = await import('./wheel.js?v=20260915q');
+        const m = await import('./wheel.js?v=20260915r');
         m.bindWheel(_db, _auth, _getState);
     }
     closeModals();

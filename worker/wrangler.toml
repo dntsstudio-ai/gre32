@@ -5,19 +5,29 @@ compatibility_date = "2026-09-01"
 # Обычные переменные (не секреты) — можно смотреть в этом файле.
 [vars]
 FIREBASE_PROJECT_ID = "voice-acting-team"
-ROBOKASSA_MERCHANT_LOGIN = "ЗАПОЛНИТЬ_ПОСЛЕ_ПОДКЛЮЧЕНИЯ"
-ROBOKASSA_TEST_MODE = "1"
 # Из config/config.js сайта (EMAILJS_CONFIG) — публичный ключ, не секрет.
 EMAILJS_PUBLIC_KEY = "FExFPIAtSKcFcS2yy"
 EMAILJS_SERVICE_ID = "service_sws"
 # Новый шаблон в EmailJS для письма с промокодом (см. worker/README.md).
 EMAILJS_TEMPLATE_STARSCODE = "template_starscode"
 
+# DIY-оплата через СБП по номеру телефона — что показывать покупателю
+# на странице оплаты (см. worker/README.md, раздел "DIY-оплата").
+PAYOUT_PHONE          = "ЗАПОЛНИТЬ_НОМЕР_ТЕЛЕФОНА"
+PAYOUT_BANK_NAME       = "Сбербанк"
+PAYOUT_RECEIVER_NAME  = "ЗАПОЛНИТЬ_ИМЯ_ПОЛУЧАТЕЛЯ"
+
+# Не используется с сайта сейчас (Robokassa отклонила подключение
+# магазина) — оставлено как рабочая заготовка на будущее.
+ROBOKASSA_MERCHANT_LOGIN = "ЗАПОЛНИТЬ_ПОСЛЕ_ПОДКЛЮЧЕНИЯ"
+ROBOKASSA_TEST_MODE = "1"
+
 # Секреты — сюда НЕ вписывать значения. Задаются командой:
 #   wrangler secret put ИМЯ
 # (см. worker/README.md)
-#   ROBOKASSA_PASSWORD1
-#   ROBOKASSA_PASSWORD2
+#   SMS_WEBHOOK_SECRET       — придумать длинную случайную строку
 #   FIREBASE_CLIENT_EMAIL
 #   FIREBASE_PRIVATE_KEY
 #   EMAILJS_PRIVATE_KEY
+#   ROBOKASSA_PASSWORD1      (не используется сейчас)
+#   ROBOKASSA_PASSWORD2      (не используется сейчас)
