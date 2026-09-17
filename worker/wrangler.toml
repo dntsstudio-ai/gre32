@@ -1,0 +1,19 @@
+name = "vat-payments"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Обычные переменные (не секреты) — можно смотреть в этом файле.
+[vars]
+FIREBASE_PROJECT_ID = "voice-acting-team"
+# Публичный Web API key из config/config.js сайта — не секрет по дизайну Firebase.
+FIREBASE_WEB_API_KEY = "AIzaSyCT524d1MZAXIqwSNS0JX7E9c5EcVMb9mM"
+ROBOKASSA_MERCHANT_LOGIN = "ЗАПОЛНИТЬ_ПОСЛЕ_ПОДКЛЮЧЕНИЯ"
+ROBOKASSA_TEST_MODE = "1"
+
+# Секреты — сюда НЕ вписывать значения. Задаются командой:
+#   wrangler secret put ИМЯ
+# (см. worker/README.md)
+#   ROBOKASSA_PASSWORD1
+#   ROBOKASSA_PASSWORD2
+#   FIREBASE_CLIENT_EMAIL
+#   FIREBASE_PRIVATE_KEY
