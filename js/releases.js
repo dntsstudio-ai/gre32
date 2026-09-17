@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915p';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915p';
-import { checkAndAwardAch } from './achievements.js?v=20260915p';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915q';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915q';
+import { checkAndAwardAch } from './achievements.js?v=20260915q';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915p';
+} from './player.js?v=20260915q';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -327,13 +327,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915p').then(m => {
+    import('./comments.js?v=20260915q').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915p').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915q').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -863,7 +863,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915p');
+                const plMod = await import('./playlists.js?v=20260915q');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {

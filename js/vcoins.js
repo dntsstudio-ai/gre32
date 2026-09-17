@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915p';
-import { VCOINS_DEFAULT_PRICES } from '../config/config.js?v=20260915p';
-import { checkAndAwardAch } from './achievements.js?v=20260915p';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915q';
+import { VCOINS_DEFAULT_PRICES, PAYMENTS_WORKER_URL } from '../config/config.js?v=20260915q';
+import { checkAndAwardAch } from './achievements.js?v=20260915q';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -120,12 +120,51 @@ window.redeemPromoCode = async function() {
     } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
 };
 
-// ── Покупка пакета Старс за деньги (Robokassa/СБП) ──
-// TODO: как только пройдёт активация магазина в Robokassa и будет поднят
-// Cloudflare Worker для подписи/проверки платежа — заменить на настоящий
-// редирект на страницу оплаты (window.location.href = initPaymentUrl(...)).
+// ── Покупка пакета Старс за деньги ──
+// Покупка не требует входа в аккаунт: покупатель указывает почту, оплачивает,
+// и получает письмом одноразовый промокод (активируется на этой же странице
+// в поле "Промокод" — начисление идёт через уже существующую систему).
 window.buyStarsPack = function(amount, price) {
-    showToast(`<i class="fas fa-clock"></i> Оплата картой/СБП скоро будет доступна! Пока Старс можно получить по промокоду.`, 'info');
+    if (!PAYMENTS_WORKER_URL) {
+        return showToast(`<i class="fas fa-clock"></i> Оплата картой/СБП скоро будет доступна! Пока Старс можно получить по промокоду.`, 'info');
+    }
+    let modal = document.getElementById('m-buy-stars');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'm-buy-stars';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `<div class="modal-content" style="max-width:380px;">
+        <h3 style="margin-bottom:14px;"><i class="fas fa-star" style="color:#a78bfa;margin-right:8px;"></i>Покупка ${amount} Старс</h3>
+        <input type="email" id="buy-stars-email" placeholder="Почта — на неё придёт промокод" style="margin-bottom:0;">
+        <div style="font-size:22px;font-weight:700;margin:14px 0 16px;text-align:center;">${price} ₽</div>
+        <button class="btn btn-purple" id="buy-stars-pay-btn" style="width:100%;margin-bottom:8px;" onclick="submitBuyStars(${amount}, ${price})"><i class="fas fa-credit-card"></i> Оплатить</button>
+        <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Отмена</button>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">После оплаты код придёт на указанную почту — активируйте его ниже в поле "Промокод", чтобы получить Старс.</p>
+    </div>`;
+    modal.style.display = 'flex';
+};
+
+window.submitBuyStars = async function(amount, price) {
+    const emailInput = document.getElementById('buy-stars-email');
+    const email = emailInput?.value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('Введите корректную почту', 'error');
+    const btn = document.getElementById('buy-stars-pay-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Подождите...'; }
+    try {
+        const res = await fetch(`${PAYMENTS_WORKER_URL}/create-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, pack: amount }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || 'Не удалось создать платёж');
+        window.location.href = data.url;
+    } catch(e) {
+        showToast('Ошибка: ' + e.message, 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-credit-card"></i> Оплатить'; }
+    }
 };
 
 // ── Подарить VCoins ──
@@ -383,7 +422,7 @@ async function openGame(type) {
     // wheel.js — отдельный, не главный модуль: подключаем через import()
     // только в момент открытия именно этой игры, а не всегда вместе с vcoins.js
     if (type === 'wheel' && typeof window.renderWheelGame !== 'function') {
-        const m = await import('./wheel.js?v=20260915p');
+        const m = await import('./wheel.js?v=20260915q');
         m.bindWheel(_db, _auth, _getState);
     }
     closeModals();

@@ -6,10 +6,12 @@
 //  - Цены заданы здесь, на сервере — клиент передаёт только размер
 //    пакета ("100"/"300"/...), сумму в рублях мы всегда берём из
 //    STARS_PACKS, а не из запроса, иначе можно было бы подделать сумму.
-//  - Кто покупает и что покупает передаём через Shp_-параметры
-//    Robokassa — они попадают в подпись, поэтому подделать их без
-//    знания Пароля#2 нельзя. Отдельная запись "заказа" в Firestore
-//    не нужна.
+//  - Покупка НЕ привязана к аккаунту в момент оплаты: покупатель просто
+//    указывает почту. Она передаётся через Shp_-параметр Robokassa —
+//    он попадает в подпись, поэтому подделать его без знания Пароля#2
+//    нельзя. После оплаты на эту почту отправляется одноразовый
+//    промокод (см. index.js) — начисление Старс идёт через уже
+//    существующую на сайте систему промокодов, а не напрямую.
 // ============================================================
 import { md5 } from './md5.js';
 
@@ -33,13 +35,13 @@ function buildShpString(shp) {
     return Object.keys(shp).sort().map(k => `Shp_${k}=${shp[k]}`).join(':');
 }
 
-export function buildPaymentUrl(env, { pack, uid, isTest }) {
+export function buildPaymentUrl(env, { pack, email, isTest }) {
     const price = STARS_PACKS[String(pack)];
     if (!price) throw new Error('Неизвестный пакет Старс: ' + pack);
 
     const outSum = price.toFixed(2);
     const invId  = generateInvId();
-    const shp    = { pack: String(pack), uid: String(uid) };
+    const shp    = { pack: String(pack), email: String(email) };
     const shpStr = buildShpString(shp);
 
     const sigBase = `${env.ROBOKASSA_MERCHANT_LOGIN}:${outSum}:${invId}:${env.ROBOKASSA_PASSWORD1}:${shpStr}`;

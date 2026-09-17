@@ -73,6 +73,7 @@ function unwrapValue(v) {
     if ('doubleValue'  in v) return v.doubleValue;
     if ('booleanValue' in v) return v.booleanValue;
     if ('mapValue'     in v) return unwrapFields(v.mapValue.fields || {});
+    if ('arrayValue'   in v) return (v.arrayValue.values || []).map(unwrapValue);
     return null;
 }
 function unwrapFields(fields) {
@@ -84,6 +85,7 @@ function wrapValue(v) {
     if (typeof v === 'string')  return { stringValue: v };
     if (typeof v === 'number')  return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
     if (typeof v === 'boolean') return { booleanValue: v };
+    if (Array.isArray(v))       return { arrayValue: { values: v.map(wrapValue) } };
     if (v && typeof v === 'object') return { mapValue: { fields: wrapFields(v) } };
     return { nullValue: null };
 }

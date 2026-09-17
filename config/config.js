@@ -27,6 +27,10 @@ export const SOCIAL_LINKS = {
     twitch:   'https://vattchelovekizvuchat.com/twich'
 };
 
+// Адрес Cloudflare Worker для покупки Старс (см. worker/README.md → "Деплой").
+// Пока не заполнен — кнопка "Купить" в магазине покажет заглушку "скоро".
+export const PAYMENTS_WORKER_URL = '';
+
 export const JOIN_FORM_URL        = 'https://t.me/VoiceActingTeam1';
 export const PLACEHOLDER_IMG      = 'https://placehold.co/300x420/1a0a2e/7c3aed?text=VAT';
 export const PLACEHOLDER_TEAM_IMG = 'https://api.dicebear.com/7.x/identicon/svg';
