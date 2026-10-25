@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20261025b';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20261025b';
-import { checkAndAwardAch } from './achievements.js?v=20261025b';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20261025c';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20261025c';
+import { checkAndAwardAch } from './achievements.js?v=20261025c';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20261025b';
+} from './player.js?v=20261025c';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -211,18 +211,26 @@ function buildFeatSlideEl(r, eyebrowText) {
     return slide;
 }
 
+// ── Случайные N штук без повторов МЕЖДУ СОБОЙ в рамках одной такой
+//    выборки (повторы с предыдущей выборкой 5 минут назад — не страшно). ──
+function pickRandomDistinct(arr, n) {
+    const pool = [...arr];
+    const picked = [];
+    while (picked.length < n && pool.length) {
+        const idx = Math.floor(Math.random() * pool.length);
+        picked.push(pool.splice(idx, 1)[0]);
+    }
+    return picked;
+}
+
 function rebuildFeaturedSlides() {
     const container = document.getElementById('rel-hero-feat-container');
     if (!container) return;
     container.innerHTML = '';
 
-    const newRel = getNewReleases();
-    if (newRel.length) {
-        newRel.forEach(r => container.appendChild(buildFeatSlideEl(r, 'Новинка')));
-    } else if (allRel.length) {
-        const pick = allRel[Math.floor(Math.random() * allRel.length)];
-        container.appendChild(buildFeatSlideEl(pick, 'Рекомендуем к просмотру'));
-    }
+    getNewReleases().forEach(r => container.appendChild(buildFeatSlideEl(r, 'Новинка')));
+    pickRandomDistinct(allRel, 3).forEach(r => container.appendChild(buildFeatSlideEl(r, 'Рекомендуем к просмотру')));
+
     initHeroCarousel();
 }
 
@@ -437,13 +445,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20261025b').then(m => {
+    import('./comments.js?v=20261025c').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20261025b').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20261025c').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -634,9 +642,14 @@ function initHeroCarousel() {
     heroRestart();
 }
 
+let _recRefreshTimer = null;
 export function bindReleases(db, auth, getState, storage) {
     _getState = getState;
     initHeroCarousel();
+
+    // ── Раз в 5 минут обновляем случайную тройку "Рекомендуем" в карусели ──
+    clearInterval(_recRefreshTimer);
+    _recRefreshTimer = setInterval(rebuildFeaturedSlides, 5 * 60 * 1000);
 
     // ── Загрузка постера файлом ──
     window.uploadPosterFile = (inputEl) => {
@@ -1025,7 +1038,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20261025b');
+                const plMod = await import('./playlists.js?v=20261025c');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {
