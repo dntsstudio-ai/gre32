@@ -7,16 +7,16 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915t';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915t';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915t';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915t';
-import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915t';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915t';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20260915t';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915t';
-import { bindBanners } from './banners.js?v=20260915t';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20260915t';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20260915u';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20260915u';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20260915u';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20260915u';
+import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20260915u';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20260915u';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20260915u';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20260915u';
+import { bindBanners } from './banners.js?v=20260915u';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20260915u';
 
 // ── Ленивая загрузка "неглавных" модулей ────────────────────────
 // Раньше все ~20 файлов сайта подключались сразу при любом заходе —
@@ -25,7 +25,7 @@ import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, pre
 // плейлистов и т.п. Теперь эти модули (и их bindX()) подключаются через
 // import() только в момент, когда человек реально открывает нужную
 // страницу — см. вызовы ниже в navigate() и в обработчиках deep-link'ов.
-const V = '20260915t';
+const V = '20260915u';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);

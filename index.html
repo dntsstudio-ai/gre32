@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915t';
+        var CURRENT = '20260915u';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -76,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915t">
+    <link rel="stylesheet" href="/css/style.css?v=20260915u">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -238,10 +238,16 @@ window.yaContextCb.push(() => {
             </button>
         </div>
         <div class="releases-hero" id="hero-carousel">
-            <div class="rel-hero-slide active" data-slide="0">
-                <div>
-                    <div class="releases-hero-title">Все релизы</div>
-                    <div class="releases-hero-sub">Качественная озвучка от Voice Acting Team — аниме, сериалы и фильмы.</div>
+            <div class="rel-hero-slide rel-hero-slide--feat active" data-slide="0" id="rel-hero-feat">
+                <div class="rel-hero-feat-art" id="rel-hero-feat-art"></div>
+                <div class="rel-hero-feat-body">
+                    <div class="rel-hero-feat-eyebrow"><i class="fas fa-star"></i> Новинка</div>
+                    <div class="rel-hero-feat-title" id="rel-hero-feat-title">Загрузка…</div>
+                    <div class="rel-hero-feat-desc" id="rel-hero-feat-desc"></div>
+                    <div class="rel-hero-feat-cta-row">
+                        <button class="btn btn-blue" id="rel-hero-feat-btn"><i class="fas fa-play"></i> Смотреть</button>
+                    </div>
+                    <div class="rel-hero-feat-meta" id="rel-hero-feat-meta"></div>
                 </div>
             </div>
             <div class="rel-hero-slide" data-slide="1">
@@ -1839,7 +1845,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915t"></script>
+<script type="module" src="/js/app.js?v=20260915u"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>

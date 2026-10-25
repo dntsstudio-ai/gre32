@@ -295,7 +295,7 @@ select option { background: var(--modal-bg); color: var(--text); }
     border: 1px solid rgba(124,58,237,0.2);
     border-radius: var(--radius-lg);
     margin-bottom: 32px;
-    min-height: 168px;
+    min-height: 360px;
     overflow: hidden; position: relative;
 }
 .releases-hero::after {
@@ -339,6 +339,45 @@ select option { background: var(--modal-bg); color: var(--text); }
 }
 .rel-hero-dot:hover { background: rgba(255,255,255,0.35); }
 .rel-hero-dot.active { background: var(--teal); transform: scale(1.3); }
+
+/* Первый слайд карусели — "витрина" самого свежего релиза, постер
+   как фон, поверх — название/описание/кнопка (кинопремьерный стиль). */
+.rel-hero-slide--feat {
+    display: block; padding: 0;
+}
+.rel-hero-feat-art {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center 20%;
+}
+.rel-hero-feat-art::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+        linear-gradient(0deg, rgba(5,2,20,0.97) 0%, rgba(5,2,20,0.65) 45%, rgba(5,2,20,0.2) 75%, transparent 100%),
+        linear-gradient(90deg, rgba(5,2,20,0.55) 0%, transparent 65%);
+}
+.rel-hero-feat-body {
+    position: relative; z-index: 2;
+    height: 100%; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 40px 48px; max-width: 600px;
+}
+.rel-hero-feat-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--teal-light); margin-bottom: 12px;
+}
+.rel-hero-feat-eyebrow i { color: #fbbf24; }
+.rel-hero-feat-title {
+    font-family: var(--font-display); font-size: 2.3rem; font-weight: 900; line-height: 1.1;
+    margin-bottom: 14px; color: var(--white); text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+}
+.rel-hero-feat-desc {
+    color: rgba(240,238,255,0.8); font-size: 13.5px; line-height: 1.6;
+    margin-bottom: 20px; max-width: 460px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rel-hero-feat-meta { display: flex; gap: 16px; margin-top: 4px; font-size: 12px; color: var(--text-dim); flex-wrap: wrap; }
+.rel-hero-feat-meta b { color: var(--white); }
 
 /* Card Grid */
 .grid {
@@ -406,6 +445,13 @@ select option { background: var(--modal-bg); color: var(--text); }
     display: inline-flex; align-items: center;
     background: rgba(20,184,166,0.12); color: var(--teal-light);
     border: 1px solid rgba(20,184,166,0.25); font-weight: 600;
+}
+
+.card-ribbon {
+    position: absolute; top: 8px; left: 8px; z-index: 5;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+    padding: 3px 8px; border-radius: 6px; text-transform: uppercase;
+    background: linear-gradient(135deg, #f87171, #ef4444); color: #fff;
 }
 
 .adm-tools {

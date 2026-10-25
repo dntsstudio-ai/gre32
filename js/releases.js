@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915t';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915t';
-import { checkAndAwardAch } from './achievements.js?v=20260915t';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915u';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915u';
+import { checkAndAwardAch } from './achievements.js?v=20260915u';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915t';
+} from './player.js?v=20260915u';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -110,6 +110,7 @@ export async function loadReleases(db, isAdmin) {
     try {
         const snap = await getDocs(query(collection(db, 'releases'), orderBy('timestamp', 'desc')));
         allRel = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateFeaturedHero();
         renderGrid(isAdmin);
     } catch(e) {
         console.error('loadReleases:', e);
@@ -118,7 +119,29 @@ export async function loadReleases(db, isAdmin) {
     }
 }
 
+// ── Главный слайд карусели: витрина самого свежего релиза ──
+function updateFeaturedHero() {
+    const r = allRel[0];
+    const art   = document.getElementById('rel-hero-feat-art');
+    const title = document.getElementById('rel-hero-feat-title');
+    const desc  = document.getElementById('rel-hero-feat-desc');
+    const meta  = document.getElementById('rel-hero-feat-meta');
+    const btn   = document.getElementById('rel-hero-feat-btn');
+    const slide = document.getElementById('rel-hero-feat');
+    if (!r || !slide) { if (slide) slide.style.display = 'none'; return; }
+
+    if (art) art.style.backgroundImage = `url('${r.img || PLACEHOLDER_IMG}')`;
+    if (title) title.textContent = r.title || '';
+    if (desc) desc.textContent = (r.desc || '').slice(0, 160);
+    if (meta) meta.innerHTML = `
+        <span>Жанр: <b>${esc(r.genre || '—')}</b></span>
+        <span>Год: <b>${esc(r.year || '—')}</b></span>
+        <span><i class="fas fa-eye"></i> <b>${r.views || 0}</b> просмотров</span>`;
+    if (btn) btn.onclick = () => { if (typeof openView === 'function') openView(r.id); };
+}
+
 export function renderGrid(isAdmin) {
+    const newIds = new Set(allRel.slice(0, 3).map(r => r.id));
     let res = [...allRel];
     if (searchEnabled) {
         const q = (document.getElementById('main-search')?.value || '').toLowerCase();
@@ -135,6 +158,7 @@ export function renderGrid(isAdmin) {
     if (!grid) return;
     grid.innerHTML = res.map(r => `
         <a class="card" href="/view/${r.id}" onclick="if(typeof openView==='function'){event.preventDefault();openView('${r.id}')}">
+            ${newIds.has(r.id) ? '<span class="card-ribbon">New</span>' : ''}
             ${isAdmin ? `<div class="adm-tools">
                 <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openRelModal('${r.id}')">Ред</button>
                 <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteRel('${r.id}')">Удал</button>
@@ -327,13 +351,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915t').then(m => {
+    import('./comments.js?v=20260915u').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915t').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915u').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -894,7 +918,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915t');
+                const plMod = await import('./playlists.js?v=20260915u');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {

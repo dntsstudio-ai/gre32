@@ -6,8 +6,8 @@ import {
     doc, getDocs, updateDoc, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showAchievementPopup, achIconHTML } from './core.js?v=20260915t';
-import { AUTO_ACHIEVEMENTS } from '../config/config.js?v=20260915t';
+import { esc, showToast, closeModals, showAchievementPopup, achIconHTML } from './core.js?v=20260915u';
+import { AUTO_ACHIEVEMENTS } from '../config/config.js?v=20260915u';
 
 let viewAchRealIdx = -1;
 
