@@ -7,8 +7,8 @@ import {
     updateDoc, deleteDoc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915v';
-import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915v';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915w';
+import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915w';
 
 export let curTM = null;
 
@@ -45,8 +45,8 @@ export function bindTeam(db, getState) {
                     <a class="card" data-id="${m.id}" href="/team-page/${m.id}" onclick="if(typeof openTeamPage==='function'){event.preventDefault();openTeamPage('${m.id}')}">
                         <div class="drag-handle"><i class="fas fa-grip-lines"></i> Перетащить</div>
                         ${isAdmin ? `<div class="adm-tools">
-                            <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openTeamModal('${m.id}')">Ред</button>
-                            <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();delTeam('${m.id}')">Удал</button>
+                            <button class="btn-sm" style="background:#3897f0;" onclick="event.preventDefault();event.stopPropagation();openTeamModal('${m.id}')">Ред</button>
+                            <button class="btn-sm" style="background:#ef4444;" onclick="event.preventDefault();event.stopPropagation();delTeam('${m.id}')">Удал</button>
                         </div>` : ''}
                         <img src="${esc(m.img)}" loading="lazy" style="width:100%;height:230px;object-fit:cover;"
                              onerror="this.src='${PLACEHOLDER_TEAM_IMG}'">

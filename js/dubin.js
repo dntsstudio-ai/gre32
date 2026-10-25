@@ -7,9 +7,9 @@ import {
     updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals } from './core.js?v=20260915v';
-import { EMAILJS_CONFIG } from '../config/config.js?v=20260915v';
-import { checkAndAwardAch } from './achievements.js?v=20260915v';
+import { esc, showToast, closeModals } from './core.js?v=20260915w';
+import { EMAILJS_CONFIG } from '../config/config.js?v=20260915w';
+import { checkAndAwardAch } from './achievements.js?v=20260915w';
 
 export function initDubinPanel(isAdmin, isDub) {
     const filesPanel   = document.getElementById('dubin-files-panel');
@@ -107,8 +107,8 @@ async function renderProjects(db, isAdmin) {
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     ${isAdmin ? `
-                    <button class="btn btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openDubinProjectModal('${p.id}')">Ред</button>
-                    <button class="btn btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteDubinProject('${p.id}')">Удал</button>` : ''}
+                    <button class="btn btn-sm" style="background:#3897f0;" onclick="event.preventDefault();event.stopPropagation();openDubinProjectModal('${p.id}')">Ред</button>
+                    <button class="btn btn-sm" style="background:#ef4444;" onclick="event.preventDefault();event.stopPropagation();deleteDubinProject('${p.id}')">Удал</button>` : ''}
                     <i class="fas fa-chevron-down" style="color:var(--text-dim);font-size:12px;"></i>
                 </div>
                 </div>

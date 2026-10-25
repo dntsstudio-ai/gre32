@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915v';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915v';
-import { getOddsMultiplier } from './vcoins.js?v=20260915v';
+import { esc, showToast } from './core.js?v=20260915w';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915w';
+import { getOddsMultiplier } from './vcoins.js?v=20260915w';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -103,8 +103,8 @@ async function renderLootboxPage(wrap, balance) {
 
     const adminControlsHtml = (box) => isAdmin ? `
                 <div class="lootbox-box-admin-controls">
-                    <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openLootboxDefModal('${box.id}')">Ред</button>
-                    <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteLootboxDef('${box.id}')">Удал</button>
+                    <button class="btn-sm" style="background:#3897f0;" onclick="event.preventDefault();event.stopPropagation();openLootboxDefModal('${box.id}')">Ред</button>
+                    <button class="btn-sm" style="background:#ef4444;" onclick="event.preventDefault();event.stopPropagation();deleteLootboxDef('${box.id}')">Удал</button>
                 </div>` : '';
 
     // Ящики с заданной картинкой — минимальная "арт" карточка (только картинка

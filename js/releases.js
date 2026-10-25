@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915v';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915v';
-import { checkAndAwardAch } from './achievements.js?v=20260915v';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915w';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915w';
+import { checkAndAwardAch } from './achievements.js?v=20260915w';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915v';
+} from './player.js?v=20260915w';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -107,23 +107,40 @@ function uploadToStorage(storage, file, folder, { onProgress, onDone, onError })
 
 // ── Загрузка релизов — живая подписка, а не разовая выборка: как только
 //    кто угодно добавит/изменит/удалит релиз, у всех открытых вкладок
-//    сама обновится и витрина, и сетка, и плашки "Новое", без перезагрузки. ──
+//    сама обновится и витрина, и сетка, и плашки "Новое", без перезагрузки.
+//    Повторные срабатывания (любой чужой просмотр/лайк где угодно в
+//    releases тоже триггерит этот снапшот) — с задержкой: без неё сетка
+//    могла пересобраться прямо посреди клика по "Ред"/"Удал" у админа и
+//    кнопка уезжала из-под курсора. ──
 let _relUnsub = null;
+let _relRenderTimer = null;
 export function loadReleases(db, isAdmin) {
     if (_relUnsub) { _relUnsub(); _relUnsub = null; }
+    clearTimeout(_relRenderTimer);
     return new Promise((resolve) => {
         let first = true;
+        const render = () => {
+            updateFeaturedHero();
+            // isAdmin мог обновиться после первой загрузки (авторизация ещё
+            // не разрешилась) — берём актуальное значение, а не то, что было
+            // на момент подписки, иначе живые обновления будут сбрасывать
+            // кнопки "Ред"/"Удал" админу обратно.
+            renderGrid(_getState ? _getState().isAdmin : isAdmin);
+        };
         _relUnsub = onSnapshot(
             query(collection(db, 'releases'), orderBy('timestamp', 'desc')),
             (snap) => {
                 allRel = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                updateFeaturedHero();
-                // isAdmin мог обновиться после первой загрузки (авторизация ещё
-                // не разрешилась) — берём актуальное значение, а не то, что было
-                // на момент подписки, иначе живые обновления будут сбрасывать
-                // кнопки "Ред"/"Удал" админу обратно.
-                renderGrid(_getState ? _getState().isAdmin : isAdmin);
-                if (first) { first = false; resolve(); }
+                if (first) {
+                    render();
+                    first = false;
+                    resolve();
+                } else {
+                    // Не первая загрузка — переждать паузу, чтобы не дёргать
+                    // DOM посреди клика по карточке.
+                    clearTimeout(_relRenderTimer);
+                    _relRenderTimer = setTimeout(render, 600);
+                }
             },
             (e) => {
                 console.error('loadReleases:', e);
@@ -178,8 +195,8 @@ export function renderGrid(isAdmin) {
         <a class="card" href="/view/${r.id}" onclick="if(typeof openView==='function'){event.preventDefault();openView('${r.id}')}">
             ${newIds.has(r.id) ? '<span class="card-ribbon">New</span>' : ''}
             ${isAdmin ? `<div class="adm-tools">
-                <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openRelModal('${r.id}')">Ред</button>
-                <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteRel('${r.id}')">Удал</button>
+                <button class="btn-sm" style="background:#3897f0;" onclick="event.preventDefault();event.stopPropagation();openRelModal('${r.id}')">Ред</button>
+                <button class="btn-sm" style="background:#ef4444;" onclick="event.preventDefault();event.stopPropagation();deleteRel('${r.id}')">Удал</button>
             </div>` : ''}
             <img src="${esc(r.img)}" loading="lazy" onerror="this.src='${PLACEHOLDER_IMG}'" alt="${esc(r.title)}">
             <div class="card-info">
@@ -369,13 +386,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915v').then(m => {
+    import('./comments.js?v=20260915w').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915v').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915w').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -934,7 +951,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915v');
+                const plMod = await import('./playlists.js?v=20260915w');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {
