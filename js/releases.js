@@ -133,6 +133,8 @@ export function renderGrid(isAdmin) {
 
     const grid = document.getElementById('main-grid');
     if (!grid) return;
+    const countEl = document.getElementById('releases-count');
+    if (countEl) countEl.textContent = allRel.length;
     grid.innerHTML = res.map(r => `
         <a class="card" href="/view/${r.id}" onclick="event.preventDefault();openView('${r.id}')">
             ${isAdmin ? `<div class="adm-tools">
