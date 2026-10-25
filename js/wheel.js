@@ -1,9 +1,9 @@
 // ============================================================
 //  js/wheel.js — Мини-игра: Колесо Фортуны
 // ============================================================
-import { esc, showToast } from './core.js?v=20260915y';
-import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915y';
-import { checkAndAwardAch } from './achievements.js?v=20260915y';
+import { esc, showToast } from './core.js?v=20260915z';
+import { awardVCoins, getOddsMultiplier, incrementGamesWon } from './vcoins.js?v=20260915z';
+import { checkAndAwardAch } from './achievements.js?v=20260915z';
 
 let _db, _auth, _getState;
 let _wheelSpinning = false;

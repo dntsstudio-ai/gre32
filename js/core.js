@@ -218,6 +218,29 @@ window.closeSidebar = function() {
     document.body.style.overflow = '';
 };
 
+// ── На ПК (настоящая мышь + hover) меню ещё и само открывается при
+//    наведении на бургер и плавно закрывается при уходе курсора — клик
+//    по-прежнему тоже работает. На тач-экранах не включаем: там некуда
+//    "увести" курсор, чтобы закрыть, меню залипло бы открытым. ──
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const toggleBtn = document.querySelector('.sidebar-toggle-btn');
+    const sidebarEl = document.getElementById('app-sidebar');
+    let hoverCloseTimer = null;
+    function hoverOpenSidebar() {
+        clearTimeout(hoverCloseTimer);
+        window.openSidebar();
+    }
+    function hoverCloseSidebar() {
+        clearTimeout(hoverCloseTimer);
+        hoverCloseTimer = setTimeout(() => window.closeSidebar(), 250);
+    }
+    [toggleBtn, sidebarEl].forEach(el => {
+        if (!el) return;
+        el.addEventListener('mouseenter', hoverOpenSidebar);
+        el.addEventListener('mouseleave', hoverCloseSidebar);
+    });
+}
+
 // ── Поиск ──
 window.openSearch = function() {
     const wrap = document.getElementById('search-wrap');

@@ -7,9 +7,9 @@ import {
     collection, query, orderBy, where, increment, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915y';
-import { VCOINS_DEFAULT_PRICES, PAYMENTS_WORKER_URL } from '../config/config.js?v=20260915y';
-import { checkAndAwardAch } from './achievements.js?v=20260915y';
+import { esc, showToast, closeModals, showVCoinsPopup } from './core.js?v=20260915z';
+import { VCOINS_DEFAULT_PRICES, PAYMENTS_WORKER_URL } from '../config/config.js?v=20260915z';
+import { checkAndAwardAch } from './achievements.js?v=20260915z';
 
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
@@ -471,7 +471,7 @@ async function openGame(type) {
     // wheel.js — отдельный, не главный модуль: подключаем через import()
     // только в момент открытия именно этой игры, а не всегда вместе с vcoins.js
     if (type === 'wheel' && typeof window.renderWheelGame !== 'function') {
-        const m = await import('./wheel.js?v=20260915y');
+        const m = await import('./wheel.js?v=20260915z');
         m.bindWheel(_db, _auth, _getState);
     }
     closeModals();
