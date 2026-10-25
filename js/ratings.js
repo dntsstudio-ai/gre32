@@ -7,8 +7,8 @@ import {
     updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, canEditRatings, canAccessRatings } from './core.js?v=20261025a';
-import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20261025a';
+import { esc, showToast, closeModals, canEditRatings, canAccessRatings } from './core.js?v=20261025b';
+import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20261025b';
 
 const EQUIPMENT_CATS = [
     { key:'mic',        label:'Микрофон',            icon:'fa-microphone'  },
