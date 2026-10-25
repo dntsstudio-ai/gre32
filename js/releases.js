@@ -4,16 +4,16 @@
 
 import {
     collection, getDocs, getDoc, doc, addDoc, setDoc,
-    updateDoc, deleteDoc, query, orderBy, increment, where
+    updateDoc, deleteDoc, query, orderBy, increment, where, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915u';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915u';
-import { checkAndAwardAch } from './achievements.js?v=20260915u';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915v';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915v';
+import { checkAndAwardAch } from './achievements.js?v=20260915v';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915u';
+} from './player.js?v=20260915v';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -105,18 +105,34 @@ function uploadToStorage(storage, file, folder, { onProgress, onDone, onError })
     );
 }
 
-// ── Загрузка релизов ──
-export async function loadReleases(db, isAdmin) {
-    try {
-        const snap = await getDocs(query(collection(db, 'releases'), orderBy('timestamp', 'desc')));
-        allRel = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateFeaturedHero();
-        renderGrid(isAdmin);
-    } catch(e) {
-        console.error('loadReleases:', e);
-        const grid = document.getElementById('main-grid');
-        if (grid) grid.innerHTML = '<p style="color:#ef4444;grid-column:1/-1;text-align:center;padding:40px;">Ошибка загрузки релизов</p>';
-    }
+// ── Загрузка релизов — живая подписка, а не разовая выборка: как только
+//    кто угодно добавит/изменит/удалит релиз, у всех открытых вкладок
+//    сама обновится и витрина, и сетка, и плашки "Новое", без перезагрузки. ──
+let _relUnsub = null;
+export function loadReleases(db, isAdmin) {
+    if (_relUnsub) { _relUnsub(); _relUnsub = null; }
+    return new Promise((resolve) => {
+        let first = true;
+        _relUnsub = onSnapshot(
+            query(collection(db, 'releases'), orderBy('timestamp', 'desc')),
+            (snap) => {
+                allRel = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                updateFeaturedHero();
+                // isAdmin мог обновиться после первой загрузки (авторизация ещё
+                // не разрешилась) — берём актуальное значение, а не то, что было
+                // на момент подписки, иначе живые обновления будут сбрасывать
+                // кнопки "Ред"/"Удал" админу обратно.
+                renderGrid(_getState ? _getState().isAdmin : isAdmin);
+                if (first) { first = false; resolve(); }
+            },
+            (e) => {
+                console.error('loadReleases:', e);
+                const grid = document.getElementById('main-grid');
+                if (grid) grid.innerHTML = '<p style="color:#ef4444;grid-column:1/-1;text-align:center;padding:40px;">Ошибка загрузки релизов</p>';
+                if (first) { first = false; resolve(); }
+            }
+        );
+    });
 }
 
 // ── Главный слайд карусели: витрина самого свежего релиза ──
@@ -140,8 +156,10 @@ function updateFeaturedHero() {
     if (btn) btn.onclick = () => { if (typeof openView === 'function') openView(r.id); };
 }
 
+const NEW_BADGE_MS = 7 * 24 * 60 * 60 * 1000; // плашка "Новое" висит 7 дней с момента добавления
 export function renderGrid(isAdmin) {
-    const newIds = new Set(allRel.slice(0, 3).map(r => r.id));
+    const newCutoff = Date.now() - NEW_BADGE_MS;
+    const newIds = new Set(allRel.filter(r => (r.timestamp || 0) > newCutoff).map(r => r.id));
     let res = [...allRel];
     if (searchEnabled) {
         const q = (document.getElementById('main-search')?.value || '').toLowerCase();
@@ -351,13 +369,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915u').then(m => {
+    import('./comments.js?v=20260915v').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915u').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915v').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -792,7 +810,6 @@ export function bindReleases(db, auth, getState, storage) {
     };
 
     window.saveRel = async () => {
-        const { isAdmin } = getState();
         const id = document.getElementById('ed-rel-id')?.value;
         const data = {
             title:     document.getElementById('ad-title')?.value     || '',
@@ -809,17 +826,16 @@ export function bindReleases(db, auth, getState, storage) {
             if (!id) await addDoc(collection(db, 'releases'), data);
             else     await updateDoc(doc(db, 'releases', id), data);
             closeModals();
-            await loadReleases(db, isAdmin);
+            // Сетку/витрину обновлять не нужно отдельно — живая подписка в
+            // loadReleases() сама подхватит это изменение.
             showToast('Релиз сохранён!');
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     };
 
     window.deleteRel = async (id) => {
         if (!confirm('Удалить релиз?')) return;
-        const { isAdmin } = getState();
         try {
             await deleteDoc(doc(db, 'releases', id));
-            await loadReleases(db, isAdmin);
             showToast('Удалено');
         } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
     };
@@ -918,7 +934,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915u');
+                const plMod = await import('./playlists.js?v=20260915v');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {
