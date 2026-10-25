@@ -2,8 +2,20 @@
 //  FIREBASE SECURITY RULES — Voice Acting Team
 //  firestore.rules
 //
-//  Скопируй эти правила в Firebase Console:
-//  Firestore Database → Rules → Edit rules
+//  ⚠️ ВАЖНО: этот файл в репозитории — только СПРАВОЧНАЯ копия.
+//  Он ничего не меняет сам по себе! Чтобы правила реально заработали,
+//  их нужно руками скопировать в Firebase Console:
+//  Firestore Database → Rules → Edit rules → вставить целиком → Publish.
+//
+//  ИЗМЕНЕНИЯ v4 (аудит безопасности):
+//  - /users/{userId}: самому себе больше нельзя поменять role/linkedCardId/
+//    cardPerms — раньше это позволяло выдать себе admin через updateDoc
+//    в консоли браузера (критическая уязвимость).
+//  - /promoCodes/{code}: проверка active/usedBy/maxUses при активации —
+//    раньше можно было активировать чужой/отключённый/исчерпанный код.
+//  - /releases/{releaseId}: обычный пользователь может менять только
+//    views/likes/dislikes — раньше мог подменить серии/постер/описание.
+//  - /releaseSubscribers: uid в записи обязан быть своим.
 //
 //  ИЗМЕНЕНИЯ v3:
 //  - developer теперь = полный админ (как admin/proxyadmin),
@@ -84,9 +96,15 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['nickname', 'email', 'role', 'views', 'subscribers'])
         && request.resource.data.role == 'user';
 
-      // Обновить: сам пользователь или admin/proxyadmin/developer
+      // Обновить: сам пользователь (кроме полей роли/привязки карточки —
+      // их может менять только админ, иначе любой может выдать себе admin
+      // через прямой updateDoc в консоли браузера) или admin/proxyadmin/developer
       allow update: if isAuth() && (
-        uid() == userId || isAdmin()
+        isAdmin() || (
+          uid() == userId &&
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'linkedCardId', 'cardPerms'])
+        )
       );
 
       // Удалять профили только главный admin (не proxyadmin/developer)
@@ -172,8 +190,14 @@ service cloud.firestore {
       allow get: if isAuth();
       allow list: if isAdmin();
       allow create, delete: if isAdmin();
-      // Пользователь может только добавить СЕБЯ в usedBy — остальные поля менять нельзя
+      // Пользователь может только добавить СЕБЯ в usedBy — остальные поля менять нельзя.
+      // Плюс: код должен быть активен, пользователь не должен быть в usedBy уже,
+      // и лимит активаций (если задан) не должен быть исчерпан — иначе через
+      // прямой updateDoc можно было активировать чужой/отключённый/исчерпанный код.
       allow update: if isAuth()
+        && resource.data.active == true
+        && !(resource.data.usedBy.hasAny([uid()]))
+        && (resource.data.maxUses == 0 || resource.data.usedBy.size() < resource.data.maxUses)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
         && request.resource.data.usedBy.size() == resource.data.usedBy.size() + 1
         && request.resource.data.usedBy[request.resource.data.usedBy.size()-1] == uid();
@@ -185,8 +209,13 @@ service cloud.firestore {
     match /releases/{releaseId} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      // Обновление: admin/proxyadmin/developer или авторизованный (лайки, просмотры)
-      allow update: if isAdmin() || isAuth();
+      // Обновление: админ — что угодно; обычный авторизованный — ТОЛЬКО
+      // просмотры/лайки (иначе любой залогиненный мог бы через updateDoc
+      // подменить серии/постер/описание релиза — включая ссылки на видео).
+      allow update: if isAdmin() || (
+        isAuth() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes', 'dislikes'])
+      );
 
       match /comments/{commentId} {
         allow read: if true;
@@ -203,7 +232,9 @@ service cloud.firestore {
     // ══════════════════════════════════════════
     match /releaseSubscribers/{subId} {
       allow read:   if isAuth();
-      allow create: if isAuth();
+      // uid в создаваемой записи обязан быть своим — иначе можно подписать
+      // (или подделать подписку) от имени чужого аккаунта.
+      allow create: if isAuth() && request.resource.data.uid == uid();
       allow delete: if isAuth() && (
         resource.data.uid == uid() || isAdmin()
       );
