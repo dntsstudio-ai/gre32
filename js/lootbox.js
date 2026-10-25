@@ -3,9 +3,9 @@
 // ============================================================
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc, updateDoc, increment }
     from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast } from './core.js?v=20260915r';
-import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915r';
-import { getOddsMultiplier } from './vcoins.js?v=20260915r';
+import { esc, showToast } from './core.js?v=20260915s';
+import { getRarityByCat, RARITIES, renderCard, addCardToInventory } from './inventory.js?v=20260915s';
+import { getOddsMultiplier } from './vcoins.js?v=20260915s';
 
 let _db, _auth, _getState;
 let _lootboxDefs = [];
@@ -359,7 +359,7 @@ window.openLootbox = async function(boxId) {
             // Ящик жёстко ограничен категорией — выпадают ТОЛЬКО карточки этой
             // категории, состав в таком ящике не участвует вообще.
             const pool = allCustomCards.filter(cc => (cc.cardType || 'character') === box.poolCategory);
-            if (!pool.length) return showToast('В этой категории пока нет карточек', 'error');
+            if (!pool.length) { _lootboxOpening = false; return showToast('В этой категории пока нет карточек', 'error'); }
             const rarity = pickRarity(box.weights, oddsM);
             winnerRarity = rarity;
             let rarityPool = pool.filter(cc => cc.rarity === rarity);
@@ -374,7 +374,7 @@ window.openLootbox = async function(boxId) {
             const customCards = currency === 'stars'
                 ? allCustomCards.filter(cc => cc.cardType === 'item')
                 : allCustomCards.filter(cc => cc.cardType !== 'item');
-            if (!allMembers.length && !customCards.length) return showToast('Нет участников в базе', 'error');
+            if (!allMembers.length && !customCards.length) { _lootboxOpening = false; return showToast('Нет участников в базе', 'error'); }
 
             for (const cc of customCards) {
                 const chance = parseFloat(cc.dropChance) || 1;
@@ -398,15 +398,18 @@ window.openLootbox = async function(boxId) {
         // Сохраняем карточку в инвентарь
         await addCardToInventory(winner.id, isCustomWinner);
 
-        // Показываем анимацию
+        // Показываем анимацию. Блокировку "_lootboxOpening" тут НЕ снимаем —
+        // иначе пока идёт анимация открытия (несколько секунд), нетерпеливый
+        // клик по другому ящику запускал бы второе открытие поверх первого.
+        // Снимается она в closeReveal(), когда пользователь закрывает карточку.
         showCardReveal(winner, winnerRarity, box, isCustomWinner);
+        return;
 
     } catch(e) {
         showToast('Ошибка: ' + e.message, 'error');
         console.error('openLootbox:', e);
-    } finally {
-        _lootboxOpening = false;
     }
+    _lootboxOpening = false;
 };
 
 // ── Анимация раскрытия карточки ────────────────────────────────
@@ -545,8 +548,10 @@ function revealCard(r, isCustom, member, box) {
         if (bg) { bg.classList.add('lb-bg--flash'); setTimeout(() => bg.classList.remove('lb-bg--flash'), 600); }
     };
 
-    // Для "арт"-ящиков (с картинками) — держим тряску 2 сек, затем картинку
-    // открытого ящика ещё 2 сек, и только потом карточку (без "взрыва").
+    // Для "арт"-ящиков (с картинками) — держим тряску, затем картинку
+    // открытого ящика, и только потом карточку (без "взрыва"). Раньше тут
+    // стояло по 2 сек на каждый шаг — в сумме больше 4 сек на одно открытие,
+    // на практике это ощущалось как "зависание/лаги", а не эффектная пауза.
     // Для обычных (иконка) — как раньше, компактная быстрая анимация.
     setTimeout(() => {
         boxWrap.classList.remove('lb-box--shake');
@@ -563,12 +568,12 @@ function revealCard(r, isCustom, member, box) {
         }
 
         if (isArt) {
-            setTimeout(showCard, 2000);
+            setTimeout(showCard, 800);
         } else {
             boxWrap.classList.add('lb-box--explode');
             setTimeout(showCard, 400);
         }
-    }, isArt ? 2000 : 600);
+    }, isArt ? 800 : 600);
 }
 
 window.keepCard = function() {
@@ -612,6 +617,7 @@ window.quickSellCard = async function(cardId, price, isCustom) {
 };
 
 function closeReveal() {
+    _lootboxOpening = false;
     const overlay = document.getElementById('lootbox-reveal-overlay');
     if (overlay) {
         overlay.classList.remove('lb-reveal-overlay--visible');

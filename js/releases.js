@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915r';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915r';
-import { checkAndAwardAch } from './achievements.js?v=20260915r';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915s';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915s';
+import { checkAndAwardAch } from './achievements.js?v=20260915s';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915r';
+} from './player.js?v=20260915s';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -134,7 +134,7 @@ export function renderGrid(isAdmin) {
     const grid = document.getElementById('main-grid');
     if (!grid) return;
     grid.innerHTML = res.map(r => `
-        <a class="card" href="/view/${r.id}" onclick="event.preventDefault();openView('${r.id}')">
+        <a class="card" href="/view/${r.id}" onclick="if(typeof openView==='function'){event.preventDefault();openView('${r.id}')}">
             ${isAdmin ? `<div class="adm-tools">
                 <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openRelModal('${r.id}')">Ред</button>
                 <button class="btn-sm" style="background:#ef4444;" onclick="event.stopPropagation();deleteRel('${r.id}')">Удал</button>
@@ -327,13 +327,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915r').then(m => {
+    import('./comments.js?v=20260915s').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915r').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915s').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -471,8 +471,39 @@ async function loadWatchListStatus(db, auth, relId) {
     } catch(e) {}
 }
 
+// ── Карусель баннера на главной: автопрокрутка + точки ──
+let _heroTimer = null;
+function initHeroCarousel() {
+    const wrap = document.getElementById('hero-carousel');
+    if (!wrap) return;
+    const slides = [...wrap.querySelectorAll('.rel-hero-slide')];
+    if (slides.length < 2) return;
+
+    const dotsWrap = document.getElementById('rel-hero-dots');
+    if (dotsWrap) {
+        dotsWrap.innerHTML = slides.map((_, i) => `<span class="rel-hero-dot${i === 0 ? ' active' : ''}" data-i="${i}"></span>`).join('');
+    }
+    const dots = dotsWrap ? [...dotsWrap.querySelectorAll('.rel-hero-dot')] : [];
+
+    let idx = 0;
+    function show(i) {
+        idx = (i + slides.length) % slides.length;
+        slides.forEach((s, j) => s.classList.toggle('active', j === idx));
+        dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+    }
+    function restart() {
+        clearInterval(_heroTimer);
+        _heroTimer = setInterval(() => show(idx + 1), 6000);
+    }
+    dots.forEach(d => d.addEventListener('click', () => { show(parseInt(d.dataset.i)); restart(); }));
+    wrap.addEventListener('mouseenter', () => clearInterval(_heroTimer));
+    wrap.addEventListener('mouseleave', restart);
+    restart();
+}
+
 export function bindReleases(db, auth, getState, storage) {
     _getState = getState;
+    initHeroCarousel();
 
     // ── Загрузка постера файлом ──
     window.uploadPosterFile = (inputEl) => {
@@ -863,7 +894,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915r');
+                const plMod = await import('./playlists.js?v=20260915s');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {

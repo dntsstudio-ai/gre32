@@ -81,7 +81,7 @@ function injectMarker(html, name, content) {
 // ── Список релизов (для главной) — настоящие <a href> с текстом ──
 function buildReleaseCardsHtml(releases) {
     return releases.map(r => `
-        <a class="card" href="/view/${r.id}" onclick="event.preventDefault();typeof openView==='function'&&openView('${r.id}')">
+        <a class="card" href="/view/${r.id}" onclick="if(typeof openView==='function'){event.preventDefault();openView('${r.id}')}">
             ${r.img ? `<img src="${escHtml(r.img)}" alt="${escHtml(r.title || '')}" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">` : ''}
             <div style="padding:10px;">
                 <div style="font-weight:700;font-size:13px;">${escHtml(r.title || '')}</div>
@@ -99,7 +99,7 @@ function buildTeamCardsHtml(team) {
             <div class="team-container-header">${escHtml(cat)}</div>
             <div class="grid">
                 ${cats[cat].map(m => `
-                    <a class="card" href="/team-page/${m.id}" onclick="event.preventDefault();typeof openTeamPage==='function'&&openTeamPage('${m.id}')">
+                    <a class="card" href="/team-page/${m.id}" onclick="if(typeof openTeamPage==='function'){event.preventDefault();openTeamPage('${m.id}')}">
                         ${m.img ? `<img src="${escHtml(m.img)}" alt="${escHtml(m.name || '')}" loading="lazy" style="width:100%;aspect-ratio:1/1;object-fit:cover;">` : ''}
                         <div style="padding:10px;">
                             <div style="font-weight:700;font-size:13px;">${escHtml(m.name || '')}</div>
@@ -156,8 +156,16 @@ async function main() {
     console.log(`Найдено: ${releases.length} релизов, ${team.length} участников.`);
 
     // ── "Гидрируем" шаблон: вставляем настоящие списки карточек в маркеры ──
+    // Для сетки на главной — только свежие N, а не все релизы разом: боту
+    // хватает для индексации, а обычный посетитель не ждёт, пока браузер
+    // загрузит картинки всех постеров до того, как JS подменит список.
+    const HOMEPAGE_GRID_LIMIT = 24;
+    const releasesForGrid = [...releases]
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .slice(0, HOMEPAGE_GRID_LIMIT);
+
     let hydrated = template;
-    hydrated = injectMarker(hydrated, 'GRID', buildReleaseCardsHtml(releases));
+    hydrated = injectMarker(hydrated, 'GRID', buildReleaseCardsHtml(releasesForGrid));
     hydrated = injectMarker(hydrated, 'TEAM', buildTeamCardsHtml(team));
 
     // ── Главная страница — теперь с реальным списком релизов в HTML ──

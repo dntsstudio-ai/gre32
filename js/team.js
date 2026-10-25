@@ -7,8 +7,8 @@ import {
     updateDoc, deleteDoc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915r';
-import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915r';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915s';
+import { PLACEHOLDER_TEAM_IMG } from '../config/config.js?v=20260915s';
 
 export let curTM = null;
 
@@ -42,7 +42,7 @@ export function bindTeam(db, getState) {
 
                 const grid = cDiv.querySelector('.grid');
                 grid.innerHTML = cats[cat].map(m => `
-                    <a class="card" data-id="${m.id}" href="/team-page/${m.id}" onclick="event.preventDefault();openTeamPage('${m.id}')">
+                    <a class="card" data-id="${m.id}" href="/team-page/${m.id}" onclick="if(typeof openTeamPage==='function'){event.preventDefault();openTeamPage('${m.id}')}">
                         <div class="drag-handle"><i class="fas fa-grip-lines"></i> Перетащить</div>
                         ${isAdmin ? `<div class="adm-tools">
                             <button class="btn-sm" style="background:#3897f0;" onclick="event.stopPropagation();openTeamModal('${m.id}')">Ред</button>
