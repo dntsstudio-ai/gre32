@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915s';
+        var CURRENT = '20260915t';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -76,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915s">
+    <link rel="stylesheet" href="/css/style.css?v=20260915t">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -1282,9 +1282,8 @@ window.yaContextCb.push(() => {
 <div id="m-role" class="modal"><div class="modal-content" style="max-width:500px;">
     <h3 style="margin-bottom:6px;"><i class="fas fa-user-shield"></i> Управление ролями</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">
-        <b style="color:var(--teal);">dub</b> — Актёр дубляжа (DUB-in).<br>
-        <b style="color:#fbbf24;">curator</b> — Куратор проекта (DUB-in + Оценка).<br>
-        <b style="color:var(--lavender-lt);">moderator</b> — Модератор.
+        <b style="color:var(--teal);">dub</b> — Актёр дубляжа · <b style="color:#fbbf24;">curator</b> — Куратор проекта · <b style="color:var(--lavender-lt);">moderator</b> — Модератор<br>
+        <b style="color:#60a5fa;">proxyadmin</b> — Прокси-администратор (тех. доступ) · <b style="color:#34d399;">developer</b> — Разработчик (тех. доступ)
     </p>
     <label class="order-label">Email пользователя</label>
     <input type="email" id="role-email" placeholder="user@example.com">
@@ -1293,6 +1292,8 @@ window.yaContextCb.push(() => {
         <option value="moderator">moderator — Модератор</option>
         <option value="dub">dub — Актёр дубляжа</option>
         <option value="curator">curator — Куратор проекта</option>
+        <option value="proxyadmin">proxyadmin — Прокси-администратор</option>
+        <option value="developer">developer — Разработчик</option>
         <option value="admin">admin — Администратор</option>
     </select>
     <div id="curator-project-block" style="display:none;">
@@ -1372,8 +1373,8 @@ window.yaContextCb.push(() => {
             </div>
         </div>
     </div>
-    <div style="overflow-x:auto;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);overflow:hidden;">
-        <table style="width:100%;border-collapse:collapse;" id="rd-equip-table"></table>
+    <div style="overflow-x:auto;overflow-y:hidden;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);">
+        <table style="width:100%;min-width:420px;border-collapse:collapse;" id="rd-equip-table"></table>
     </div>
     <div style="margin-bottom:16px;">
         <label class="order-label">Заметки об оборудовании</label>
@@ -1751,28 +1752,6 @@ window.yaContextCb.push(() => {
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
 </div></div>
 
-<div id="m-user-profile" class="modal"><div class="modal-content" style="text-align:center;">
-    <img id="mu-ava" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--violet);margin-bottom:12px;" src="" alt="">
-    <h2 id="mu-nick" style="margin-bottom:8px;font-family:var(--font-display);"></h2>
-    <div id="mu-role-badge" style="margin-bottom:14px;display:flex;justify-content:center;"></div>
-    <p id="mu-bio" class="mu-bio-text"></p>
-    <a id="mu-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;display:none;margin:0 auto 14px;"><i class="fas fa-link"></i> Профиль</a>
-    <div style="display:flex;justify-content:center;gap:32px;font-size:13px;margin:14px 0;">
-        <div><b id="mu-views-count" style="font-size:1.3rem;color:var(--teal);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Просмотрено</span></div>
-        <div><b id="mu-subs-count" style="font-size:1.3rem;color:var(--violet-light);">0</b><br><span style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Подписчики</span></div>
-    </div>
-    <div id="mu-ach-list" style="display:flex;justify-content:center;gap:6px;margin:14px 0;flex-wrap:wrap;"></div>
-    <button id="btn-mu-sub" class="btn" style="width:100%;margin-bottom:8px;">Подписаться</button>
-    <button id="btn-report-user" class="btn btn-outline" style="width:100%;margin-bottom:8px;border-color:rgba(245,158,11,0.4);color:#f59e0b;display:none;"><i class="fas fa-flag"></i> Пожаловаться</button>
-    <button class="btn btn-outline" style="width:100%;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-subs" class="modal"><div class="modal-content">
-    <h3 style="margin-bottom:16px;">Ваши подписчики</h3>
-    <div id="subs-list" style="max-height:300px;overflow-y:auto;"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:16px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
 <div id="m-admin-roles" class="modal"><div class="modal-content" style="max-width:640px;">
     <h3 style="margin-bottom:6px;"><i class="fas fa-users-cog" style="color:var(--violet-light);margin-right:8px;"></i>Пользователи с ролями</h3>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Все пользователи кроме обычных</p>
@@ -1860,43 +1839,6 @@ window.yaContextCb.push(() => {
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
 </div></div>
 
-<div id="m-role" class="modal"><div class="modal-content" style="max-width:500px;">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-user-shield"></i> Управление ролями</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">
-        <b style="color:var(--teal);">dub</b> — Актёр дубляжа · <b style="color:#fbbf24;">curator</b> — Куратор проекта · <b style="color:var(--lavender-lt);">moderator</b> — Модератор<br>
-        <b style="color:#60a5fa;">proxyadmin</b> — Прокси-администратор (тех. доступ) · <b style="color:#34d399;">developer</b> — Разработчик (тех. доступ)
-    </p>
-    <label class="order-label">Email пользователя</label>
-    <input type="email" id="role-email" placeholder="user@example.com">
-    <label class="order-label">Назначить роль</label>
-    <select id="role-select" style="margin-bottom:10px;" onchange="onRoleSelectChange()">
-        <option value="moderator">moderator — Модератор</option>
-        <option value="dub">dub — Актёр дубляжа</option>
-        <option value="curator">curator — Куратор проекта</option>
-        <option value="proxyadmin">proxyadmin — Прокси-администратор</option>
-        <option value="developer">developer — Разработчик</option>
-        <option value="admin">admin — Администратор</option>
-    </select>
-    <div id="curator-project-block" style="display:none;">
-        <label class="order-label">Название проекта куратора</label>
-        <input type="text" id="curator-project-name" placeholder="Например: Атака Титанов S2" style="margin-bottom:10px;">
-    </div>
-    <button class="btn btn-blue" style="width:100%;" onclick="assignRole()"><i class="fas fa-save"></i> Назначить роль</button>
-    <hr style="border-color:var(--border);margin:14px 0;">
-    <button class="btn btn-outline" style="width:100%;border-color:rgba(239,68,68,0.4);color:#ef4444;" onclick="removeRole()"><i class="fas fa-user-minus"></i> Снять текущую роль</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Закрыть</button>
-</div></div>
-
-<div id="m-public-prof" class="modal"><div class="modal-content">
-    <h3 style="margin-bottom:6px;"><i class="fas fa-masks-theater"></i> Мой публичный профиль</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;font-style:italic;">Эту информацию смогут видеть другие пользователи.</p>
-    <label class="order-label">О себе</label>
-    <textarea id="pub-bio" rows="5" placeholder="Расскажите о себе..."></textarea>
-    <label class="order-label">Ссылка (соцсеть, портфолио)</label>
-    <input type="text" id="pub-link" placeholder="https://...">
-    <button class="btn btn-purple" style="width:100%;" onclick="savePublicProfile()">Сохранить</button>
-    <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
-</div></div>
 
 <!-- Куки баннер -->
 <div id="cookie-banner" class="cookie-banner" style="display:none;">
@@ -1915,7 +1857,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915s"></script>
+<script type="module" src="/js/app.js?v=20260915t"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>

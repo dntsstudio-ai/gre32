@@ -6,7 +6,7 @@ import {
     collection, getDocs, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
     doc, query, where, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { esc, showToast, closeModals, ROLE_LABELS } from './core.js?v=20260915s';
+import { esc, showToast, closeModals, ROLE_LABELS } from './core.js?v=20260915t';
 
 let _db, _auth, _getState;
 
@@ -141,7 +141,7 @@ async function loadSiteStats() {
                 <div class="stats-card-label">Всего пользователей</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">🆕</div>
+                <div class="stats-card-icon"><i class="fas fa-user-plus"></i></div>
                 <div class="stats-card-val">${todayUsers}</div>
                 <div class="stats-card-label">Регистраций сегодня</div>
             </div>
@@ -151,7 +151,7 @@ async function loadSiteStats() {
                 <div class="stats-card-label">Релизов на сайте</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-icon">⏱</div>
+                <div class="stats-card-icon"><i class="fas fa-clock"></i></div>
                 <div class="stats-card-val">${Math.round(totalMinutes / 60)}ч</div>
                 <div class="stats-card-label">Суммарное время</div>
             </div>
