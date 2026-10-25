@@ -285,9 +285,21 @@ select option { background: var(--modal-bg); color: var(--text); }
    ═══════════════════════════════════════════════ */
 .search-bar {
     display: flex; gap: 10px; margin-bottom: 32px;
-    flex-wrap: wrap; align-items: center;
+    flex-wrap: wrap; align-items: stretch;
 }
 .filter-select { width: auto; min-width: 150px; }
+/* Все элементы этой панели — одной высоты (раньше у кнопки поиска,
+   выпадающих списков и кнопки "Добавить релиз" были разные паддинги/
+   размер шрифта, из-за чего ряд выглядел неровно). */
+.search-bar .filter-select,
+.search-bar .btn,
+.search-bar .search-open-btn,
+.search-bar .search-wrap,
+.search-bar .search-field-input,
+.search-bar .search-close-btn {
+    height: 44px; box-sizing: border-box; margin-bottom: 0;
+}
+.search-bar .search-field-input { height: 100%; }
 
 /* Hero — горизонтальная полоса с акцентом, теперь карусель слайдов */
 .releases-hero {
@@ -1238,9 +1250,14 @@ select option { background: var(--modal-bg); color: var(--text); }
 /* ═══════════════════════════════════════════════
    SEARCH
    ═══════════════════════════════════════════════ */
+/* Раскрывающееся поле поиска — абсолютным слоем поверх соседних
+   фильтров, а не раздвигая их в строке: раньше рост по max-width
+   прямо в потоке мог резко перебрасывать "Жанры"/"Новинки" на новую
+   строку прямо посреди анимации — выглядело криво и неестественно. */
 .search-wrap { position: relative; display: flex; align-items: center; }
+.search-wrap.search-open { z-index: 20; }
 .search-open-btn {
-    display: flex; align-items: center; gap: 8px; padding: 12px 20px;
+    display: flex; align-items: center; gap: 8px; padding: 0 20px;
     background: var(--input-bg); border: 1px solid rgba(124,58,237,0.25);
     border-radius: 12px; color: var(--text-dim); font-size: 12px;
     font-weight: 700; cursor: pointer; white-space: nowrap; z-index: 2;
@@ -1248,10 +1265,16 @@ select option { background: var(--modal-bg); color: var(--text); }
     font-family: var(--font-body);
 }
 .search-open-btn:hover { color: var(--text); border-color: var(--teal); background: rgba(20,184,166,0.05); }
-.search-field-wrap { display: flex; align-items: center; max-width: 0; overflow: hidden; opacity: 0; margin-left: -1px; transition: max-width 0.42s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; }
+.search-field-wrap {
+    position: absolute; left: 100%; top: 0; height: 100%;
+    display: flex; align-items: center;
+    max-width: 0; overflow: hidden; opacity: 0; margin-left: -1px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: max-width 0.42s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+}
 .search-wrap.search-open .search-field-wrap { max-width: 320px; opacity: 1; }
-.search-field-input { width: 240px; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--teal); border-left: none; border-radius: 0; color: var(--text); font-size: 14px; margin-bottom: 0; outline: none; font-family: var(--font-body); }
-.search-close-btn { display: flex; align-items: center; justify-content: center; width: 46px; min-width: 46px; height: 46px; background: var(--input-bg); border: 1px solid var(--teal); border-left: none; border-radius: 0 12px 12px 0; color: var(--text-dim); font-size: 14px; cursor: pointer; margin-bottom: 0; padding: 0; transition: color 0.2s; }
+.search-field-input { width: 240px; height: 100%; padding: 0 16px; background: var(--input-bg); border: 1px solid var(--teal); border-left: none; border-radius: 0; color: var(--text); font-size: 14px; margin-bottom: 0; outline: none; font-family: var(--font-body); }
+.search-close-btn { display: flex; align-items: center; justify-content: center; width: 46px; min-width: 46px; height: 100%; background: var(--input-bg); border: 1px solid var(--teal); border-left: none; border-radius: 0 12px 12px 0; color: var(--text-dim); font-size: 14px; cursor: pointer; margin-bottom: 0; padding: 0; transition: color 0.2s; }
 .search-close-btn:hover { color: var(--teal); }
 .search-wrap.search-open .search-open-btn { border-radius: 12px 0 0 12px; border-right: none; border-color: var(--teal); color: var(--teal); background: rgba(20,184,166,0.05); }
 .search-wrap.search-open .search-open-label { display: none; }
