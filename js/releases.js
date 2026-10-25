@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915x';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915x';
-import { checkAndAwardAch } from './achievements.js?v=20260915x';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20260915y';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20260915y';
+import { checkAndAwardAch } from './achievements.js?v=20260915y';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20260915x';
+} from './player.js?v=20260915y';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -120,7 +120,7 @@ export function loadReleases(db, isAdmin) {
     return new Promise((resolve) => {
         let first = true;
         const render = () => {
-            updateFeaturedHero();
+            rebuildFeaturedSlides();
             // isAdmin мог обновиться после первой загрузки (авторизация ещё
             // не разрешилась) — берём актуальное значение, а не то, что было
             // на момент подписки, иначе живые обновления будут сбрасывать
@@ -152,31 +152,82 @@ export function loadReleases(db, isAdmin) {
     });
 }
 
-// ── Главный слайд карусели: витрина самого свежего релиза ──
-function updateFeaturedHero() {
-    const r = allRel[0];
-    const art   = document.getElementById('rel-hero-feat-art');
-    const title = document.getElementById('rel-hero-feat-title');
-    const desc  = document.getElementById('rel-hero-feat-desc');
-    const meta  = document.getElementById('rel-hero-feat-meta');
-    const btn   = document.getElementById('rel-hero-feat-btn');
-    const slide = document.getElementById('rel-hero-feat');
-    if (!r || !slide) { if (slide) slide.style.display = 'none'; return; }
+// ── Слайды карусели: по одному на каждую "Новинку" (не старше 7 дней);
+//    если новинок сейчас нет — один слайд "Рекомендуем к просмотру" со
+//    случайным тайтлом из каталога. Пересобирается при каждом
+//    изменении данных (живая подписка в loadReleases). ──
+const NEW_BADGE_MS = 7 * 24 * 60 * 60 * 1000; // плашка "Новое" висит 7 дней с момента добавления
+function getNewReleases() {
+    const cutoff = Date.now() - NEW_BADGE_MS;
+    return allRel.filter(r => (r.timestamp || 0) > cutoff);
+}
 
-    if (art) art.style.backgroundImage = `url('${r.img || PLACEHOLDER_IMG}')`;
-    if (title) title.textContent = r.title || '';
-    if (desc) desc.textContent = (r.desc || '').slice(0, 160);
-    if (meta) meta.innerHTML = `
+function buildFeatSlideEl(r, eyebrowText) {
+    const slide = document.createElement('div');
+    slide.className = 'rel-hero-slide rel-hero-slide--feat';
+
+    const art = document.createElement('div');
+    art.className = 'rel-hero-feat-art';
+    art.style.backgroundImage = `url('${r.img || PLACEHOLDER_IMG}')`;
+    slide.appendChild(art);
+
+    const body = document.createElement('div');
+    body.className = 'rel-hero-feat-body';
+
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'rel-hero-feat-eyebrow';
+    eyebrow.innerHTML = '<i class="fas fa-star"></i> ';
+    eyebrow.append(eyebrowText);
+    body.appendChild(eyebrow);
+
+    const title = document.createElement('div');
+    title.className = 'rel-hero-feat-title';
+    title.textContent = r.title || '';
+    body.appendChild(title);
+
+    const desc = document.createElement('div');
+    desc.className = 'rel-hero-feat-desc';
+    desc.textContent = (r.desc || '').slice(0, 160);
+    body.appendChild(desc);
+
+    const ctaRow = document.createElement('div');
+    ctaRow.className = 'rel-hero-feat-cta-row';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-blue';
+    btn.innerHTML = '<i class="fas fa-play"></i> Смотреть';
+    btn.onclick = () => { if (typeof openView === 'function') openView(r.id); };
+    ctaRow.appendChild(btn);
+    body.appendChild(ctaRow);
+
+    const meta = document.createElement('div');
+    meta.className = 'rel-hero-feat-meta';
+    meta.innerHTML = `
         <span>Жанр: <b>${esc(r.genre || '—')}</b></span>
         <span>Год: <b>${esc(r.year || '—')}</b></span>
         <span><i class="fas fa-eye"></i> <b>${r.views || 0}</b> просмотров</span>`;
-    if (btn) btn.onclick = () => { if (typeof openView === 'function') openView(r.id); };
+    body.appendChild(meta);
+
+    slide.appendChild(body);
+    return slide;
 }
 
-const NEW_BADGE_MS = 7 * 24 * 60 * 60 * 1000; // плашка "Новое" висит 7 дней с момента добавления
+function rebuildFeaturedSlides() {
+    const container = document.getElementById('rel-hero-feat-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const newRel = getNewReleases();
+    if (newRel.length) {
+        newRel.forEach(r => container.appendChild(buildFeatSlideEl(r, 'Новинка')));
+    } else if (allRel.length) {
+        const pick = allRel[Math.floor(Math.random() * allRel.length)];
+        container.appendChild(buildFeatSlideEl(pick, 'Рекомендуем к просмотру'));
+    }
+    initHeroCarousel();
+}
+
 export function renderGrid(isAdmin) {
-    const newCutoff = Date.now() - NEW_BADGE_MS;
-    const newIds = new Set(allRel.filter(r => (r.timestamp || 0) > newCutoff).map(r => r.id));
+    const newIds = new Set(getNewReleases().map(r => r.id));
     let res = [...allRel];
     if (searchEnabled) {
         const q = (document.getElementById('main-search')?.value || '').toLowerCase();
@@ -386,13 +437,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20260915x').then(m => {
+    import('./comments.js?v=20260915y').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20260915x').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20260915y').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -530,34 +581,57 @@ async function loadWatchListStatus(db, auth, relId) {
     } catch(e) {}
 }
 
-// ── Карусель баннера на главной: автопрокрутка + точки ──
+// ── Карусель баннера на главной: автопрокрутка + точки.
+//    Пересобирается заново каждый раз, когда меняется число слайдов
+//    (новинки добавились/исчезли) — поэтому обработчики на самой
+//    карусели и на точках вешаются только один раз (иначе при
+//    повторных вызовах они бы копились), а список слайдов/точек и
+//    таймер переинициализируются каждый вызов. ──
 let _heroTimer = null;
-function initHeroCarousel() {
+let _heroIdx = 0;
+function heroShow(i) {
     const wrap = document.getElementById('hero-carousel');
     if (!wrap) return;
     const slides = [...wrap.querySelectorAll('.rel-hero-slide')];
-    if (slides.length < 2) return;
-
+    if (!slides.length) return;
+    _heroIdx = (i + slides.length) % slides.length;
+    slides.forEach((s, j) => s.classList.toggle('active', j === _heroIdx));
+    const dots = [...document.querySelectorAll('#rel-hero-dots .rel-hero-dot')];
+    dots.forEach((d, j) => d.classList.toggle('active', j === _heroIdx));
+}
+function heroRestart() {
+    clearInterval(_heroTimer);
+    const wrap = document.getElementById('hero-carousel');
+    const count = wrap ? wrap.querySelectorAll('.rel-hero-slide').length : 0;
+    if (count < 2) return;
+    _heroTimer = setInterval(() => heroShow(_heroIdx + 1), 6000);
+}
+function initHeroCarousel() {
+    const wrap = document.getElementById('hero-carousel');
     const dotsWrap = document.getElementById('rel-hero-dots');
+    if (!wrap) return;
+    const slides = [...wrap.querySelectorAll('.rel-hero-slide')];
+
     if (dotsWrap) {
         dotsWrap.innerHTML = slides.map((_, i) => `<span class="rel-hero-dot${i === 0 ? ' active' : ''}" data-i="${i}"></span>`).join('');
     }
-    const dots = dotsWrap ? [...dotsWrap.querySelectorAll('.rel-hero-dot')] : [];
+    _heroIdx = 0;
+    slides.forEach((s, j) => s.classList.toggle('active', j === 0));
 
-    let idx = 0;
-    function show(i) {
-        idx = (i + slides.length) % slides.length;
-        slides.forEach((s, j) => s.classList.toggle('active', j === idx));
-        dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+    if (!wrap.dataset.heroBound) {
+        wrap.dataset.heroBound = '1';
+        wrap.addEventListener('mouseenter', () => clearInterval(_heroTimer));
+        wrap.addEventListener('mouseleave', heroRestart);
+        if (dotsWrap) {
+            dotsWrap.addEventListener('click', (e) => {
+                const dot = e.target.closest('.rel-hero-dot');
+                if (!dot) return;
+                heroShow(parseInt(dot.dataset.i));
+                heroRestart();
+            });
+        }
     }
-    function restart() {
-        clearInterval(_heroTimer);
-        _heroTimer = setInterval(() => show(idx + 1), 6000);
-    }
-    dots.forEach(d => d.addEventListener('click', () => { show(parseInt(d.dataset.i)); restart(); }));
-    wrap.addEventListener('mouseenter', () => clearInterval(_heroTimer));
-    wrap.addEventListener('mouseleave', restart);
-    restart();
+    heroRestart();
 }
 
 export function bindReleases(db, auth, getState, storage) {
@@ -951,7 +1025,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20260915x');
+                const plMod = await import('./playlists.js?v=20260915y');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {

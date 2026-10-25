@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20260915x';
+        var CURRENT = '20260915y';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -76,7 +76,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20260915x">
+    <link rel="stylesheet" href="/css/style.css?v=20260915y">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -246,18 +246,7 @@ window.yaContextCb.push(() => {
             </button>
         </div>
         <div class="releases-hero" id="hero-carousel">
-            <div class="rel-hero-slide rel-hero-slide--feat active" data-slide="0" id="rel-hero-feat">
-                <div class="rel-hero-feat-art" id="rel-hero-feat-art"></div>
-                <div class="rel-hero-feat-body">
-                    <div class="rel-hero-feat-eyebrow"><i class="fas fa-star"></i> Новинка</div>
-                    <div class="rel-hero-feat-title" id="rel-hero-feat-title">Загрузка…</div>
-                    <div class="rel-hero-feat-desc" id="rel-hero-feat-desc"></div>
-                    <div class="rel-hero-feat-cta-row">
-                        <button class="btn btn-blue" id="rel-hero-feat-btn"><i class="fas fa-play"></i> Смотреть</button>
-                    </div>
-                    <div class="rel-hero-feat-meta" id="rel-hero-feat-meta"></div>
-                </div>
-            </div>
+            <div id="rel-hero-feat-container"></div>
             <div class="rel-hero-slide" data-slide="1">
                 <div>
                     <div class="releases-hero-title">Нет вашего любимого тайтла?</div>
@@ -275,6 +264,20 @@ window.yaContextCb.push(() => {
             <div class="rel-hero-dots" id="rel-hero-dots"></div>
         </div>
         <div class="grid" id="main-grid"><!--PRERENDER_GRID_START-->
+        <a class="card" href="/view/knsHpT7kzIieDXRSBaaI" onclick="if(typeof openView==='function'){event.preventDefault();openView('knsHpT7kzIieDXRSBaaI')}">
+            <img src="https://shikimori.io/uploads/poster/animes/34006/09f8da78178c5c84434a08471ae3998c.jpeg" alt="Девушки дополненной реальности" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">
+            <div style="padding:10px;">
+                <div style="font-weight:700;font-size:13px;">Девушки дополненной реальности</div>
+                <div style="font-size:11px;color:var(--text-dim);">Аниме · 2017</div>
+            </div>
+        </a>
+        <a class="card" href="/view/wuVSJPSJV6tMTut5aRyy" onclick="if(typeof openView==='function'){event.preventDefault();openView('wuVSJPSJV6tMTut5aRyy')}">
+            <img src="https://shikimori.io/uploads/poster/animes/53913/e857919d78802cd6029d07d5562611d0.jpeg" alt="О моем перерождении в меч 2 сезон" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">
+            <div style="padding:10px;">
+                <div style="font-weight:700;font-size:13px;">О моем перерождении в меч 2 сезон</div>
+                <div style="font-size:11px;color:var(--text-dim);">Аниме · 2026</div>
+            </div>
+        </a>
         <a class="card" href="/view/gVHi0KKPvo1DDCXOZmad" onclick="if(typeof openView==='function'){event.preventDefault();openView('gVHi0KKPvo1DDCXOZmad')}">
             <img src="https://shikimori.io/uploads/poster/animes/56735/587be97943f96694ef1d5c846dde4052.jpeg" alt="Аккуратная и симпатичная девочка в моей новой школе — подруга детства, с которой я играл, думая, что она мальчик" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">
             <div style="padding:10px;">
@@ -1863,7 +1866,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20260915x"></script>
+<script type="module" src="/js/app.js?v=20260915y"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
