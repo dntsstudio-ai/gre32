@@ -712,9 +712,18 @@ window.yaContextCb.push(() => {
                     <label class="order-label">Email</label>
                     <input type="email" id="email" placeholder="mail@example.com" autocomplete="username" style="margin-bottom:14px;">
                     <label class="order-label">Пароль</label>
-                    <input type="password" id="pass" placeholder="Минимум 6 символов" autocomplete="current-password" style="margin-bottom:18px;">
+                    <input type="password" id="pass" placeholder="Минимум 6 символов" autocomplete="current-password" style="margin-bottom:14px;">
+                    <div id="reg-only-fields">
+                        <label class="order-label">Дата рождения</label>
+                        <input type="date" id="birth-date" autocomplete="bday" style="margin-bottom:10px;">
+                        <label class="checkbox-row" style="font-size:12px;color:var(--text-dim);margin-bottom:18px;">
+                            <input type="checkbox" id="policy-agree">
+                            Согласен(на) с <a href="/oferta" target="_blank" onclick="event.stopPropagation()">публичной офертой</a> и даю согласие на обработку персональных данных
+                        </label>
+                    </div>
                     <button class="btn" style="width:100%;margin-bottom:10px;" id="btn-login" type="button"><i class="fas fa-sign-in-alt"></i> Войти</button>
                     <button class="btn btn-outline" style="width:100%;margin-bottom:10px;" id="btn-reg" type="button"><i class="fas fa-user-plus"></i> Регистрация</button>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:-2px;">Дата рождения и согласие — только для регистрации</p>
                 </form>
                 <div id="reset-pass-block" style="display:none;text-align:center;margin-top:6px;">
                     <a href="#" style="color:var(--text-dim);font-size:12px;" onclick="resetPassword();return false;">Забыли пароль?</a>
@@ -747,6 +756,11 @@ window.yaContextCb.push(() => {
                         <div class="profile-stat profile-stat--stars" style="cursor:pointer;" onclick="navigate('shop')"><b id="u-vstars-profile">0</b><span><i class="fas fa-star"></i> Старс</span></div>
                     </div>
                 </div>
+            </div>
+
+            <div id="email-verify-banner" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:13px;color:var(--text-dim);"><i class="fas fa-triangle-exclamation" style="color:#f59e0b;margin-right:6px;"></i>Почта не подтверждена — проверьте письмо от нас</span>
+                <button class="btn btn-outline btn-sm" onclick="resendEmailVerification()"><i class="fas fa-paper-plane"></i> Отправить письмо ещё раз</button>
             </div>
 
             <div class="profile-actions">
