@@ -4,7 +4,8 @@
 
 import {
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
-    signOut, sendPasswordResetEmail, updatePassword, updateEmail
+    signOut, sendPasswordResetEmail, updatePassword, updateEmail,
+    sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
     doc, setDoc, updateDoc, getDocs, collection, query, where
@@ -14,6 +15,16 @@ import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } fr
 import { renderAchProfile } from './achievements.js?v=20261025c';
 
 let loginAttempts = 0;
+
+function calcAge(birthDateStr) {
+    const birth = new Date(birthDateStr);
+    if (isNaN(birth.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age;
+}
 
 function authErrorMsg(code) {
     const map = {
@@ -62,12 +73,21 @@ export function initAuthListeners(auth, db) {
         btnReg.onclick = async function() {
             const e = document.getElementById('email')?.value.trim();
             const p = document.getElementById('pass')?.value;
+            const birthDate   = document.getElementById('birth-date')?.value;
+            const policyAgree = document.getElementById('policy-agree')?.checked;
             if (!e || !p || p.length < 6) return showToast('Email и пароль (мин. 6 символов)!', 'error');
+            if (!birthDate) return showToast('Укажите дату рождения!', 'error');
+            const age = calcAge(birthDate);
+            if (age === null || age < 0) return showToast('Некорректная дата рождения!', 'error');
+            if (age < 14) return showToast('Регистрация доступна с 14 лет!', 'error');
+            if (!policyAgree) return showToast('Нужно согласиться с публичной офертой!', 'error');
             try {
                 const cred = await createUserWithEmailAndPassword(auth, e, p);
                 await setDoc(doc(db, 'users', cred.user.uid), {
                     nickname:       'User_' + Math.floor(Math.random() * 10000),
                     email:          e,
+                    birthDate:      birthDate,
+                    policyAcceptedAt: Date.now(),
                     role:           'user',
                     views:          0,
                     subscribers:    0,
@@ -83,7 +103,8 @@ export function initAuthListeners(auth, db) {
                         hidden: false, giver: 'Система'
                     }]
                 });
-                showToast('Регистрация успешна!');
+                try { await sendEmailVerification(cred.user); } catch(e2) { console.warn('sendEmailVerification:', e2); }
+                showToast('Регистрация успешна! Проверьте почту для подтверждения.');
             } catch(err) {
                 showToast(authErrorMsg(err.code), 'error');
             }
@@ -217,7 +238,7 @@ export function resetUserUI() {
 
     ['adm-btn-rel','adm-btn-team','adm-btn-role','adm-ach-panel',
      'btn-admin-roles','btn-admin-vcoins','btn-admin-levers','btn-admin-banners',
-     'sn-playlists','sn-shop','notif-btn','header-balance'].forEach(function(id) {
+     'sn-playlists','sn-shop','notif-btn','header-balance','email-verify-banner'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -258,6 +279,14 @@ export function applyProfileVisuals(userData) {
 }
 
 export function bindAuthActions(auth, db, getState) {
+    window.resendEmailVerification = async function() {
+        if (!auth.currentUser) return showToast('Вы не авторизованы!', 'error');
+        try {
+            await sendEmailVerification(auth.currentUser);
+            showToast('Письмо отправлено!');
+        } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
+    };
+
     window.resetPassword = async function() {
         const e = document.getElementById('email')?.value.trim();
         if (!e) return showToast('Введите email!', 'error');

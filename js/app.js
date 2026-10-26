@@ -41,6 +41,21 @@ function withTimeout(promise, ms, fallback) {
     ]);
 }
 
+// ── Чтение профиля пользователя с повтором ──────────────────────
+// Раньше один withTimeout(getDoc(...), 6000, null) на медленной сети
+// часто "не успевал" — и вместо повторной попытки сайт тут же решал,
+// что пользователя нет, и показывал форму входа, хотя Firebase Auth
+// уже был успешно авторизован (отсюда "вход успешный, но не вошёл" и
+// эпизодическое "выкидывает с аккаунта" — UI просто не дожидался
+// ответа Firestore и откатывался в гостевой вид).
+async function getUserDocWithRetry(uid, attempts = 3, timeoutMs = 7000) {
+    for (let i = 0; i < attempts; i++) {
+        const snap = await withTimeout(getDoc(doc(db, 'users', uid)), timeoutMs, null);
+        if (snap) return snap;
+    }
+    return null;
+}
+
 if (window.emailjs) emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
 
 const state = { userData: null, isAdmin: false, isDub: false, isMod: false, isCurator: false, curProj: null };
@@ -55,6 +70,13 @@ bindVCoins(db, auth, getState);
 bindNotifications(db, auth, getState);
 bindAdminPanel(db, auth, getState);
 bindBanners(db, auth, getState);
+
+// Кнопки входа/регистрации/выхода — статичные элементы в index.html,
+// привязываем сразу, не дожидаясь первого onAuthStateChanged (который
+// может занять секунды на медленной сети из-за проверки техработ и
+// загрузки каталога) — иначе клик по "Войти" сразу после открытия
+// сайта мог ничего не делать, пока обработчик ещё не навешен.
+initAuthListeners(auth, db);
 
 window.closeModals = closeModals;
 window.showToast   = showToast;
@@ -186,7 +208,7 @@ onAuthStateChanged(auth, async function(user) {
 
     if (user) {
         try {
-            const snap = await withTimeout(getDoc(doc(db, 'users', user.uid)), 6000, null);
+            const snap = await getUserDocWithRetry(user.uid);
             if (snap && snap.exists()) {
                 state.userData  = snap.data();
                 state.isAdmin   = ['admin', 'proxyadmin', 'developer'].includes(state.userData.role);
@@ -195,6 +217,8 @@ onAuthStateChanged(auth, async function(user) {
                 state.isCurator = state.userData.role === 'curator';
                 applyUserUI(state.userData, state.isAdmin, state.isDub);
                 renderAchProfile(state.userData);
+                const verifyBanner = document.getElementById('email-verify-banner');
+                if (verifyBanner) verifyBanner.style.display = user.emailVerified ? 'none' : 'flex';
                 listenNotifications(user.uid);
                 startSessionTimer(user.uid);
                 updateLastSeen(user.uid);
@@ -225,8 +249,6 @@ onAuthStateChanged(auth, async function(user) {
     renderGrid(state.isAdmin); // перерисовать с учётом реальной роли (карточки уже загружены выше параллельно)
     startMaintenancePolling(db, () => state.userData?.role || null);
     if (inMaintenance) return;
-
-    initAuthListeners(auth, db);
 
     const rawPath    = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
     const hashPage   = rawPath || 'home';
