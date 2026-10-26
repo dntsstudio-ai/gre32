@@ -157,8 +157,13 @@ export function initAuthListeners(auth, db) {
                         hidden: false, giver: 'Система'
                     }]
                 });
-                try { await sendEmailVerification(cred.user); } catch(e2) { console.warn('sendEmailVerification:', e2); }
-                showToast('Регистрация успешна! Проверьте почту для подтверждения.');
+                try {
+                    await sendEmailVerification(cred.user);
+                    showToast('Регистрация успешна! Проверьте почту (и папку "Спам") для подтверждения.');
+                } catch(e2) {
+                    console.error('sendEmailVerification:', e2);
+                    showToast('Аккаунт создан, но письмо с подтверждением не отправилось (' + (e2.code || e2.message) + '). Нажмите "Отправить письмо ещё раз" в профиле.', 'error');
+                }
             } catch(err) {
                 showToast(authErrorMsg(err.code), 'error');
             }
@@ -335,10 +340,14 @@ export function applyProfileVisuals(userData) {
 export function bindAuthActions(auth, db, getState) {
     window.resendEmailVerification = async function() {
         if (!auth.currentUser) return showToast('Вы не авторизованы!', 'error');
+        if (auth.currentUser.emailVerified) return showToast('Почта уже подтверждена!');
         try {
             await sendEmailVerification(auth.currentUser);
-            showToast('Письмо отправлено!');
-        } catch(err) { showToast(authErrorMsg(err.code), 'error'); }
+            showToast('Письмо отправлено! Проверьте и папку "Спам".');
+        } catch(err) {
+            console.error('resendEmailVerification:', err);
+            showToast(authErrorMsg(err.code), 'error');
+        }
     };
 
     window.resetPassword = async function() {
