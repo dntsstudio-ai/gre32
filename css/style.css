@@ -2699,11 +2699,135 @@ select option { background: var(--modal-bg); color: var(--text); }
     to   { transform: scale(1); opacity: 1; }
 }
 
+/* ═══════════════════════════════════════════════
+   КАМЕНЬ-НОЖНИЦЫ-БУМАГА
+   ═══════════════════════════════════════════════ */
+.rps-arena {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin: 16px 18px 0;
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(7,4,26,0.95) 0%, rgba(13,8,37,0.95) 100%);
+    border: 1px solid rgba(124,58,237,0.2);
+}
+.rps-side { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rps-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.rps-display { font-size: 2.6rem; filter: drop-shadow(0 0 14px rgba(124,58,237,0.5)); color: var(--violet-light); }
+.rps-vs { font-size: 13px; font-weight: 700; color: var(--text-dim); font-family: var(--font-display); }
+.rps-choices {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 18px;
+    padding: 0 18px;
+}
+.rps-choice-btn {
+    flex: 1;
+    max-width: 100px;
+    padding: 14px 0;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--lavender), var(--violet));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.rps-choice-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(124,58,237,0.5); }
+.rps-choice-btn:active { transform: scale(0.95); }
+
+/* ═══════════════════════════════════════════════
+   КРЕСТИКИ-НОЛИКИ
+   ═══════════════════════════════════════════════ */
+.ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 260px;
+    margin: 16px auto 0;
+    padding: 0 18px;
+}
+.ttt-cell {
+    aspect-ratio: 1;
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 12px;
+    background: rgba(10,7,32,0.9);
+    font-size: 1.5rem;
+    color: var(--white);
+    cursor: pointer;
+    transition: var(--ts-fast);
+}
+.ttt-cell:hover:empty { border-color: var(--violet); background: rgba(124,58,237,0.12); }
+.ttt-cell:disabled { cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════
+   ЗМЕЙКА
+   ═══════════════════════════════════════════════ */
+.snake-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 16px 18px 0;
+}
+.snake-canvas-wrap canvas {
+    border-radius: 12px;
+    border: 1px solid rgba(124,58,237,0.25);
+    box-shadow: 0 0 24px rgba(124,58,237,0.2);
+}
+.snake-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+}
+.snake-dpad-row { display: flex; gap: 6px; }
+.snake-dpad-btn {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 10px;
+    background: rgba(10,7,32,0.9);
+    font-size: 1rem;
+    color: var(--white);
+    cursor: pointer;
+    transition: var(--ts-fast);
+}
+.snake-dpad-btn:hover { border-color: var(--teal); background: rgba(20,184,166,0.12); }
+.snake-dpad-btn:active { transform: scale(0.92); }
+
+/* ═══════════════════════════════════════════════
+   MEMORY
+   ═══════════════════════════════════════════════ */
+.memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 16px 18px 0;
+}
+.memory-card {
+    aspect-ratio: 1;
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 10px;
+    background: rgba(10,7,32,0.9);
+    font-size: 1.2rem;
+    color: var(--white);
+    cursor: pointer;
+    transition: var(--ts-fast);
+}
+.memory-card:hover { border-color: var(--violet); }
+.memory-card--flipped { background: rgba(124,58,237,0.18); border-color: var(--violet); color: var(--teal-light); }
+.memory-card--matched { background: rgba(20,184,166,0.18); border-color: var(--teal); color: var(--teal-light); cursor: default; }
+
 /* ── Адаптив ── */
 @media (max-width: 480px) {
     .rocket-multiplier { font-size: 2.2rem; }
     .slot-reel { width: 60px; height: 68px; font-size: 2rem; }
     .game-coin-display { font-size: 4rem; }
+    .snake-canvas-wrap canvas { max-width: 100%; height: auto; }
+    .rps-display { font-size: 2rem; }
 }
 
 /* ── VCoins Log ── */

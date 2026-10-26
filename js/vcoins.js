@@ -14,6 +14,12 @@ import { checkAndAwardAch } from './achievements.js?v=20261025c';
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
 
+// Переключатель игр со ставками/элементом азартности (Монетка, Слоты, Ракета,
+// Чёрная дыра, Колесо Фортуны) — выключено по требованию платёжного
+// провайдера. Код игр не удалён, просто скрыт; чтобы вернуть — true.
+const CASINO_GAMES_ENABLED = false;
+const CASINO_GAME_TYPES = ['coinflip', 'slots', 'rocket', 'plinko', 'wheel'];
+
 async function loadPrices() {
     try {
         const snap = await getDoc(doc(_db, 'settings', 'vcoins'));
@@ -364,7 +370,7 @@ function renderShopPage() {
             <i class="fas fa-gamepad art-motif"></i>
             <div class="art-eyebrow">Отдельная страница</div>
             <div class="art-title">Игры</div>
-            <div class="art-sub">Монетка · Слоты · Ракета · Чёрная дыра</div>
+            <div class="art-sub">Камень-Ножницы-Бумага · Крестики-нолики · Змейка · Memory</div>
             <div class="art-goarrow">Перейти <i class="fas fa-arrow-right"></i></div>
         </div>
     </div>
@@ -468,6 +474,9 @@ async function activateShopItem(itemId) {
 async function openGame(type) {
     const { userData } = _getState();
     if (!userData) return showToast('Войдите в аккаунт', 'error');
+    if (CASINO_GAME_TYPES.includes(type) && !CASINO_GAMES_ENABLED) {
+        return showToast('Игра временно недоступна', 'error');
+    }
     // wheel.js — отдельный, не главный модуль: подключаем через import()
     // только в момент открытия именно этой игры, а не всегда вместе с vcoins.js
     if (type === 'wheel' && typeof window.renderWheelGame !== 'function') {
@@ -490,6 +499,7 @@ function renderGamesPage(wrap) {
         <i class="fas fa-coins" style="color:#fbbf24;"></i> <b id="games-mini-vcoins">${balance}</b> VC
     </div>
     <div class="shop-grid shop-grid--games">
+        ${CASINO_GAMES_ENABLED ? `
         <div class="shop-game-card" onclick="openGame('coinflip')">
             <div class="shop-game-icon"><i class="fas fa-coins"></i></div>
             <div class="shop-game-name">Монетка</div>
@@ -514,6 +524,27 @@ function renderGamesPage(wrap) {
             <div class="shop-game-icon"><i class="fas fa-dharmachakra"></i></div>
             <div class="shop-game-name">Колесо Фортуны</div>
             <div class="shop-game-desc">Крути колесо и лови множитель ставки</div>
+        </div>
+        ` : ''}
+        <div class="shop-game-card" onclick="openGame('rps')">
+            <div class="shop-game-icon"><i class="fas fa-hand-back-fist"></i></div>
+            <div class="shop-game-name">Камень-Ножницы-Бумага</div>
+            <div class="shop-game-desc">Против бота, просто для веселья</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('ttt')">
+            <div class="shop-game-icon"><i class="fas fa-xmark"></i></div>
+            <div class="shop-game-name">Крестики-нолики</div>
+            <div class="shop-game-desc">Классика против бота, без ставок</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('snake')">
+            <div class="shop-game-icon"><i class="fas fa-bullseye"></i></div>
+            <div class="shop-game-name">Змейка</div>
+            <div class="shop-game-desc">Аркада на реакцию — собери побольше очков</div>
+        </div>
+        <div class="shop-game-card" onclick="openGame('memory')">
+            <div class="shop-game-icon"><i class="fas fa-brain"></i></div>
+            <div class="shop-game-name">Memory</div>
+            <div class="shop-game-desc">Найди все пары карточек на память</div>
         </div>
     </div>`;
 }
@@ -611,13 +642,339 @@ function renderGame(type) {
         if (typeof window.renderWheelGame === 'function') {
             window.renderWheelGame(wrap, balance);
         }
+    } else if (type === 'rps') {
+        if (typeof window._renderRPS === 'function') window._renderRPS(wrap);
+    } else if (type === 'ttt') {
+        if (typeof window._renderTTT === 'function') window._renderTTT(wrap);
+    } else if (type === 'snake') {
+        if (typeof window._renderSnake === 'function') window._renderSnake(wrap);
+    } else if (type === 'memory') {
+        if (typeof window._renderMemory === 'function') window._renderMemory(wrap);
     }
 
     const titleEl = document.getElementById('m-game-title');
-    const gameTitles = { coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты', rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра', wheel:'<i class="fas fa-dharmachakra"></i> Колесо Фортуны' };
+    const gameTitles = {
+        coinflip:'<i class="fas fa-coins"></i> Монетка', slots:'<i class="fas fa-dice"></i> Слоты',
+        rocket:'<i class="fas fa-rocket"></i> Ракета', plinko:'<i class="fas fa-meteor"></i> Чёрная дыра',
+        wheel:'<i class="fas fa-dharmachakra"></i> Колесо Фортуны',
+        rps:'<i class="fas fa-hand-back-fist"></i> Камень-Ножницы-Бумага', ttt:'<i class="fas fa-xmark"></i> Крестики-нолики',
+        snake:'<i class="fas fa-bullseye"></i> Змейка', memory:'<i class="fas fa-brain"></i> Memory'
+    };
     if (titleEl) titleEl.innerHTML = gameTitles[type] || type;
     window._currentGame = type;
 }
+
+// ════════════════════════════════════════════════════════════════
+//  РАЗВЛЕКАТЕЛЬНЫЕ МИНИ-ИГРЫ (без ставок и валюты)
+//  Камень-Ножницы-Бумага · Крестики-нолики · Змейка · Memory
+// ════════════════════════════════════════════════════════════════
+
+// ── Камень-Ножницы-Бумага ──
+const RPS_ICON = {
+    rock:     '<i class="fas fa-hand-back-fist"></i>',
+    paper:    '<i class="fas fa-hand"></i>',
+    scissors: '<i class="fas fa-scissors"></i>'
+};
+const RPS_NAMES = { rock: 'Камень', paper: 'Бумага', scissors: 'Ножницы' };
+let _rpsScore = { win: 0, lose: 0, draw: 0 };
+
+function _rpsBeats(a, b) {
+    return (a === 'rock' && b === 'scissors') ||
+           (a === 'paper' && b === 'rock') ||
+           (a === 'scissors' && b === 'paper');
+}
+
+window._renderRPS = function(wrap) {
+    wrap.innerHTML = `
+    <div class="game-wrap-inner">
+        <div class="game-header">
+            <div class="game-title"><i class="fas fa-hand-back-fist"></i> Камень-Ножницы-Бумага</div>
+            <div class="game-balance">Счёт: <b id="rps-score">${_rpsScore.win}-${_rpsScore.lose}-${_rpsScore.draw}</b></div>
+        </div>
+        <div class="game-desc">Выбери фигуру и сыграй против бота — просто для веселья, без ставок.</div>
+        <div class="rps-arena">
+            <div class="rps-side">
+                <div class="rps-label">Ты</div>
+                <div class="rps-display" id="rps-you"><i class="fas fa-question"></i></div>
+            </div>
+            <div class="rps-vs">VS</div>
+            <div class="rps-side">
+                <div class="rps-label">Бот</div>
+                <div class="rps-display" id="rps-bot"><i class="fas fa-question"></i></div>
+            </div>
+        </div>
+        <div class="rps-choices">
+            <button class="rps-choice-btn" onclick="playRPS('rock')"><i class="fas fa-hand-back-fist"></i></button>
+            <button class="rps-choice-btn" onclick="playRPS('paper')"><i class="fas fa-hand"></i></button>
+            <button class="rps-choice-btn" onclick="playRPS('scissors')"><i class="fas fa-scissors"></i></button>
+        </div>
+        <div id="game-result"></div>
+    </div>`;
+};
+
+window.playRPS = function(choice) {
+    const picks = ['rock', 'paper', 'scissors'];
+    const botChoice = picks[Math.floor(Math.random() * 3)];
+    const youEl = document.getElementById('rps-you');
+    const botEl = document.getElementById('rps-bot');
+    const resEl = document.getElementById('game-result');
+    if (youEl) youEl.innerHTML = RPS_ICON[choice];
+    if (botEl) botEl.innerHTML = RPS_ICON[botChoice];
+
+    let msg, color;
+    if (choice === botChoice) {
+        _rpsScore.draw++; msg = '<i class="fas fa-handshake"></i> Ничья!'; color = 'var(--text-dim)';
+    } else if (_rpsBeats(choice, botChoice)) {
+        _rpsScore.win++; msg = `<i class="fas fa-circle-check"></i> Победа! «${RPS_NAMES[choice]}» бьёт «${RPS_NAMES[botChoice]}»`; color = 'var(--teal)';
+    } else {
+        _rpsScore.lose++; msg = `<i class="fas fa-circle-xmark"></i> Бот выиграл: «${RPS_NAMES[botChoice]}» бьёт «${RPS_NAMES[choice]}»`; color = '#ef4444';
+    }
+    if (resEl) resEl.innerHTML = `<span style="color:${color}">${msg}</span>`;
+    const scoreEl = document.getElementById('rps-score');
+    if (scoreEl) scoreEl.textContent = `${_rpsScore.win}-${_rpsScore.lose}-${_rpsScore.draw}`;
+};
+
+// ── Крестики-нолики ──
+const TTT_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let _ttt = { board: Array(9).fill(''), over: false };
+let _tttScore = { win: 0, lose: 0, draw: 0 };
+
+function _tttWinner(b) {
+    for (const [a, c, d] of TTT_LINES) {
+        if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];
+    }
+    return b.every(c => c) ? 'draw' : null;
+}
+
+function _tttBotMove(b) {
+    for (const line of TTT_LINES) {
+        const vals = line.map(i => b[i]);
+        if (vals.filter(v => v === 'O').length === 2 && vals.includes('')) return line[vals.indexOf('')];
+    }
+    for (const line of TTT_LINES) {
+        const vals = line.map(i => b[i]);
+        if (vals.filter(v => v === 'X').length === 2 && vals.includes('')) return line[vals.indexOf('')];
+    }
+    if (!b[4]) return 4;
+    const free = b.map((v, i) => v ? null : i).filter(i => i !== null);
+    return free[Math.floor(Math.random() * free.length)];
+}
+
+window._renderTTT = function(wrap) {
+    _ttt = { board: Array(9).fill(''), over: false };
+    wrap.innerHTML = `
+    <div class="game-wrap-inner">
+        <div class="game-header">
+            <div class="game-title"><i class="fas fa-xmark"></i> Крестики-нолики</div>
+            <div class="game-balance">Счёт: <b id="ttt-score">${_tttScore.win}-${_tttScore.lose}-${_tttScore.draw}</b></div>
+        </div>
+        <div class="game-desc">Ты — <i class="fas fa-xmark"></i>, бот — <i class="fas fa-circle"></i>. Собери линию из трёх. Просто для веселья, без ставок.</div>
+        <div class="ttt-board">
+            ${_ttt.board.map((_, i) => `<button class="ttt-cell" id="ttt-c${i}" onclick="playTTT(${i})"></button>`).join('')}
+        </div>
+        <div id="game-result"></div>
+        <div class="game-actions">
+            <button class="btn btn-outline btn-sm" onclick="_renderTTT(document.getElementById('game-wrap'))"><i class="fas fa-rotate-right"></i> Новая игра</button>
+        </div>
+    </div>`;
+};
+
+window.playTTT = function(i) {
+    if (_ttt.over || _ttt.board[i]) return;
+    _ttt.board[i] = 'X';
+    document.getElementById('ttt-c' + i).innerHTML = '<i class="fas fa-xmark"></i>';
+    let winner = _tttWinner(_ttt.board);
+    if (!winner) {
+        const botI = _tttBotMove(_ttt.board);
+        if (botI !== undefined) {
+            _ttt.board[botI] = 'O';
+            document.getElementById('ttt-c' + botI).innerHTML = '<i class="fas fa-circle"></i>';
+        }
+        winner = _tttWinner(_ttt.board);
+    }
+    if (!winner) return;
+    _ttt.over = true;
+    const resEl = document.getElementById('game-result');
+    if (winner === 'draw') { _tttScore.draw++; resEl.innerHTML = '<span style="color:var(--text-dim)"><i class="fas fa-handshake"></i> Ничья!</span>'; }
+    else if (winner === 'X') { _tttScore.win++; resEl.innerHTML = '<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Ты выиграл!</span>'; }
+    else { _tttScore.lose++; resEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Бот выиграл!</span>'; }
+    const scoreEl = document.getElementById('ttt-score');
+    if (scoreEl) scoreEl.textContent = `${_tttScore.win}-${_tttScore.lose}-${_tttScore.draw}`;
+};
+
+// ── Змейка ──
+const SNAKE_COLS = 15, SNAKE_ROWS = 15, SNAKE_CELL = 18;
+let _snake = null;
+
+function _snakeKeyHandler(e) {
+    const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+    if (map[e.key]) { e.preventDefault(); window._snakeDir(map[e.key]); }
+}
+
+function _snakeStop() {
+    if (_snake?.interval) clearInterval(_snake.interval);
+    if (_snake) _snake.over = true;
+    document.removeEventListener('keydown', _snakeKeyHandler);
+}
+window._stopFunGames = _snakeStop;
+
+function _snakeRandFood(cells) {
+    let f;
+    do {
+        f = { x: Math.floor(Math.random() * SNAKE_COLS), y: Math.floor(Math.random() * SNAKE_ROWS) };
+    } while (cells.some(c => c.x === f.x && c.y === f.y));
+    return f;
+}
+
+function _snakeDraw(ctx) {
+    ctx.fillStyle = '#0a0720';
+    ctx.fillRect(0, 0, SNAKE_COLS * SNAKE_CELL, SNAKE_ROWS * SNAKE_CELL);
+    _snake.cells.forEach((c, i) => {
+        ctx.fillStyle = i === 0 ? '#5eead4' : '#14b8a6';
+        ctx.fillRect(c.x * SNAKE_CELL + 1, c.y * SNAKE_CELL + 1, SNAKE_CELL - 2, SNAKE_CELL - 2);
+    });
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(_snake.food.x * SNAKE_CELL + SNAKE_CELL / 2, _snake.food.y * SNAKE_CELL + SNAKE_CELL / 2, SNAKE_CELL / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function _snakeTick(ctx) {
+    if (!_snake || _snake.over) return;
+    if (!_snake.canvas.isConnected) { _snakeStop(); return; }
+    _snake.dir = _snake.nextDir;
+    const head = _snake.cells[0];
+    const delta = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } }[_snake.dir];
+    const newHead = { x: head.x + delta.x, y: head.y + delta.y };
+
+    const hitWall = newHead.x < 0 || newHead.x >= SNAKE_COLS || newHead.y < 0 || newHead.y >= SNAKE_ROWS;
+    const hitSelf = _snake.cells.some(c => c.x === newHead.x && c.y === newHead.y);
+    if (hitWall || hitSelf) {
+        _snakeStop();
+        const resEl = document.getElementById('game-result');
+        if (resEl) resEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-skull"></i> Игра окончена! Очки: ${_snake.score}</span>
+            <button class="btn btn-sm btn-purple" style="margin-left:8px;" onclick="_renderSnake(document.getElementById('game-wrap'))"><i class="fas fa-rotate-right"></i> Заново</button>`;
+        return;
+    }
+
+    _snake.cells.unshift(newHead);
+    if (newHead.x === _snake.food.x && newHead.y === _snake.food.y) {
+        _snake.score++;
+        _snake.food = _snakeRandFood(_snake.cells);
+        const scoreEl = document.getElementById('snake-score');
+        if (scoreEl) scoreEl.textContent = _snake.score;
+    } else {
+        _snake.cells.pop();
+    }
+    _snakeDraw(ctx);
+}
+
+window._snakeDir = function(dir) {
+    if (!_snake || _snake.over) return;
+    const opposite = { up: 'down', down: 'up', left: 'right', right: 'left' };
+    if (opposite[dir] === _snake.dir) return;
+    _snake.nextDir = dir;
+};
+
+window._renderSnake = function(wrap) {
+    wrap.innerHTML = `
+    <div class="game-wrap-inner">
+        <div class="game-header">
+            <div class="game-title"><i class="fas fa-bullseye"></i> Змейка</div>
+            <div class="game-balance">Очки: <b id="snake-score">0</b></div>
+        </div>
+        <div class="game-desc">Стрелки на клавиатуре или кнопки ниже — собирай еду, не врежься в себя.</div>
+        <div class="snake-canvas-wrap">
+            <canvas id="snake-canvas" width="${SNAKE_COLS * SNAKE_CELL}" height="${SNAKE_ROWS * SNAKE_CELL}"></canvas>
+        </div>
+        <div class="snake-controls">
+            <button class="snake-dpad-btn" onclick="_snakeDir('up')"><i class="fas fa-arrow-up"></i></button>
+            <div class="snake-dpad-row">
+                <button class="snake-dpad-btn" onclick="_snakeDir('left')"><i class="fas fa-arrow-left"></i></button>
+                <button class="snake-dpad-btn" onclick="_snakeDir('down')"><i class="fas fa-arrow-down"></i></button>
+                <button class="snake-dpad-btn" onclick="_snakeDir('right')"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+        <div id="game-result"></div>
+    </div>`;
+
+    _snakeStop();
+    const startCells = [{ x: 7, y: 7 }, { x: 6, y: 7 }, { x: 5, y: 7 }];
+    const canvas = document.getElementById('snake-canvas');
+    _snake = {
+        cells: startCells, dir: 'right', nextDir: 'right',
+        food: _snakeRandFood(startCells), score: 0, over: false, canvas
+    };
+    const ctx = canvas.getContext('2d');
+    document.addEventListener('keydown', _snakeKeyHandler);
+    _snake.interval = setInterval(() => _snakeTick(ctx), 140);
+    _snakeDraw(ctx);
+};
+
+// ── Memory (карточки на память) ──
+const MEMORY_ICONS = [
+    'fa-gamepad', 'fa-headphones', 'fa-video', 'fa-palette',
+    'fa-trophy', 'fa-star', 'fa-rocket', 'fa-music'
+];
+let _memory = null;
+
+window._renderMemory = function(wrap) {
+    const deck = [...MEMORY_ICONS, ...MEMORY_ICONS]
+        .map(icon => ({ icon }))
+        .sort(() => Math.random() - 0.5);
+    _memory = { cards: deck, flipped: [], matched: [], moves: 0, busy: false };
+    wrap.innerHTML = `
+    <div class="game-wrap-inner">
+        <div class="game-header">
+            <div class="game-title"><i class="fas fa-brain"></i> Memory</div>
+            <div class="game-balance">Ходы: <b id="memory-moves">0</b></div>
+        </div>
+        <div class="game-desc">Найди все пары одинаковых карточек. Просто для веселья.</div>
+        <div class="memory-grid">
+            ${deck.map((_, i) => `<button class="memory-card" id="memory-c${i}" onclick="flipMemory(${i})"><i class="fas fa-question"></i></button>`).join('')}
+        </div>
+        <div id="game-result"></div>
+        <div class="game-actions">
+            <button class="btn btn-outline btn-sm" onclick="_renderMemory(document.getElementById('game-wrap'))"><i class="fas fa-rotate-right"></i> Новая игра</button>
+        </div>
+    </div>`;
+};
+
+window.flipMemory = function(i) {
+    if (!_memory || _memory.busy) return;
+    if (_memory.matched.includes(i) || _memory.flipped.includes(i)) return;
+    const cardEl = document.getElementById('memory-c' + i);
+    cardEl.innerHTML = `<i class="fas ${_memory.cards[i].icon}"></i>`;
+    cardEl.classList.add('memory-card--flipped');
+    _memory.flipped.push(i);
+    if (_memory.flipped.length < 2) return;
+
+    _memory.moves++;
+    const movesEl = document.getElementById('memory-moves');
+    if (movesEl) movesEl.textContent = _memory.moves;
+
+    const [a, b] = _memory.flipped;
+    if (_memory.cards[a].icon === _memory.cards[b].icon) {
+        _memory.matched.push(a, b);
+        document.getElementById('memory-c' + a).classList.add('memory-card--matched');
+        document.getElementById('memory-c' + b).classList.add('memory-card--matched');
+        _memory.flipped = [];
+        if (_memory.matched.length === _memory.cards.length) {
+            const resEl = document.getElementById('game-result');
+            if (resEl) resEl.innerHTML = `<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Готово! Ходов: ${_memory.moves}</span>`;
+        }
+    } else {
+        _memory.busy = true;
+        setTimeout(() => {
+            [a, b].forEach(idx => {
+                const el = document.getElementById('memory-c' + idx);
+                if (el) { el.innerHTML = '<i class="fas fa-question"></i>'; el.classList.remove('memory-card--flipped'); }
+            });
+            _memory.flipped = [];
+            _memory.busy = false;
+        }, 700);
+    }
+};
 
 // ── Глобальный множитель шансов (админ-рычаг) ──────────────────
 let _oddsCache = { value: 1, ts: 0 };
