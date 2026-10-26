@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20261026a';
+        var CURRENT = '20261026b';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -91,7 +91,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20261026a">
+    <link rel="stylesheet" href="/css/style.css?v=20261026b">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -282,7 +282,7 @@ window.yaContextCb.push(() => {
         </div>
         <div class="grid" id="main-grid"><!--PRERENDER_GRID_START-->
         <a class="card" href="/view/knsHpT7kzIieDXRSBaaI" onclick="if(typeof openView==='function'){event.preventDefault();openView('knsHpT7kzIieDXRSBaaI')}">
-            <img src="https://shikimori.io/uploads/poster/animes/34006/09f8da78178c5c84434a08471ae3998c.jpeg" alt="Девушки дополненной реальности" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">
+            <img src="https://nfibwvpvoxdvdlabxvxi.supabase.co/storage/v1/object/public/media/1793013041750_1000158831.jpg" alt="Девушки дополненной реальности" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;">
             <div style="padding:10px;">
                 <div style="font-weight:700;font-size:13px;">Девушки дополненной реальности</div>
                 <div style="font-size:11px;color:var(--text-dim);">Аниме · 2017</div>
@@ -1232,7 +1232,7 @@ window.yaContextCb.push(() => {
         <span style="font-size:11px;color:var(--text-dim);">PNG / JPG / GIF, до 8 МБ за файл</span>
     </div>
     <div id="media-grid" class="media-grid-admin"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="if(typeof closeMediaLibrary==='function') closeMediaLibrary(); else closeModals();">Закрыть</button>
 </div></div>
 
 <div id="m-team" class="modal"><div class="modal-content">
@@ -1929,7 +1929,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20261026a"></script>
+<script type="module" src="/js/app.js?v=20261026b"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
