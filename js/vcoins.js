@@ -14,6 +14,11 @@ import { checkAndAwardAch } from './achievements.js';
 let _prices   = { ...VCOINS_DEFAULT_PRICES };
 let _db, _auth, _getState;
 
+// Переключатель мини-игр с элементом азартности (Монетка/Слоты/Ракета/Чёрная дыра).
+// Выключено по требованию платёжного провайдера — код сохранён, не удалён.
+// Чтобы вернуть игры: поставить true.
+const CASINO_GAMES_ENABLED = false;
+
 async function loadPrices() {
     try {
         const snap = await getDoc(doc(_db, 'settings', 'vcoins'));
@@ -128,6 +133,7 @@ function renderShopPage() {
 
     <div class="shop-section-title" style="margin-top:32px;">🎮 Мини-игры</div>
     <div class="shop-grid shop-grid--games">
+        ${CASINO_GAMES_ENABLED ? `
         <div class="shop-game-card" onclick="openGame('coinflip')">
             <div class="shop-game-icon">🪙</div>
             <div class="shop-game-name">Монетка</div>
@@ -152,6 +158,7 @@ function renderShopPage() {
             <div class="shop-game-desc">Шарик падает через штыри — попади в множитель</div>
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
+        ` : ''}
         <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
             <div class="shop-game-icon">🎁</div>
             <div class="shop-game-name">Ящики</div>
@@ -202,6 +209,7 @@ async function activateShopItem(itemId) {
 }
 
 function openGame(type) {
+    if (!CASINO_GAMES_ENABLED) return showToast('Игра временно недоступна', 'error');
     const { userData } = _getState();
     if (!userData) return showToast('Войдите в аккаунт', 'error');
     document.getElementById('m-game').style.display = 'flex';
