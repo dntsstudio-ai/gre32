@@ -26,6 +26,60 @@ function calcAge(birthDateStr) {
     return age;
 }
 
+const MONTH_NAMES = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+];
+
+// Заполняет селекты день/месяц/год на форме регистрации (вместо
+// нативного <input type="date"> — неудобного и по-разному выглядящего
+// в разных браузерах/ОС). Вызывается один раз при старте приложения.
+export function initBirthdateSelects() {
+    const dayEl = document.getElementById('birth-day');
+    const monthEl = document.getElementById('birth-month');
+    const yearEl = document.getElementById('birth-year');
+    if (!dayEl || !monthEl || !yearEl || dayEl.dataset.filled) return;
+    dayEl.dataset.filled = '1';
+
+    for (let d = 1; d <= 31; d++) {
+        dayEl.insertAdjacentHTML('beforeend', `<option value="${d}">${d}</option>`);
+    }
+    MONTH_NAMES.forEach((name, i) => {
+        monthEl.insertAdjacentHTML('beforeend', `<option value="${i + 1}">${name}</option>`);
+    });
+    const curYear = new Date().getFullYear();
+    for (let y = curYear - 14; y >= curYear - 100; y--) {
+        yearEl.insertAdjacentHTML('beforeend', `<option value="${y}">${y}</option>`);
+    }
+}
+
+// Собирает ISO-дату (YYYY-MM-DD) из трёх селектов и проверяет, что
+// день/месяц/год образуют реально существующую дату (без переполнения
+// вроде 30 февраля).
+function readBirthdate() {
+    const d = parseInt(document.getElementById('birth-day')?.value);
+    const m = parseInt(document.getElementById('birth-month')?.value);
+    const y = parseInt(document.getElementById('birth-year')?.value);
+    if (!d || !m || !y) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+window.switchAuthTab = function(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('auth-tab-login')?.classList.toggle('active', isLogin);
+    document.getElementById('auth-tab-reg')?.classList.toggle('active', !isLogin);
+    const regFields = document.getElementById('reg-only-fields');
+    if (regFields) regFields.style.display = isLogin ? 'none' : 'block';
+    const btnLogin = document.getElementById('btn-login');
+    const btnReg = document.getElementById('btn-reg');
+    if (btnLogin) btnLogin.style.display = isLogin ? 'inline-flex' : 'none';
+    if (btnReg) btnReg.style.display = isLogin ? 'none' : 'inline-flex';
+    const resetBlock = document.getElementById('reset-pass-block');
+    if (resetBlock && !isLogin) resetBlock.style.display = 'none';
+};
+
 function authErrorMsg(code) {
     const map = {
         'auth/email-already-in-use':   'Данный email уже занят!',
@@ -73,10 +127,10 @@ export function initAuthListeners(auth, db) {
         btnReg.onclick = async function() {
             const e = document.getElementById('email')?.value.trim();
             const p = document.getElementById('pass')?.value;
-            const birthDate   = document.getElementById('birth-date')?.value;
+            const birthDate   = readBirthdate();
             const policyAgree = document.getElementById('policy-agree')?.checked;
             if (!e || !p || p.length < 6) return showToast('Email и пароль (мин. 6 символов)!', 'error');
-            if (!birthDate) return showToast('Укажите дату рождения!', 'error');
+            if (!birthDate) return showToast('Укажите корректную дату рождения!', 'error');
             const age = calcAge(birthDate);
             if (age === null || age < 0) return showToast('Некорректная дата рождения!', 'error');
             if (age < 14) return showToast('Регистрация доступна с 14 лет!', 'error');

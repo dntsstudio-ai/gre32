@@ -9,7 +9,7 @@ import { getStorage }                  from "https://www.gstatic.com/firebasejs/
 
 import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20261025c';
 import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20261025c';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions } from './auth.js?v=20261025c';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions, initBirthdateSelects } from './auth.js?v=20261025c';
 import { renderAchProfile, bindAchievements } from './achievements.js?v=20261025c';
 import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20261025c';
 import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20261025c';
@@ -77,6 +77,7 @@ bindBanners(db, auth, getState);
 // загрузки каталога) — иначе клик по "Войти" сразу после открытия
 // сайта мог ничего не делать, пока обработчик ещё не навешен.
 initAuthListeners(auth, db);
+initBirthdateSelects();
 
 window.closeModals = closeModals;
 window.showToast   = showToast;
