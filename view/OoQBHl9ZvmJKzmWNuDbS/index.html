@@ -833,6 +833,7 @@ window.yaContextCb.push(() => {
                         <button id="btn-admin-roles" class="btn btn-outline" onclick="openAdminRolesPanel()"><i class="fas fa-users-cog"></i> Роли пользователей</button>
                         <button id="btn-admin-levers" class="btn btn-outline" style="color:#f59e0b;border-color:rgba(245,158,11,0.35);" onclick="openAdminLeversPanel()"><i class="fas fa-sliders-h"></i> Рычаги</button>
                         <button id="btn-admin-banners" class="btn btn-outline" onclick="openBannersAdmin()"><i class="fas fa-bullhorn"></i> Плашки</button>
+                        <button id="btn-admin-media" class="btn btn-outline" onclick="openMediaLibrary()"><i class="fas fa-photo-film"></i> Медиатека</button>
                     </div>
                 </div>
 
@@ -1155,6 +1156,7 @@ window.yaContextCb.push(() => {
             <i class="fas fa-upload"></i> Файл
             <input type="file" id="ad-img-file" accept="image/*" style="display:none;" onchange="uploadPosterFile(this)">
         </label>
+        <button type="button" class="btn btn-outline btn-sm field-action-btn" onclick="openMediaLibrary('ad-img')"><i class="fas fa-photo-film"></i> Медиатека</button>
     </div>
     <div class="upload-progress-wrap" id="poster-upload-wrap" style="display:none;">
         <div class="upload-progress-bar" id="poster-upload-bar"></div>
@@ -1198,6 +1200,7 @@ window.yaContextCb.push(() => {
             <i class="fas fa-upload"></i> Файл
             <input type="file" id="ad-ep-thumb-file" accept="image/*" style="display:none;" onchange="uploadEpThumbFile(this)">
         </label>
+        <button type="button" class="btn btn-outline btn-sm field-action-btn" onclick="openMediaLibrary('ad-ep-thumb')"><i class="fas fa-photo-film"></i> Медиатека</button>
     </div>
     <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:16px;margin-bottom:12px;">
         <p style="font-size:11px;color:var(--violet-light);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏱ Тайминги заставки (формат мм:сс)</p>
@@ -1221,12 +1224,28 @@ window.yaContextCb.push(() => {
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
 </div></div>
 
+<div id="m-media" class="modal"><div class="modal-content" style="max-width:740px;">
+    <h3 id="media-modal-title" style="margin-bottom:14px;"><i class="fas fa-photo-film" style="color:#5eead4;margin-right:8px;"></i>Медиатека</h3>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+        <label class="btn btn-purple btn-sm" style="cursor:pointer;margin-bottom:0;">
+            <i class="fas fa-upload"></i> Загрузить
+            <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadMediaFiles(this)">
+        </label>
+        <span style="font-size:11px;color:var(--text-dim);">PNG / JPG / GIF, до 8 МБ за файл</span>
+    </div>
+    <div id="media-grid" class="media-grid-admin"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
+</div></div>
+
 <div id="m-team" class="modal"><div class="modal-content">
     <h3 style="margin-bottom:18px;">Участник команды</h3>
     <input type="hidden" id="ed-team-id">
     <input type="text" id="ad-m-name" placeholder="Никнейм">
     <input type="text" id="ad-m-role" placeholder="Роль (Дабер, Редактор...)">
-    <input type="text" id="ad-m-img" placeholder="URL фото">
+    <div class="field-with-action">
+        <input type="text" id="ad-m-img" placeholder="URL фото">
+        <button type="button" class="btn btn-outline btn-sm field-action-btn" onclick="openMediaLibrary('ad-m-img')"><i class="fas fa-photo-film"></i> Медиатека</button>
+    </div>
     <input type="text" id="ad-m-cat" placeholder="Категория">
     <button class="btn btn-blue" style="width:100%;margin-top:5px;" onclick="saveTeam()">Сохранить</button>
     <button class="btn btn-outline" style="width:100%;margin-top:8px;" onclick="closeModals()">Отмена</button>
