@@ -669,6 +669,35 @@ function renderGame(type) {
 //  Камень-Ножницы-Бумага · Крестики-нолики · Змейка · Memory
 // ════════════════════════════════════════════════════════════════
 
+// ── Звуки (генерируются на лету через WebAudio — без внешних файлов) ──
+let _sfxCtx = null;
+function _sfxTone(freq, dur, type, vol, delay) {
+    try {
+        if (!_sfxCtx) _sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (_sfxCtx.state === 'suspended') _sfxCtx.resume();
+        const t0 = _sfxCtx.currentTime + (delay || 0);
+        const osc = _sfxCtx.createOscillator();
+        const gain = _sfxCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(vol ?? 0.15, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        osc.connect(gain); gain.connect(_sfxCtx.destination);
+        osc.start(t0); osc.stop(t0 + dur);
+    } catch(e) { /* звук — необязательная часть игры, молча пропускаем */ }
+}
+const SFX = {
+    click:    () => _sfxTone(440, 0.08, 'triangle', 0.12),
+    place:    () => _sfxTone(392, 0.07, 'triangle', 0.1),
+    win:      () => { _sfxTone(523, 0.12, 'sine', 0.16); _sfxTone(659, 0.12, 'sine', 0.16, 0.1); _sfxTone(784, 0.18, 'sine', 0.16, 0.2); },
+    lose:     () => { _sfxTone(300, 0.15, 'sawtooth', 0.1); _sfxTone(220, 0.25, 'sawtooth', 0.1, 0.12); },
+    draw:     () => _sfxTone(350, 0.15, 'sine', 0.1),
+    eat:      () => _sfxTone(660, 0.07, 'square', 0.09),
+    gameover: () => { _sfxTone(260, 0.12, 'sawtooth', 0.12); _sfxTone(180, 0.3, 'sawtooth', 0.12, 0.12); },
+    flip:     () => _sfxTone(500, 0.05, 'triangle', 0.08),
+    match:    () => { _sfxTone(600, 0.08, 'sine', 0.14); _sfxTone(800, 0.12, 'sine', 0.14, 0.08); },
+};
+
 // ── Камень-Ножницы-Бумага ──
 const RPS_ICON = {
     rock:     '<i class="fas fa-hand-back-fist"></i>',
@@ -677,6 +706,7 @@ const RPS_ICON = {
 };
 const RPS_NAMES = { rock: 'Камень', paper: 'Бумага', scissors: 'Ножницы' };
 let _rpsScore = { win: 0, lose: 0, draw: 0 };
+let _rpsBusy = false;
 
 function _rpsBeats(a, b) {
     return (a === 'rock' && b === 'scissors') ||
@@ -685,6 +715,7 @@ function _rpsBeats(a, b) {
 }
 
 window._renderRPS = function(wrap) {
+    _rpsBusy = false;
     wrap.innerHTML = `
     <div class="game-wrap-inner">
         <div class="game-header">
@@ -713,30 +744,39 @@ window._renderRPS = function(wrap) {
 };
 
 window.playRPS = function(choice) {
+    if (_rpsBusy) return;
+    _rpsBusy = true;
+    SFX.click();
     const picks = ['rock', 'paper', 'scissors'];
     const botChoice = picks[Math.floor(Math.random() * 3)];
     const youEl = document.getElementById('rps-you');
     const botEl = document.getElementById('rps-bot');
     const resEl = document.getElementById('game-result');
-    if (youEl) youEl.innerHTML = RPS_ICON[choice];
-    if (botEl) botEl.innerHTML = RPS_ICON[botChoice];
+    [youEl, botEl].forEach(el => el?.classList.remove('rps-reveal'));
+    void youEl?.offsetWidth; // перезапуск CSS-анимации
+    if (youEl) { youEl.innerHTML = RPS_ICON[choice]; youEl.classList.add('rps-reveal'); }
 
-    let msg, color;
-    if (choice === botChoice) {
-        _rpsScore.draw++; msg = '<i class="fas fa-handshake"></i> Ничья!'; color = 'var(--text-dim)';
-    } else if (_rpsBeats(choice, botChoice)) {
-        _rpsScore.win++; msg = `<i class="fas fa-circle-check"></i> Победа! «${RPS_NAMES[choice]}» бьёт «${RPS_NAMES[botChoice]}»`; color = 'var(--teal)';
-    } else {
-        _rpsScore.lose++; msg = `<i class="fas fa-circle-xmark"></i> Бот выиграл: «${RPS_NAMES[botChoice]}» бьёт «${RPS_NAMES[choice]}»`; color = '#ef4444';
-    }
-    if (resEl) resEl.innerHTML = `<span style="color:${color}">${msg}</span>`;
-    const scoreEl = document.getElementById('rps-score');
-    if (scoreEl) scoreEl.textContent = `${_rpsScore.win}-${_rpsScore.lose}-${_rpsScore.draw}`;
+    setTimeout(() => {
+        if (botEl) { botEl.innerHTML = RPS_ICON[botChoice]; botEl.classList.add('rps-reveal'); }
+
+        let msg, color;
+        if (choice === botChoice) {
+            _rpsScore.draw++; msg = '<i class="fas fa-handshake"></i> Ничья!'; color = 'var(--text-dim)'; SFX.draw();
+        } else if (_rpsBeats(choice, botChoice)) {
+            _rpsScore.win++; msg = `<i class="fas fa-circle-check"></i> Победа! «${RPS_NAMES[choice]}» бьёт «${RPS_NAMES[botChoice]}»`; color = 'var(--teal)'; SFX.win();
+        } else {
+            _rpsScore.lose++; msg = `<i class="fas fa-circle-xmark"></i> Бот выиграл: «${RPS_NAMES[botChoice]}» бьёт «${RPS_NAMES[choice]}»`; color = '#ef4444'; SFX.lose();
+        }
+        if (resEl) resEl.innerHTML = `<span style="color:${color}">${msg}</span>`;
+        const scoreEl = document.getElementById('rps-score');
+        if (scoreEl) scoreEl.textContent = `${_rpsScore.win}-${_rpsScore.lose}-${_rpsScore.draw}`;
+        _rpsBusy = false;
+    }, 350);
 };
 
 // ── Крестики-нолики ──
 const TTT_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let _ttt = { board: Array(9).fill(''), over: false };
+let _ttt = { board: Array(9).fill(''), over: false, locked: false };
 let _tttScore = { win: 0, lose: 0, draw: 0 };
 
 function _tttWinner(b) {
@@ -761,7 +801,7 @@ function _tttBotMove(b) {
 }
 
 window._renderTTT = function(wrap) {
-    _ttt = { board: Array(9).fill(''), over: false };
+    _ttt = { board: Array(9).fill(''), over: false, locked: false };
     wrap.innerHTML = `
     <div class="game-wrap-inner">
         <div class="game-header">
@@ -779,27 +819,43 @@ window._renderTTT = function(wrap) {
     </div>`;
 };
 
-window.playTTT = function(i) {
-    if (_ttt.over || _ttt.board[i]) return;
-    _ttt.board[i] = 'X';
-    document.getElementById('ttt-c' + i).innerHTML = '<i class="fas fa-xmark"></i>';
-    let winner = _tttWinner(_ttt.board);
-    if (!winner) {
-        const botI = _tttBotMove(_ttt.board);
-        if (botI !== undefined) {
-            _ttt.board[botI] = 'O';
-            document.getElementById('ttt-c' + botI).innerHTML = '<i class="fas fa-circle"></i>';
-        }
-        winner = _tttWinner(_ttt.board);
-    }
-    if (!winner) return;
+function _tttPlace(i, icon) {
+    const el = document.getElementById('ttt-c' + i);
+    if (!el) return;
+    el.innerHTML = icon;
+    el.classList.add('ttt-cell--placed');
+}
+
+function _tttFinish(winner) {
     _ttt.over = true;
     const resEl = document.getElementById('game-result');
-    if (winner === 'draw') { _tttScore.draw++; resEl.innerHTML = '<span style="color:var(--text-dim)"><i class="fas fa-handshake"></i> Ничья!</span>'; }
-    else if (winner === 'X') { _tttScore.win++; resEl.innerHTML = '<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Ты выиграл!</span>'; }
-    else { _tttScore.lose++; resEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Бот выиграл!</span>'; }
+    if (winner === 'draw') { _tttScore.draw++; resEl.innerHTML = '<span style="color:var(--text-dim)"><i class="fas fa-handshake"></i> Ничья!</span>'; SFX.draw(); }
+    else if (winner === 'X') { _tttScore.win++; resEl.innerHTML = '<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Ты выиграл!</span>'; SFX.win(); }
+    else { _tttScore.lose++; resEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-circle-xmark"></i> Бот выиграл!</span>'; SFX.lose(); }
     const scoreEl = document.getElementById('ttt-score');
     if (scoreEl) scoreEl.textContent = `${_tttScore.win}-${_tttScore.lose}-${_tttScore.draw}`;
+}
+
+window.playTTT = function(i) {
+    if (_ttt.over || _ttt.locked || _ttt.board[i]) return;
+    _ttt.board[i] = 'X';
+    SFX.place();
+    _tttPlace(i, '<i class="fas fa-xmark"></i>');
+
+    const winnerAfterPlayer = _tttWinner(_ttt.board);
+    if (winnerAfterPlayer) { _tttFinish(winnerAfterPlayer); return; }
+
+    const botI = _tttBotMove(_ttt.board);
+    if (botI === undefined) return;
+    _ttt.board[botI] = 'O';
+    _ttt.locked = true;
+    setTimeout(() => {
+        SFX.place();
+        _tttPlace(botI, '<i class="fas fa-circle"></i>');
+        _ttt.locked = false;
+        const winnerAfterBot = _tttWinner(_ttt.board);
+        if (winnerAfterBot) _tttFinish(winnerAfterBot);
+    }, 280);
 };
 
 // ── Змейка ──
@@ -837,6 +893,17 @@ function _snakeDraw(ctx) {
     ctx.beginPath();
     ctx.arc(_snake.food.x * SNAKE_CELL + SNAKE_CELL / 2, _snake.food.y * SNAKE_CELL + SNAKE_CELL / 2, SNAKE_CELL / 2 - 2, 0, Math.PI * 2);
     ctx.fill();
+
+    if (!_snake.started) {
+        const w = SNAKE_COLS * SNAKE_CELL, h = SNAKE_ROWS * SNAKE_CELL;
+        ctx.fillStyle = 'rgba(7,4,26,0.72)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#f0eeff';
+        ctx.font = '600 13px Exo 2, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Нажмите стрелку,', w / 2, h / 2 - 8);
+        ctx.fillText('чтобы начать', w / 2, h / 2 + 12);
+    }
 }
 
 function _snakeTick(ctx) {
@@ -851,6 +918,7 @@ function _snakeTick(ctx) {
     const hitSelf = _snake.cells.some(c => c.x === newHead.x && c.y === newHead.y);
     if (hitWall || hitSelf) {
         _snakeStop();
+        SFX.gameover();
         const resEl = document.getElementById('game-result');
         if (resEl) resEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-skull"></i> Игра окончена! Очки: ${_snake.score}</span>
             <button class="btn btn-sm btn-purple" style="margin-left:8px;" onclick="_renderSnake(document.getElementById('game-wrap'))"><i class="fas fa-rotate-right"></i> Заново</button>`;
@@ -860,6 +928,7 @@ function _snakeTick(ctx) {
     _snake.cells.unshift(newHead);
     if (newHead.x === _snake.food.x && newHead.y === _snake.food.y) {
         _snake.score++;
+        SFX.eat();
         _snake.food = _snakeRandFood(_snake.cells);
         const scoreEl = document.getElementById('snake-score');
         if (scoreEl) scoreEl.textContent = _snake.score;
@@ -871,6 +940,15 @@ function _snakeTick(ctx) {
 
 window._snakeDir = function(dir) {
     if (!_snake || _snake.over) return;
+    if (!_snake.started) {
+        _snake.started = true;
+        _snake.dir = dir;
+        _snake.nextDir = dir;
+        SFX.click();
+        _snake.interval = setInterval(() => _snakeTick(_snake.ctx), 140);
+        _snakeDraw(_snake.ctx);
+        return;
+    }
     const opposite = { up: 'down', down: 'up', left: 'right', right: 'left' };
     if (opposite[dir] === _snake.dir) return;
     _snake.nextDir = dir;
@@ -901,13 +979,12 @@ window._renderSnake = function(wrap) {
     _snakeStop();
     const startCells = [{ x: 7, y: 7 }, { x: 6, y: 7 }, { x: 5, y: 7 }];
     const canvas = document.getElementById('snake-canvas');
+    const ctx = canvas.getContext('2d');
     _snake = {
         cells: startCells, dir: 'right', nextDir: 'right',
-        food: _snakeRandFood(startCells), score: 0, over: false, canvas
+        food: _snakeRandFood(startCells), score: 0, over: false, started: false, canvas, ctx
     };
-    const ctx = canvas.getContext('2d');
     document.addEventListener('keydown', _snakeKeyHandler);
-    _snake.interval = setInterval(() => _snakeTick(ctx), 140);
     _snakeDraw(ctx);
 };
 
@@ -931,7 +1008,13 @@ window._renderMemory = function(wrap) {
         </div>
         <div class="game-desc">Найди все пары одинаковых карточек. Просто для веселья.</div>
         <div class="memory-grid">
-            ${deck.map((_, i) => `<button class="memory-card" id="memory-c${i}" onclick="flipMemory(${i})"><i class="fas fa-question"></i></button>`).join('')}
+            ${deck.map((c, i) => `
+            <button class="memory-card" id="memory-c${i}" onclick="flipMemory(${i})">
+                <div class="memory-card-inner">
+                    <div class="memory-card-face memory-card-front"><i class="fas fa-question"></i></div>
+                    <div class="memory-card-face memory-card-back"><i class="fas ${c.icon}"></i></div>
+                </div>
+            </button>`).join('')}
         </div>
         <div id="game-result"></div>
         <div class="game-actions">
@@ -943,9 +1026,8 @@ window._renderMemory = function(wrap) {
 window.flipMemory = function(i) {
     if (!_memory || _memory.busy) return;
     if (_memory.matched.includes(i) || _memory.flipped.includes(i)) return;
-    const cardEl = document.getElementById('memory-c' + i);
-    cardEl.innerHTML = `<i class="fas ${_memory.cards[i].icon}"></i>`;
-    cardEl.classList.add('memory-card--flipped');
+    SFX.flip();
+    document.getElementById('memory-c' + i)?.classList.add('flipped');
     _memory.flipped.push(i);
     if (_memory.flipped.length < 2) return;
 
@@ -955,21 +1037,21 @@ window.flipMemory = function(i) {
 
     const [a, b] = _memory.flipped;
     if (_memory.cards[a].icon === _memory.cards[b].icon) {
+        SFX.match();
         _memory.matched.push(a, b);
-        document.getElementById('memory-c' + a).classList.add('memory-card--matched');
-        document.getElementById('memory-c' + b).classList.add('memory-card--matched');
+        document.getElementById('memory-c' + a)?.classList.add('matched');
+        document.getElementById('memory-c' + b)?.classList.add('matched');
         _memory.flipped = [];
         if (_memory.matched.length === _memory.cards.length) {
+            SFX.win();
             const resEl = document.getElementById('game-result');
             if (resEl) resEl.innerHTML = `<span style="color:var(--teal)"><i class="fas fa-circle-check"></i> Готово! Ходов: ${_memory.moves}</span>`;
         }
     } else {
         _memory.busy = true;
         setTimeout(() => {
-            [a, b].forEach(idx => {
-                const el = document.getElementById('memory-c' + idx);
-                if (el) { el.innerHTML = '<i class="fas fa-question"></i>'; el.classList.remove('memory-card--flipped'); }
-            });
+            SFX.click();
+            [a, b].forEach(idx => { document.getElementById('memory-c' + idx)?.classList.remove('flipped'); });
             _memory.flipped = [];
             _memory.busy = false;
         }, 700);
