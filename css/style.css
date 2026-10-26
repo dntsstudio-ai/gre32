@@ -1129,6 +1129,47 @@ select option { background: var(--modal-bg); color: var(--text); }
     transition: width 0.2s ease;
 }
 
+/* ═══════════════════════════════════════════════
+   МЕДИАТЕКА (Supabase Storage)
+   ═══════════════════════════════════════════════ */
+.media-grid-admin {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 2px;
+}
+.media-tile {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(124,58,237,0.25);
+    background: rgba(10,7,32,0.6);
+}
+.media-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-tile-actions {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(7,4,26,0.72);
+    opacity: 0;
+    transition: opacity 0.18s;
+}
+.media-tile:hover .media-tile-actions { opacity: 1; }
+.media-tile-btn {
+    width: 30px; height: 30px;
+    border: none; border-radius: 8px;
+    background: rgba(124,58,237,0.9);
+    color: #fff; font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+}
+.media-tile-btn:hover { transform: scale(1.1); }
+.media-tile-btn--pick { background: rgba(20,184,166,0.9); }
+.media-tile-btn--danger { background: rgba(239,68,68,0.9); }
+
 .kodik-search-block {
     background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2);
     border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative;

@@ -651,24 +651,25 @@ export function bindReleases(db, auth, getState, storage) {
     clearInterval(_recRefreshTimer);
     _recRefreshTimer = setInterval(rebuildFeaturedSlides, 5 * 60 * 1000);
 
-    // ── Загрузка постера файлом ──
-    window.uploadPosterFile = (inputEl) => {
+    // ── Загрузка постера файлом (медиатека на Supabase — не Firebase Storage,
+    //    тот занят под видео) ──
+    window.uploadPosterFile = async (inputEl) => {
         const file = inputEl.files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) return showToast('Нужен файл изображения', 'error');
         if (file.size > 8 * 1024 * 1024) return showToast('Файл слишком большой (макс. 8 МБ)', 'error');
         const wrap = document.getElementById('poster-upload-wrap');
-        const bar  = document.getElementById('poster-upload-bar');
         if (wrap) wrap.style.display = 'block';
-        uploadToStorage(storage, file, 'posters', {
-            onProgress: (pct) => { if (bar) bar.style.width = pct + '%'; },
-            onDone: (url) => {
-                const img = document.getElementById('ad-img'); if (img) img.value = url;
-                if (wrap) wrap.style.display = 'none';
-                showToast('Постер загружен!');
-            },
-            onError: (err) => { if (wrap) wrap.style.display = 'none'; showToast('Ошибка загрузки: ' + err.message, 'error'); },
-        });
+        try {
+            const { uploadMedia } = await import('./media.js?v=20261025c');
+            const { url } = await uploadMedia(file);
+            const img = document.getElementById('ad-img'); if (img) img.value = url;
+            showToast('Постер загружен!');
+        } catch(err) {
+            showToast('Ошибка загрузки: ' + err.message, 'error');
+        } finally {
+            if (wrap) wrap.style.display = 'none';
+        }
     };
 
     // ── Загрузка видео файлом (VAT-источник) ──
@@ -694,16 +695,20 @@ export function bindReleases(db, auth, getState, storage) {
         });
     };
 
-    // ── Загрузка превью эпизода файлом ──
-    window.uploadEpThumbFile = (inputEl) => {
+    // ── Загрузка превью эпизода файлом (та же медиатека на Supabase) ──
+    window.uploadEpThumbFile = async (inputEl) => {
         const file = inputEl.files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) return showToast('Нужен файл изображения', 'error');
         if (file.size > 5 * 1024 * 1024) return showToast('Файл слишком большой (макс. 5 МБ)', 'error');
-        uploadToStorage(storage, file, 'thumbs', {
-            onDone: (url) => { const el = document.getElementById('ad-ep-thumb'); if (el) el.value = url; showToast('Превью загружено!'); },
-            onError: (err) => showToast('Ошибка загрузки: ' + err.message, 'error'),
-        });
+        try {
+            const { uploadMedia } = await import('./media.js?v=20261025c');
+            const { url } = await uploadMedia(file);
+            const el = document.getElementById('ad-ep-thumb'); if (el) el.value = url;
+            showToast('Превью загружено!');
+        } catch(err) {
+            showToast('Ошибка загрузки: ' + err.message, 'error');
+        }
     };
 
     window.filterData = () => { const { isAdmin } = getState(); renderGrid(isAdmin); };

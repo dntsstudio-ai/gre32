@@ -12,6 +12,16 @@ export const FIREBASE_CONFIG = {
     measurementId:     "G-98LRHNZY2B"
 };
 
+// Медиатека (картинки/гифки для сайта) — отдельное хранилище в Supabase
+// Storage, независимое от Firebase Storage (который используется для
+// больших видеофайлов эпизодов). anonKey — публичный ключ, его можно
+// безопасно показывать во фронтенде (как и apiKey Firebase выше).
+export const SUPABASE_CONFIG = {
+    url:    'https://nfibwvpvoxdvdlabxvxi.supabase.co',
+    anonKey: 'sb_publishable_YdacZkDhwcOzxi9utkJRrQ_-yQsYtd2',
+    bucket: 'media'
+};
+
 export const EMAILJS_CONFIG = {
     serviceId:       'service_sws',
     templateSuggest: 'template_suggest',

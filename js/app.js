@@ -85,6 +85,15 @@ window._releasesEnableSearch  = enableSearch;
 window._releasesDisableSearch = disableSearch;
 window.awardVCoins = awardVCoins;
 
+// Медиатека (Supabase) — только для админки, подключаем через import()
+// при первом открытии, а не всегда вместе с app.js (её кнопки лежат в
+// уже отрендеренных модалках m-rel/m-ep/m-team, не за navigate()).
+window.openMediaLibrary = async function(targetInputId) {
+    const m = await import(`./media.js?v=${V}`);
+    m.bindMediaLibrary();
+    window.openMediaLibrary(targetInputId);
+};
+
 const _pendingNav = window._navQueue || [];
 
 // users.js вызывается со множества страниц (профиль, состав, магазин,
@@ -192,6 +201,7 @@ function updateSidebarVisibility() {
     show('btn-admin-levers', a, 'inline-flex');
     show('btn-admin-banners', a, 'inline-flex');
     show('btn-admin-vcoins', a, 'inline-flex');
+    show('btn-admin-media', a, 'inline-flex');
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = a ? 'block' : 'none';
     const shopBal = document.getElementById('sn-shop-balance');
