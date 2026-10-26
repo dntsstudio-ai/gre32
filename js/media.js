@@ -2,8 +2,8 @@
 //  js/media.js — Медиатека: картинки/гифки на Supabase Storage
 // ============================================================
 
-import { SUPABASE_CONFIG } from '../config/config.js?v=20261026a';
-import { showToast, closeModals } from './core.js?v=20261026a';
+import { SUPABASE_CONFIG } from '../config/config.js?v=20261026b';
+import { showToast } from './core.js?v=20261026b';
 
 const BUCKET = SUPABASE_CONFIG.bucket || 'media';
 const MAX_FILE_MB = 8;
@@ -136,7 +136,17 @@ export function bindMediaLibrary() {
             const el = document.getElementById(_pickTarget);
             if (el) { el.value = url; el.dispatchEvent(new Event('input', { bubbles: true })); }
         }
-        closeModals();
+        // Закрываем только саму медиатеку — closeModals() закрыл бы и
+        // модалку "Управление релизом"/"Добавить медиа" под ней, из-за
+        // чего казалось, что выбор картинки вообще ничего не делает.
+        closeMediaModal();
         showToast('Картинка выбрана!');
     };
+
+    window.closeMediaLibrary = closeMediaModal;
+}
+
+function closeMediaModal() {
+    const modal = document.getElementById('m-media');
+    if (modal) modal.style.display = 'none';
 }

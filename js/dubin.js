@@ -7,9 +7,9 @@ import {
     updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals } from './core.js?v=20261026a';
-import { EMAILJS_CONFIG } from '../config/config.js?v=20261026a';
-import { checkAndAwardAch } from './achievements.js?v=20261026a';
+import { esc, showToast, closeModals } from './core.js?v=20261026b';
+import { EMAILJS_CONFIG } from '../config/config.js?v=20261026b';
+import { checkAndAwardAch } from './achievements.js?v=20261026b';
 
 export function initDubinPanel(isAdmin, isDub) {
     const filesPanel   = document.getElementById('dubin-files-panel');
