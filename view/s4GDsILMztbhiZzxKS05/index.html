@@ -273,7 +273,7 @@ window.yaContextCb.push(() => {
                 <div>
                     <div class="releases-hero-title">Колесо Фортуны ждёт!</div>
                     <div class="releases-hero-sub">Крутите барабан, получайте Старс и редкие карточки из ящиков.</div>
-                    <button class="btn btn-blue rel-hero-cta" onclick="navigate('games')"><i class="fas fa-dice"></i> Играть</button>
+                    <button class="btn btn-blue rel-hero-cta" onclick="navigate('games')"><i class="fas fa-gamepad"></i> Играть</button>
                 </div>
             </div>
             <div class="rel-hero-dots" id="rel-hero-dots"></div>
@@ -1028,7 +1028,7 @@ window.yaContextCb.push(() => {
             <h1 style="font-size:1.9rem;font-weight:700;font-family:var(--font-display);background:linear-gradient(135deg,#5eead4,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
                 <i class="fas fa-gamepad" style="-webkit-text-fill-color:#5eead4;margin-right:10px;"></i>Мини-игры
             </h1>
-            <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Испытай удачу и заработай VCoins</p>
+            <p style="color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;">Простые игры для разнообразия — без ставок</p>
         </div>
     </div>
     <div id="games-wrap"></div>
@@ -1507,7 +1507,7 @@ window.yaContextCb.push(() => {
 <div id="m-game" class="modal"><div class="modal-content" style="max-width:480px;">
     <h3 id="m-game-title" style="margin-bottom:18px;"></h3>
     <div id="game-wrap"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="if(typeof _stopFunGames==='function') _stopFunGames(); closeModals();">Закрыть</button>
 </div></div>
 
 <!-- ===== МОДАЛКА: Промо-слайд (карусель магазина, только для админов) ===== -->
