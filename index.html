@@ -908,7 +908,7 @@ window.yaContextCb.push(() => {
 <div id="m-game" class="modal"><div class="modal-content" style="max-width:480px;">
     <h3 id="m-game-title" style="margin-bottom:18px;"></h3>
     <div id="game-wrap"></div>
-    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="closeModals()">Закрыть</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="if(typeof _stopFunGames==='function') _stopFunGames(); closeModals();">Закрыть</button>
 </div></div>
 
 <div id="m-vcoin-history" class="modal"><div class="modal-content" style="max-width:480px;">

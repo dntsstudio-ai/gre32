@@ -25,6 +25,7 @@ import { bindNotifications, listenNotifications } from './notifications.js';
 import { bindUserSearch, bindProfileWall } from './users_search.js';
 import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js';
 import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles } from './maintenance.js';
+import './fungames.js';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);

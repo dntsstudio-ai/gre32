@@ -159,6 +159,30 @@ function renderShopPage() {
             <button class="btn btn-sm btn-purple">Играть</button>
         </div>
         ` : ''}
+        <div class="shop-game-card" onclick="openGame('rps')">
+            <div class="shop-game-icon">✊</div>
+            <div class="shop-game-name">Камень-Ножницы-Бумага</div>
+            <div class="shop-game-desc">Сыграй против бота — просто для веселья</div>
+            <button class="btn btn-sm btn-purple">Играть</button>
+        </div>
+        <div class="shop-game-card" onclick="openGame('ttt')">
+            <div class="shop-game-icon">❌⭕</div>
+            <div class="shop-game-name">Крестики-нолики</div>
+            <div class="shop-game-desc">Классика против бота, без ставок</div>
+            <button class="btn btn-sm btn-purple">Играть</button>
+        </div>
+        <div class="shop-game-card" onclick="openGame('snake')">
+            <div class="shop-game-icon">🐍</div>
+            <div class="shop-game-name">Змейка</div>
+            <div class="shop-game-desc">Аркада на реакцию — собери побольше очков</div>
+            <button class="btn btn-sm btn-purple">Играть</button>
+        </div>
+        <div class="shop-game-card" onclick="openGame('memory')">
+            <div class="shop-game-icon">🧠</div>
+            <div class="shop-game-name">Memory</div>
+            <div class="shop-game-desc">Найди все пары карточек на память</div>
+            <button class="btn btn-sm btn-purple">Играть</button>
+        </div>
         <div class="shop-game-card shop-game-card--lootbox" onclick="navigate('lootbox')">
             <div class="shop-game-icon">🎁</div>
             <div class="shop-game-name">Ящики</div>
@@ -208,10 +232,12 @@ async function activateShopItem(itemId) {
     }
 }
 
+const CASINO_GAME_TYPES = ['coinflip', 'slots', 'rocket', 'plinko'];
+
 function openGame(type) {
-    if (!CASINO_GAMES_ENABLED) return showToast('Игра временно недоступна', 'error');
-    const { userData } = _getState();
-    if (!userData) return showToast('Войдите в аккаунт', 'error');
+    if (CASINO_GAME_TYPES.includes(type) && !CASINO_GAMES_ENABLED) {
+        return showToast('Игра временно недоступна', 'error');
+    }
     document.getElementById('m-game').style.display = 'flex';
     renderGame(type);
 }
@@ -305,10 +331,21 @@ function renderGame(type) {
         if (typeof _renderPlinko === 'function') {
             _renderPlinko(wrap, balance);
         }
+    } else if (type === 'rps') {
+        if (typeof window._renderRPS === 'function') window._renderRPS(wrap);
+    } else if (type === 'ttt') {
+        if (typeof window._renderTTT === 'function') window._renderTTT(wrap);
+    } else if (type === 'snake') {
+        if (typeof window._renderSnake === 'function') window._renderSnake(wrap);
+    } else if (type === 'memory') {
+        if (typeof window._renderMemory === 'function') window._renderMemory(wrap);
     }
 
     const titleEl = document.getElementById('m-game-title');
-    const gameTitles = { coinflip:'🪙 Монетка', slots:'🎰 Слоты', rocket:'🚀 Ракета', plinko:'🌌 Чёрная дыра' };
+    const gameTitles = {
+        coinflip:'🪙 Монетка', slots:'🎰 Слоты', rocket:'🚀 Ракета', plinko:'🌌 Чёрная дыра',
+        rps:'✊ Камень-Ножницы-Бумага', ttt:'❌⭕ Крестики-нолики', snake:'🐍 Змейка', memory:'🧠 Memory'
+    };
     if (titleEl) titleEl.textContent = gameTitles[type] || type;
     window._currentGame = type;
 }
