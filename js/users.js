@@ -7,8 +7,8 @@ import {
     query, where, increment, arrayUnion, arrayRemove, addDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { esc, showToast, closeModals, navigate, getRoleBadgeHTML, achIconHTML } from './core.js?v=20261025c';
-import { checkAndAwardAch } from './achievements.js?v=20261025c';
+import { esc, showToast, closeModals, navigate, getRoleBadgeHTML, achIconHTML } from './core.js?v=20261026a';
+import { checkAndAwardAch } from './achievements.js?v=20261026a';
 
 export function bindUsers(db, auth, getState) {
 

@@ -2,8 +2,8 @@
 //  js/media.js — Медиатека: картинки/гифки на Supabase Storage
 // ============================================================
 
-import { SUPABASE_CONFIG } from '../config/config.js?v=20261025c';
-import { showToast, closeModals } from './core.js?v=20261025c';
+import { SUPABASE_CONFIG } from '../config/config.js?v=20261026a';
+import { showToast, closeModals } from './core.js?v=20261026a';
 
 const BUCKET = SUPABASE_CONFIG.bucket || 'media';
 const MAX_FILE_MB = 8;
