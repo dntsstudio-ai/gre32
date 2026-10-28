@@ -1,18 +1,27 @@
 // ============================================================
 //  js/videolib.js — Видеотека: серии/фильмы на Firebase Storage
 //  (не Supabase — там лимит на размер файла, а видео VAT бывает до 3 ГБ)
+//
+//  Список файлов хранится не через Storage listAll() (та операция
+//  капризна к правилам/CORS — в проде упала с storage/retry-limit-
+//  exceeded), а отдельной коллекцией videoLibrary в Firestore, как и
+//  весь остальной "каталог" на этом сайте. Storage — только блобы.
 // ============================================================
 
 import {
-    ref as storageRef, listAll, getDownloadURL, getMetadata,
-    deleteObject, uploadBytesResumable
+    ref as storageRef, deleteObject, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-import { showToast } from './core.js?v=20261028a';
+import {
+    collection, addDoc, deleteDoc, doc, getDocs, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { showToast } from './core.js?v=20261028b';
 
 const FOLDER = 'videos';
+const COLLECTION = 'videoLibrary';
 const MAX_FILE_GB = 3;
 
 let _storage = null;
+let _db = null;
 let _pickTarget = null;
 
 function esc(s) {
@@ -26,20 +35,24 @@ function fmtSize(bytes) {
     return (bytes / (1024 ** 2)).toFixed(1) + ' МБ';
 }
 
-function fmtDate(iso) {
-    if (!iso) return '';
-    try { return new Date(iso).toLocaleDateString('ru-RU'); } catch(e) { return ''; }
+function fmtDate(ms) {
+    if (!ms) return '';
+    try { return new Date(ms).toLocaleDateString('ru-RU'); } catch(e) { return ''; }
+}
+
+// Вызывается из releases.js после успешной загрузки видео эпизода тем
+// же "Файл"-инпутом (не только из этой библиотеки) — чтобы в видеотеке
+// оказывались вообще все загруженные видео, а не только те, что
+// загрузили через саму модалку видеотеки.
+export async function registerVideoInLibrary(db, { name, url, size, path }) {
+    try {
+        await addDoc(collection(db, COLLECTION), { name, url, size, path, createdAt: Date.now() });
+    } catch(e) { console.warn('registerVideoInLibrary:', e); }
 }
 
 async function listVideos() {
-    const folderRef = storageRef(_storage, FOLDER);
-    const res = await listAll(folderRef);
-    const items = await Promise.all(res.items.map(async itemRef => {
-        const [url, meta] = await Promise.all([getDownloadURL(itemRef), getMetadata(itemRef)]);
-        return { name: itemRef.name, url, size: meta.size, createdAt: meta.timeCreated };
-    }));
-    items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    return items;
+    const snap = await getDocs(query(collection(_db, COLLECTION), orderBy('createdAt', 'desc')));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 async function renderVideoList() {
@@ -53,10 +66,10 @@ async function renderVideoList() {
             return;
         }
         list.innerHTML = videos.map(v => `
-            <div class="videolib-row" data-url="${esc(v.url)}" data-name="${esc(v.name)}">
+            <div class="videolib-row" data-id="${esc(v.id)}" data-url="${esc(v.url)}" data-path="${esc(v.path || '')}">
                 <div class="videolib-row-icon"><i class="fas fa-film"></i></div>
                 <div class="videolib-row-info">
-                    <div class="videolib-row-name" title="${esc(v.name)}">${esc(v.name)}</div>
+                    <div class="videolib-row-name" title="${esc(v.name || '')}">${esc(v.name || v.url)}</div>
                     <div class="videolib-row-meta">${fmtSize(v.size)} · ${fmtDate(v.createdAt)}</div>
                 </div>
                 <div class="videolib-row-actions">
@@ -71,15 +84,16 @@ async function renderVideoList() {
     }
 }
 
-export function bindVideoLib(storage) {
+export function bindVideoLib(storage, db) {
     _storage = storage;
+    _db = db;
 
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.videolib-row .media-tile-btn');
         if (!btn) return;
         const row = btn.closest('.videolib-row');
         if (!row) return;
-        const { url, name } = row.dataset;
+        const { id, url, path } = row.dataset;
         if (btn.dataset.act === 'copy') {
             navigator.clipboard?.writeText(url)
                 .then(() => showToast('Ссылка скопирована!'))
@@ -87,7 +101,7 @@ export function bindVideoLib(storage) {
         } else if (btn.dataset.act === 'pick') {
             window.pickVideoUrl(url);
         } else if (btn.dataset.act === 'delete') {
-            window.deleteVideoFile(name);
+            window.deleteVideoFile(id, path);
         }
     });
 
@@ -126,19 +140,22 @@ export function bindVideoLib(storage) {
                 if (wrap) wrap.style.display = 'none';
                 showToast('Ошибка загрузки: ' + err.message, 'error');
             },
-            () => {
+            async () => {
                 if (wrap) wrap.style.display = 'none';
                 inputEl.value = '';
+                const url = await getDownloadURL(fileRef);
+                await registerVideoInLibrary(_db, { name: file.name, url, size: file.size, path });
                 showToast('Видео загружено!');
                 renderVideoList();
             }
         );
     };
 
-    window.deleteVideoFile = async function(name) {
+    window.deleteVideoFile = async function(docId, path) {
         if (!confirm('Удалить видео из видеотеки? Если оно используется в релизах, ссылка в них перестанет работать.')) return;
         try {
-            await deleteObject(storageRef(_storage, `${FOLDER}/${name}`));
+            if (path) await deleteObject(storageRef(_storage, path)).catch(e => console.warn('deleteObject:', e));
+            await deleteDoc(doc(_db, COLLECTION, docId));
             showToast('Удалено');
             renderVideoList();
         } catch(e) { showToast('Ошибка удаления: ' + e.message, 'error'); }

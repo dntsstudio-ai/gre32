@@ -313,5 +313,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ══════════════════════════════════════════
+    //  VIDEO LIBRARY (видеотека — список загруженных видео эпизодов
+    //  на Firebase Storage; сами файлы в Storage, тут только индекс)
+    // ══════════════════════════════════════════
+    match /videoLibrary/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
   }
 }

@@ -11,9 +11,9 @@ import {
     ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20261028a';
-import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20261028a';
-import { checkAndAwardAch } from './achievements.js?v=20261028a';
+import { esc, showToast, closeModals, navigate, updatePageMeta } from './core.js?v=20261028b';
+import { PLACEHOLDER_IMG, VIEW_COUNT_AFTER_MS, KODIK_TOKEN } from '../config/config.js?v=20261028b';
+import { checkAndAwardAch } from './achievements.js?v=20261028b';
 
 import {
     initPlayer, playerLoad, playerShowSkip, playerHideSkip,
@@ -21,7 +21,7 @@ import {
     playerSeekTo, playerUpdateEpisodes,
     getYtVideoId, buildEmbedSrc, minsToSec,
     getPlayerStateExternal
-} from './player.js?v=20261028a';
+} from './player.js?v=20261028b';
 // comments.js и playlists.js — не главные модули, подключаются через
 // import() только когда реально нужны (см. ниже), а не при каждом заходе
 // на сайт (это же относится и к их bind*-вызовам, поэтому сохраняем
@@ -101,7 +101,7 @@ function uploadToStorage(storage, file, folder, { onProgress, onDone, onError })
     task.on('state_changed',
         (snap) => { if (onProgress) onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)); },
         (err)  => { if (onError) onError(err); },
-        async () => { try { const url = await getDownloadURL(fileRef); if (onDone) onDone(url); } catch(e) { if (onError) onError(e); } }
+        async () => { try { const url = await getDownloadURL(fileRef); if (onDone) onDone(url, path); } catch(e) { if (onError) onError(e); } }
     );
 }
 
@@ -445,13 +445,13 @@ function renderViewPage(db, auth, userData, isAdmin, startEpIdx=0) {
     }
 
     if (userData) loadWatchListStatus(db, auth, curProj.id);
-    import('./comments.js?v=20261028a').then(m => {
+    import('./comments.js?v=20261028b').then(m => {
         m.bindComments(db, auth, _getState);
         m.loadComments(db, auth, curProj, userData, isAdmin);
     });
     // users.js — клик по аватарке/нику в комментариях открывает профиль
     if (typeof window.openUserProfile !== 'function') {
-        import('./users.js?v=20261028a').then(m => m.bindUsers(db, auth, _getState));
+        import('./users.js?v=20261028b').then(m => m.bindUsers(db, auth, _getState));
     }
 }
 
@@ -661,7 +661,7 @@ export function bindReleases(db, auth, getState, storage) {
         const wrap = document.getElementById('poster-upload-wrap');
         if (wrap) wrap.style.display = 'block';
         try {
-            const { uploadMedia } = await import('./media.js?v=20261028a');
+            const { uploadMedia } = await import('./media.js?v=20261028b');
             const { url } = await uploadMedia(file);
             const img = document.getElementById('ad-img'); if (img) img.value = url;
             showToast('Постер загружен!');
@@ -685,11 +685,17 @@ export function bindReleases(db, auth, getState, storage) {
         if (saveBtn) saveBtn.disabled = true;
         uploadToStorage(storage, file, 'videos', {
             onProgress: (pct) => { if (bar) bar.style.width = pct + '%'; if (bar) bar.textContent = pct + '%'; },
-            onDone: (url) => {
+            onDone: async (url, path) => {
                 const urlEl = document.getElementById('ad-ep-url'); if (urlEl) urlEl.value = url;
                 if (wrap) wrap.style.display = 'none';
                 if (saveBtn) saveBtn.disabled = false;
                 showToast('Видео загружено!');
+                // Чтобы это видео потом можно было выбрать повторно
+                // из видеотеки, а не только при первой загрузке файла
+                try {
+                    const { registerVideoInLibrary } = await import('./videolib.js?v=20261028b');
+                    await registerVideoInLibrary(db, { name: file.name, url, size: file.size, path });
+                } catch(e) { console.warn('registerVideoInLibrary:', e); }
             },
             onError: (err) => { if (wrap) wrap.style.display = 'none'; if (saveBtn) saveBtn.disabled = false; showToast('Ошибка загрузки: ' + err.message, 'error'); },
         });
@@ -702,7 +708,7 @@ export function bindReleases(db, auth, getState, storage) {
         if (!file.type.startsWith('image/')) return showToast('Нужен файл изображения', 'error');
         if (file.size > 5 * 1024 * 1024) return showToast('Файл слишком большой (макс. 5 МБ)', 'error');
         try {
-            const { uploadMedia } = await import('./media.js?v=20261028a');
+            const { uploadMedia } = await import('./media.js?v=20261028b');
             const { url } = await uploadMedia(file);
             const el = document.getElementById('ad-ep-thumb'); if (el) el.value = url;
             showToast('Превью загружено!');
@@ -1043,7 +1049,7 @@ export function bindReleases(db, auth, getState, storage) {
 
             let pinnedSection = '';
             try {
-                const plMod = await import('./playlists.js?v=20261028a');
+                const plMod = await import('./playlists.js?v=20261028b');
                 plMod.bindPlaylists(db, auth, getState);
                 const pinnedHtml = await plMod.renderPinnedPlaylists(uid);
                 if (pinnedHtml) {
