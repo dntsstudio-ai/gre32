@@ -7,16 +7,16 @@ import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage }                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20261026d';
-import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20261026d';
-import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions, initBirthdateSelects } from './auth.js?v=20261026d';
-import { renderAchProfile, bindAchievements } from './achievements.js?v=20261026d';
-import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20261026d';
-import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20261026d';
-import { bindNotifications, listenNotifications } from './notifications.js?v=20261026d';
-import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20261026d';
-import { bindBanners } from './banners.js?v=20261026d';
-import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20261026d';
+import { FIREBASE_CONFIG, EMAILJS_CONFIG } from '../config/config.js?v=20261028a';
+import { navigate, closeModals, showToast, canAccessDubin, canAccessRatings } from './core.js?v=20261028a';
+import { initAuthListeners, applyUserUI, resetUserUI, bindAuthActions, initBirthdateSelects } from './auth.js?v=20261028a';
+import { renderAchProfile, bindAchievements } from './achievements.js?v=20261028a';
+import { loadReleases, renderGrid, bindReleases, enableSearch, disableSearch } from './releases.js?v=20261028a';
+import { bindVCoins, awardVCoins, claimPendingGifts } from './vcoins.js?v=20261028a';
+import { bindNotifications, listenNotifications } from './notifications.js?v=20261028a';
+import { bindAdminPanel, updateLastSeen, startSessionTimer, incrementPageView } from './admin_panel.js?v=20261028a';
+import { bindBanners } from './banners.js?v=20261028a';
+import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, prefetchMaintenance } from './maintenance.js?v=20261028a';
 
 // ── Ленивая загрузка "неглавных" модулей ────────────────────────
 // Раньше все ~20 файлов сайта подключались сразу при любом заходе —
@@ -25,7 +25,7 @@ import { checkMaintenance, startMaintenancePolling, injectMaintenanceStyles, pre
 // плейлистов и т.п. Теперь эти модули (и их bindX()) подключаются через
 // import() только в момент, когда человек реально открывает нужную
 // страницу — см. вызовы ниже в navigate() и в обработчиках deep-link'ов.
-const V = '20261026d';
+const V = '20261028a';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const db   = getFirestore(app);
@@ -92,6 +92,14 @@ window.openMediaLibrary = async function(targetInputId) {
     const m = await import(`./media.js?v=${V}`);
     m.bindMediaLibrary();
     window.openMediaLibrary(targetInputId);
+};
+
+// Видеотека (Firebase Storage — тот же, что уже принимает видео эпизодов
+// до 3 ГБ; Supabase для такого размера не годится) — та же ленивая загрузка.
+window.openVideoLibrary = async function(targetInputId) {
+    const m = await import(`./videolib.js?v=${V}`);
+    m.bindVideoLib(storage);
+    window.openVideoLibrary(targetInputId);
 };
 
 const _pendingNav = window._navQueue || [];
@@ -202,6 +210,7 @@ function updateSidebarVisibility() {
     show('btn-admin-banners', a, 'inline-flex');
     show('btn-admin-vcoins', a, 'inline-flex');
     show('btn-admin-media', a, 'inline-flex');
+    show('btn-admin-videolib', a, 'inline-flex');
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = a ? 'block' : 'none';
     const shopBal = document.getElementById('sn-shop-balance');

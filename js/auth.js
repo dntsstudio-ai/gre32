@@ -11,8 +11,8 @@ import {
     doc, setDoc, updateDoc, getDocs, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20261026d';
-import { renderAchProfile } from './achievements.js?v=20261026d';
+import { showToast, closeModals, navigate, getRoleBadgeHTML, canAccessDubin } from './core.js?v=20261028a';
+import { renderAchProfile } from './achievements.js?v=20261028a';
 
 let loginAttempts = 0;
 
@@ -265,6 +265,7 @@ export function applyUserUI(userData, isAdmin, hasDubAccess) {
     setDsp('btn-admin-banners', isAdmin);
     setDsp('btn-admin-vcoins', isAdmin);
     setDsp('btn-admin-media', isAdmin);
+    setDsp('btn-admin-videolib', isAdmin);
 
     const admAch = document.getElementById('adm-ach-panel');
     if (admAch) admAch.style.display = isAdmin ? 'block' : 'none';
@@ -297,7 +298,7 @@ export function resetUserUI() {
     if (commAuthMsg) commAuthMsg.style.display = 'block';
 
     ['adm-btn-rel','adm-btn-team','adm-btn-role','adm-ach-panel',
-     'btn-admin-roles','btn-admin-vcoins','btn-admin-levers','btn-admin-banners','btn-admin-media',
+     'btn-admin-roles','btn-admin-vcoins','btn-admin-levers','btn-admin-banners','btn-admin-media','btn-admin-videolib',
      'sn-playlists','sn-shop','notif-btn','header-balance','email-verify-banner'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
