@@ -20,7 +20,7 @@
       // в цикл, если CDN отдаёт version.json с разных узлов неконсистентно) —
       // только показываем маленькую плашку с кнопкой "Обновить" по требованию.
       (function () {
-        var CURRENT = '20261026d';
+        var CURRENT = '20261028a';
         function showUpdateBanner() {
           if (document.getElementById('vat-update-banner')) return;
           if (sessionStorage.getItem('vat_update_dismissed') === CURRENT) return;
@@ -91,7 +91,7 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20261026d">
+    <link rel="stylesheet" href="/css/style.css?v=20261028a">
     
     <!-- Yandex.RTB -->
 <script>window.yaContextCb=window.yaContextCb||[]</script>
@@ -825,6 +825,7 @@ window.yaContextCb.push(() => {
                         <button id="btn-admin-levers" class="btn btn-outline" style="color:#f59e0b;border-color:rgba(245,158,11,0.35);" onclick="openAdminLeversPanel()"><i class="fas fa-sliders-h"></i> Рычаги</button>
                         <button id="btn-admin-banners" class="btn btn-outline" onclick="openBannersAdmin()"><i class="fas fa-bullhorn"></i> Плашки</button>
                         <button id="btn-admin-media" class="btn btn-outline" onclick="openMediaLibrary()"><i class="fas fa-photo-film"></i> Медиатека</button>
+                        <button id="btn-admin-videolib" class="btn btn-outline" onclick="openVideoLibrary()"><i class="fas fa-film"></i> Видеотека</button>
                     </div>
                 </div>
 
@@ -1169,6 +1170,7 @@ window.yaContextCb.push(() => {
             <i class="fas fa-upload"></i> Файл
             <input type="file" id="ad-ep-file" accept="video/*" style="display:none;" onchange="uploadEpVideoFile(this)">
         </label>
+        <button type="button" class="btn btn-outline btn-sm field-action-btn" onclick="openVideoLibrary('ad-ep-url')"><i class="fas fa-film"></i> Видеотека</button>
     </div>
     <div class="upload-progress-wrap" id="ep-upload-wrap" style="display:none;">
         <div class="upload-progress-bar" id="ep-upload-bar">0%</div>
@@ -1226,6 +1228,22 @@ window.yaContextCb.push(() => {
     </div>
     <div id="media-grid" class="media-grid-admin"></div>
     <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="if(typeof closeMediaLibrary==='function') closeMediaLibrary(); else closeModals();">Закрыть</button>
+</div></div>
+
+<div id="m-videolib" class="modal"><div class="modal-content" style="max-width:640px;">
+    <h3 id="videolib-modal-title" style="margin-bottom:14px;"><i class="fas fa-film" style="color:#5eead4;margin-right:8px;"></i>Видеотека</h3>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <label class="btn btn-purple btn-sm" style="cursor:pointer;margin-bottom:0;">
+            <i class="fas fa-upload"></i> Загрузить
+            <input type="file" accept="video/*" style="display:none;" onchange="uploadVideoLibFile(this)">
+        </label>
+        <span style="font-size:11px;color:var(--text-dim);">Видеофайл, до 3 ГБ</span>
+    </div>
+    <div class="upload-progress-wrap" id="videolib-upload-wrap" style="display:none;">
+        <div class="upload-progress-bar" id="videolib-upload-bar">0%</div>
+    </div>
+    <div id="videolib-list" class="videolib-list"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:18px;" onclick="if(typeof closeVideoLibrary==='function') closeVideoLibrary(); else closeModals();">Закрыть</button>
 </div></div>
 
 <div id="m-team" class="modal"><div class="modal-content">
@@ -1922,7 +1940,7 @@ window.yaContextCb.push(() => {
 
 <!-- ===== SCRIPTS ===== -->
 
-<script type="module" src="/js/app.js?v=20261026d"></script>
+<script type="module" src="/js/app.js?v=20261028a"></script>
 
 <canvas id="bg-canvas"></canvas>
 <script>
